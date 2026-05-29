@@ -1,0 +1,38 @@
+# 依赖 & 构建产物
+node_modules/
+dist/
+
+# Git
+.git/
+.gitignore
+
+# 编辑器 & IDE
+.vscode/
+.idea/
+.agent/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+
+# 打包文件
+*.tar.gz
+*.zip
+
+# 密钥文件（不应进入镜像）
+.secrets/
+.env.local
+.env*.local
+
+# Docker 自身
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 文档 & 资源
+README.md
+*.md
+*.png
