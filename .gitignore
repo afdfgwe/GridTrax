@@ -6,9 +6,9 @@ dist/
 
 # Env & Secrets
 # Secrets backend
-.env.local
-.env*.local
-.secrets/
+#.env.local
+#.env*.local
+#.secrets/
 
 # Editor
 .vscode/
