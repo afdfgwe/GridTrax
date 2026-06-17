@@ -1,5 +1,6 @@
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
 import { Box, Card, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
@@ -33,6 +34,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const navigate = useNavigate();
     const [season, setSeason] = useState<TMDBSeason | null>(null);
     const [episodePage, setEpisodePage] = useState(0);
+    const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
     const [loadingSeason, setLoadingSeason] = useState(false);
 
     const { getSeasonRecord } = useProgressStore();
@@ -85,11 +87,28 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
         : 0;
     const watchedCount = totalEpisodes > 0 ? Math.min(rawWatchedCount, totalEpisodes) : rawWatchedCount;
     const progress = totalEpisodes > 0 ? Math.min((watchedCount / totalEpisodes) * 100, 100) : 0;
-    const totalPages = season ? Math.max(Math.ceil(season.episodes.length / EPISODES_PER_PAGE), 1) : 1;
+    const orderedEpisodes = season
+        ? [...season.episodes].sort((a, b) =>
+            episodeOrder === 'asc'
+                ? a.episode_number - b.episode_number
+                : b.episode_number - a.episode_number
+        )
+        : [];
+    const totalPages = season ? Math.max(Math.ceil(orderedEpisodes.length / EPISODES_PER_PAGE), 1) : 1;
     const currentPage = Math.min(episodePage, totalPages - 1);
     const pageStart = currentPage * EPISODES_PER_PAGE;
-    const pageEnd = season ? Math.min(pageStart + EPISODES_PER_PAGE, season.episodes.length) : 0;
-    const visibleEpisodes = season?.episodes.slice(pageStart, pageEnd) ?? [];
+    const pageEnd = season ? Math.min(pageStart + EPISODES_PER_PAGE, orderedEpisodes.length) : 0;
+    const visibleEpisodes = orderedEpisodes.slice(pageStart, pageEnd);
+    const pageMinEpisode = visibleEpisodes.length
+        ? Math.min(...visibleEpisodes.map((episode) => episode.episode_number))
+        : 0;
+    const pageMaxEpisode = visibleEpisodes.length
+        ? Math.max(...visibleEpisodes.map((episode) => episode.episode_number))
+        : 0;
+    const handleToggleEpisodeOrder = () => {
+        setEpisodeOrder((order) => (order === 'asc' ? 'desc' : 'asc'));
+        setEpisodePage(0);
+    };
 
     return (
         <Card
@@ -209,7 +228,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                         variant="caption"
                         sx={{ color: 'text.secondary', minWidth: 112, textAlign: 'center', fontWeight: 600 }}
                     >
-                        {season ? `第 ${pageStart + 1}-${pageEnd} 集` : '正在加载集数…'}
+                        {season ? `第 ${pageMinEpisode}-${pageMaxEpisode} 集` : '正在加载集数…'}
                     </Typography>
                     <Tooltip title="下一页">
                         <span>
@@ -222,6 +241,22 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                                 <ChevronRightIcon fontSize="small" />
                             </IconButton>
                         </span>
+                    </Tooltip>
+                    <Tooltip title={episodeOrder === 'asc' ? '倒序排列' : '正序排列'}>
+                        <IconButton
+                            size="small"
+                            disabled={loadingSeason}
+                            aria-label={episodeOrder === 'asc' ? '倒序排列集数' : '正序排列集数'}
+                            onClick={handleToggleEpisodeOrder}
+                            sx={{
+                                border: `1px solid ${alpha(primary, episodeOrder === 'desc' ? 0.45 : 0.2)}`,
+                                borderRadius: 1.5,
+                                color: episodeOrder === 'desc' ? primary : 'text.secondary',
+                                backgroundColor: episodeOrder === 'desc' ? alpha(primary, 0.08) : 'transparent',
+                            }}
+                        >
+                            <SwapVertIcon fontSize="small" />
+                        </IconButton>
                     </Tooltip>
                 </Box>
 

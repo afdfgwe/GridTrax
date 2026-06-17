@@ -1,5 +1,6 @@
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
 import {
     Accordion,
     AccordionDetails,
@@ -8,8 +9,10 @@ import {
     Button,
     Chip,
     Collapse,
+    IconButton,
     Skeleton,
     TextField,
+    Tooltip,
     Typography,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -34,6 +37,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, seasonSummary
     const [loading, setLoading] = useState(false);
     const [expanded, setExpanded] = useState(defaultExpanded);
     const [showComment, setShowComment] = useState(false);
+    const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
 
     const {
         getSeasonRecord,
@@ -69,6 +73,13 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, seasonSummary
             (ep) => record.episodes[String(ep.episode_number)]?.watched ?? false
         ).length
         : 0;
+    const orderedEpisodes = season
+        ? [...season.episodes].sort((a, b) =>
+            episodeOrder === 'asc'
+                ? a.episode_number - b.episode_number
+                : b.episode_number - a.episode_number
+        )
+        : [];
 
     const statusLabel = record?.global_status ? STATUS_LABELS[record.global_status] : null;
 
@@ -146,12 +157,31 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, seasonSummary
 
                 {/* Episode Grid */}
                 {season && (
-                    <EpisodeGrid
-                        tvId={tvId}
-                        seasonNumber={seasonSummary.season_number}
-                        episodes={season.episodes}
-                        metaPayload={metaPayload}
-                    />
+                    <>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 1 }}>
+                            <Tooltip title={episodeOrder === 'asc' ? '倒序排列' : '正序排列'}>
+                                <IconButton
+                                    size="small"
+                                    aria-label={episodeOrder === 'asc' ? '倒序排列集数' : '正序排列集数'}
+                                    onClick={() => setEpisodeOrder((order) => (order === 'asc' ? 'desc' : 'asc'))}
+                                    sx={{
+                                        border: `1px solid ${alpha(primary, episodeOrder === 'desc' ? 0.45 : 0.2)}`,
+                                        borderRadius: 1.5,
+                                        color: episodeOrder === 'desc' ? primary : 'text.secondary',
+                                        backgroundColor: episodeOrder === 'desc' ? alpha(primary, 0.08) : 'transparent',
+                                    }}
+                                >
+                                    <SwapVertIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                        <EpisodeGrid
+                            tvId={tvId}
+                            seasonNumber={seasonSummary.season_number}
+                            episodes={orderedEpisodes}
+                            metaPayload={metaPayload}
+                        />
+                    </>
                 )}
 
                 {/* Overall Comment */}
