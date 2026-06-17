@@ -99,12 +99,8 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const pageStart = currentPage * EPISODES_PER_PAGE;
     const pageEnd = season ? Math.min(pageStart + EPISODES_PER_PAGE, orderedEpisodes.length) : 0;
     const visibleEpisodes = orderedEpisodes.slice(pageStart, pageEnd);
-    const pageMinEpisode = visibleEpisodes.length
-        ? Math.min(...visibleEpisodes.map((episode) => episode.episode_number))
-        : 0;
-    const pageMaxEpisode = visibleEpisodes.length
-        ? Math.max(...visibleEpisodes.map((episode) => episode.episode_number))
-        : 0;
+    const pageFirstEpisode = visibleEpisodes[0]?.episode_number ?? 0;
+    const pageLastEpisode = visibleEpisodes[visibleEpisodes.length - 1]?.episode_number ?? 0;
     const handleToggleEpisodeOrder = () => {
         setEpisodeOrder((order) => (order === 'asc' ? 'desc' : 'asc'));
         setEpisodePage(0);
@@ -228,7 +224,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                         variant="caption"
                         sx={{ color: 'text.secondary', minWidth: 112, textAlign: 'center', fontWeight: 600 }}
                     >
-                        {season ? `第 ${pageMinEpisode}-${pageMaxEpisode} 集` : '正在加载集数…'}
+                        {season ? `第 ${pageFirstEpisode}-${pageLastEpisode} 集` : '正在加载集数…'}
                     </Typography>
                     <Tooltip title="下一页">
                         <span>
