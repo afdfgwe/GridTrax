@@ -1,11 +1,14 @@
-import { Box, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import { Box, ListSubheader, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useRef, useState } from 'react';
 import type { TMDBEpisode } from '../types';
+import { getEpisodeTitle } from './episodeTitle';
 
 interface EpisodeCellProps {
     episode: TMDBEpisode;
     watched: boolean;
+    showTitle?: boolean;
     onSingleClick: (episodeNumber: number) => void;
     onWatchUpTo: (episodeNumber: number) => void;
     onCommentRequest: (episode: TMDBEpisode) => void;
@@ -16,6 +19,7 @@ const LONG_PRESS_DURATION = 500;
 const EpisodeCell: React.FC<EpisodeCellProps> = ({
     episode,
     watched,
+    showTitle = false,
     onSingleClick,
     onWatchUpTo,
     onCommentRequest,
@@ -110,8 +114,8 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
 
     const handleTouchEnd = useCallback(
         (e: React.TouchEvent) => {
-            // Always prevent the 300ms synthetic mouse/click events on touch devices
-            e.preventDefault();
+            // Suppress synthetic clicks, but leave native scrolling alone.
+            if (e.cancelable) e.preventDefault();
 
             if (longPressTimer.current) {
                 clearTimeout(longPressTimer.current);
@@ -169,6 +173,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
 
     const primary = theme.palette.primary.main;
     const primaryContrast = theme.palette.primary.contrastText;
+    const episodeTitle = getEpisodeTitle(episode);
 
     return (
         <>
@@ -179,9 +184,9 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                         <Typography variant="caption" fontWeight={600}>
                             第 {episode.episode_number} 集
                         </Typography>
-                        {episode.name && episode.name !== `第 ${episode.episode_number} 集` && (
+                        {episodeTitle && (
                             <Typography variant="caption" display="block" sx={{ opacity: 0.8 }}>
-                                {episode.name}
+                                {episodeTitle}
                             </Typography>
                         )}
                         <Typography variant="caption" display="block" sx={{ opacity: 0.6, mt: 0.3 }}>
@@ -209,12 +214,23 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
                 onTouchMove={handleTouchMove}
+                onTouchCancel={() => {
+                    if (longPressTimer.current) {
+                        clearTimeout(longPressTimer.current);
+                        longPressTimer.current = null;
+                    }
+                    touchStartPos.current = null;
+                    didLongPress.current = true;
+                    setPressed(false);
+                }}
                 onContextMenu={handleContextMenu}
                 sx={{
                     position: 'relative',
-                    width: { xs: 44, sm: 36 },
-                    height: { xs: 44, sm: 36 },
-                    minWidth: { xs: 44, sm: 36 },
+                    width: showTitle ? '100%' : { xs: 44, sm: 36 },
+                    height: showTitle ? 88 : { xs: 44, sm: 36 },
+                    minWidth: showTitle ? 0 : { xs: 44, sm: 36 },
+                    boxSizing: 'border-box',
+                    p: showTitle ? 1.25 : 0,
                     border: 'none',
                     outline: 'none',
                     borderRadius: '8px',
@@ -233,8 +249,12 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                         boxShadow: `0 0 0 2px ${alpha(primary, 0.7)}`,
                     },
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    flexDirection: showTitle ? 'column' : 'row',
+                    alignItems: showTitle ? 'stretch' : 'center',
+                    justifyContent: showTitle ? 'flex-start' : 'center',
+                    gap: showTitle ? 0.5 : 0,
+                    textAlign: showTitle ? 'left' : 'center',
+                    '&:focus-visible': { outline: `2px solid ${primary}`, outlineOffset: 2 },
                     // Ripple overlay
                     '&::after': {
                         content: '""',
@@ -246,9 +266,9 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                     },
                     // Touch target ensure >= 44dp on mobile
                     '@media (pointer: coarse)': {
-                        width: 44,
-                        height: 44,
-                        minWidth: 44,
+                        width: showTitle ? '100%' : 44,
+                        height: showTitle ? 88 : 44,
+                        minWidth: showTitle ? 0 : 44,
                     },
                     // Allow pan-y scrolling but prevent default tap delay;
                     // touchAction: 'none' would block scroll — use manipulation instead
@@ -257,13 +277,35 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                 }}
-                aria-label={`第 ${episode.episode_number} 集${watched ? '（已看）' : ''}`}
+                aria-label={`第 ${episode.episode_number} 集${showTitle && episodeTitle ? ` ${episodeTitle}` : ''}${watched ? '（已看）' : ''}`}
                 aria-pressed={watched}
                 aria-controls={isMenuOpen ? 'episode-context-menu' : undefined}
                 aria-haspopup="true"
                 aria-expanded={isMenuOpen ? 'true' : undefined}
             >
-                <Typography
+                {showTitle ? (
+                    <>
+                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5, pointerEvents: 'none' }}>
+                            <Typography component="span" sx={{ fontSize: '0.75rem', lineHeight: '18px', fontWeight: 600, color: watched ? primaryContrast : 'text.secondary' }}>
+                                第 {episode.episode_number} 集
+                            </Typography>
+                            <CheckIcon sx={{ width: 16, height: 16, flexShrink: 0, visibility: watched ? 'visible' : 'hidden', color: primaryContrast }} />
+                        </Box>
+                        {episodeTitle && (
+                            <Typography
+                                component="span"
+                                sx={{
+                                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden', overflowWrap: 'anywhere', minWidth: 0,
+                                    fontSize: '0.8125rem', lineHeight: '20px', fontWeight: 600,
+                                    color: watched ? primaryContrast : 'text.primary', pointerEvents: 'none',
+                                }}
+                            >
+                                {episodeTitle}
+                            </Typography>
+                        )}
+                    </>
+                ) : <Typography
                     variant="caption"
                     sx={{
                         color: watched ? primaryContrast : alpha(primary, 0.9),
@@ -275,7 +317,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                     }}
                 >
                     {episode.episode_number}
-                </Typography>
+                </Typography>}
             </Box>
             </Tooltip>
 
@@ -296,9 +338,13 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                     horizontal: 'center',
                 }}
                 PaperProps={{
-                    sx: { borderRadius: 3, mt: 0.5, minWidth: 140 }
+                    sx: { borderRadius: 2, mt: 0.5, minWidth: 140, maxWidth: 'min(320px, calc(100vw - 32px))' }
                 }}
             >
+                <ListSubheader disableSticky sx={{ lineHeight: 1.5, py: 1, whiteSpace: 'normal', overflowWrap: 'anywhere', color: 'text.primary' }}>
+                    第 {episode.episode_number} 集
+                    {episodeTitle && <Typography variant="body2" sx={{ mt: 0.5 }}>{episodeTitle}</Typography>}
+                </ListSubheader>
                 <MenuItem onClick={(e) => {
                     handleMenuClose(e);
                     onWatchUpTo(episode.episode_number);

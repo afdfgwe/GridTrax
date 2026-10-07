@@ -10,6 +10,7 @@ import {
     Snackbar,
     TextField,
     Typography,
+    useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useState } from 'react';
@@ -23,10 +24,13 @@ interface EpisodeGridProps {
     episodes: TMDBEpisode[];
     metaPayload?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number };
     hideProgress?: boolean;
+    showTitles?: boolean;
 }
 
-const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes, metaPayload, hideProgress = false }) => {
+const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes, metaPayload, hideProgress = false, showTitles = false }) => {
     const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const titleView = isMobile && showTitles;
     const {
         toggleEpisodeWatched,
         watchUpToEpisode,
@@ -101,9 +105,10 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
             {/* Grid of cells */}
             <Box
                 sx={{
-                    display: 'flex',
+                    display: titleView ? 'grid' : 'flex',
+                    gridTemplateColumns: titleView ? 'repeat(2, minmax(0, 1fr))' : undefined,
                     flexWrap: 'wrap',
-                    gap: '6px',
+                    gap: titleView ? '8px' : '6px',
                     // Ensure at least 48dp on mobile by setting touch area
                 }}
             >
@@ -114,6 +119,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
                             key={episode.episode_number}
                             episode={episode}
                             watched={rec.watched}
+                            showTitle={titleView}
                             onSingleClick={handleSingleClick}
                             onWatchUpTo={handleWatchUpTo}
                             onCommentRequest={handleCommentRequest}

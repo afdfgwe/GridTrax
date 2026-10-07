@@ -9,6 +9,7 @@ import { getPosterUrl, getTVSeason } from '../api/tmdb';
 import { useProgressStore } from '../store/useProgressStore';
 import type { TMDBSeason } from '../types';
 import EpisodeGrid from './EpisodeGrid';
+import EpisodeViewToggle from './EpisodeViewToggle';
 import HomeQuickEdit from './HomeQuickEdit';
 
 const EPISODES_PER_PAGE = 18;
@@ -35,6 +36,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const [season, setSeason] = useState<TMDBSeason | null>(null);
     const [episodePage, setEpisodePage] = useState(0);
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
+    const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
     const [loadingSeason, setLoadingSeason] = useState(false);
 
     const { getSeasonRecord } = useProgressStore();
@@ -207,7 +209,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                     </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mb: 1 }}>
                     <Tooltip title="上一页">
                         <span>
                             <IconButton
@@ -254,6 +256,11 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                             <SwapVertIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
+                    <EpisodeViewToggle
+                        episodes={orderedEpisodes}
+                        showTitles={showEpisodeTitles}
+                        onChange={() => setShowEpisodeTitles((value) => !value)}
+                    />
                 </Box>
 
                 {season && (
@@ -262,6 +269,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                         seasonNumber={seasonNumber}
                         episodes={visibleEpisodes}
                         metaPayload={meta}
+                        showTitles={showEpisodeTitles}
                         hideProgress
                     />
                 )}

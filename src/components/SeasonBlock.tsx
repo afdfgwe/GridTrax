@@ -22,6 +22,7 @@ import { useProgressStore } from '../store/useProgressStore';
 import type { TMDBSeason, TMDBSeasonSummary, WatchStatus } from '../types';
 import { STATUS_LABELS } from '../types';
 import EpisodeGrid from './EpisodeGrid';
+import EpisodeViewToggle from './EpisodeViewToggle';
 import GlobalStatusPicker from './GlobalStatusPicker';
 
 interface SeasonBlockProps {
@@ -39,6 +40,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPat
     const [expanded, setExpanded] = useState(defaultExpanded);
     const [showComment, setShowComment] = useState(false);
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
+    const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
 
     const {
         getSeasonRecord,
@@ -159,7 +161,12 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPat
                 {/* Episode Grid */}
                 {season && (
                     <>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
+                            <EpisodeViewToggle
+                                episodes={orderedEpisodes}
+                                showTitles={showEpisodeTitles}
+                                onChange={() => setShowEpisodeTitles((value) => !value)}
+                            />
                             <Tooltip title={episodeOrder === 'asc' ? '倒序排列' : '正序排列'}>
                                 <IconButton
                                     size="small"
@@ -181,6 +188,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPat
                             seasonNumber={seasonSummary.season_number}
                             episodes={orderedEpisodes}
                             metaPayload={metaPayload}
+                            showTitles={showEpisodeTitles}
                         />
                     </>
                 )}
