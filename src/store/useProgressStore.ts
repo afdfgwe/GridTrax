@@ -6,6 +6,7 @@ import type {
     EpisodeRecord,
     MovieRecord,
     ProgressData,
+    ProgressRecord,
     SeasonRecord,
     WatchStatus,
 } from '../types';
@@ -13,6 +14,7 @@ import { useBangumiStore } from './useBangumiStore';
 
 interface ProgressState {
     data: ProgressData;
+    fillMissingPosters: (type: ProgressRecord['type'], tmdbId: number, posterPath?: string) => void;
     // TV Season actions
     // TV Season actions
     ensureSeasonRecord: (tvId: number, seasonNumber: number, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
@@ -71,6 +73,21 @@ export const useProgressStore = create<ProgressState>()(
                 user_id: 'local_user',
                 last_sync: Date.now(),
                 records: {},
+            },
+
+            fillMissingPosters: (type, tmdbId, posterPath) => {
+                if (!posterPath) return;
+                set((state) => {
+                    const entries = Object.entries(state.data.records).filter(([, record]) =>
+                        record.type === type && record.tmdb_id === tmdbId && !record.poster_path
+                    );
+                    if (entries.length === 0) return state;
+                    const records = { ...state.data.records };
+                    for (const [key, record] of entries) {
+                        records[key] = { ...record, poster_path: posterPath };
+                    }
+                    return { data: { ...state.data, records } };
+                });
             },
 
             ensureSeasonRecord: (tvId, seasonNumber, meta) => {

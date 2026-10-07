@@ -27,11 +27,12 @@ import GlobalStatusPicker from './GlobalStatusPicker';
 interface SeasonBlockProps {
     tvId: number;
     showName: string;
+    showPosterPath?: string;
     seasonSummary: TMDBSeasonSummary;
     defaultExpanded?: boolean;
 }
 
-const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, seasonSummary, defaultExpanded = false }) => {
+const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPath, seasonSummary, defaultExpanded = false }) => {
     const theme = useTheme();
     const [season, setSeason] = useState<TMDBSeason | null>(null);
     const [loading, setLoading] = useState(false);
@@ -61,7 +62,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, seasonSummary
     const metaPayload = {
         name: seasonSummary.name,
         show_name: showName,
-        poster_path: seasonSummary.poster_path,
+        poster_path: seasonSummary.poster_path || showPosterPath,
         episode_count: seasonSummary.episode_count,
     };
 

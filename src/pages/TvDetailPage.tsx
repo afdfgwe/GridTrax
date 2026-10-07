@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getBackdropUrl, getPosterUrl, getTVShow } from '../api/tmdb';
 import SeasonBlock from '../components/SeasonBlock';
+import { useProgressStore } from '../store/useProgressStore';
 import type { TMDBTVShow } from '../types';
 
 const TvDetailPage: React.FC = () => {
@@ -33,7 +34,10 @@ const TvDetailPage: React.FC = () => {
         });
         getTVShow(Number(id))
             .then(data => {
-                if (isMounted) setShow(data);
+                if (isMounted) {
+                    setShow(data);
+                    useProgressStore.getState().fillMissingPosters('tv_season', data.id, data.poster_path);
+                }
             })
             .catch(() => {
                 if (isMounted) setError('加载失败，请刷新重试。');
@@ -213,6 +217,7 @@ const TvDetailPage: React.FC = () => {
                                     key={season.id}
                                     tvId={show.id}
                                     showName={show.name}
+                                    showPosterPath={show.poster_path}
                                     seasonSummary={season}
                                     defaultExpanded={idx === 0}
                                 />

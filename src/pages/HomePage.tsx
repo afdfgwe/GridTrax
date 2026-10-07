@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { getPosterUrl } from '../api/tmdb';
 import HomeActiveCard from '../components/HomeActiveCard';
 import HomeMovieActiveCard from '../components/HomeMovieActiveCard';
+import { useBackfillPosters } from '../hooks/useBackfillPosters';
 import { useProgressStore } from '../store/useProgressStore';
 import { STATUS_LABELS, type MovieRecord, type ProgressRecord, type SeasonRecord, type SortMode, type WatchStatus } from '../types';
 
@@ -142,6 +143,8 @@ const HomePage: React.FC = () => {
     const trackedItems = useMemo(() => {
         return Object.values(records).filter((record) => record.global_status);
     }, [records]);
+
+    useBackfillPosters(trackedItems);
 
     const itemsByStatus = useMemo(() => {
         const groups: Record<WatchStatus, (SeasonRecord | MovieRecord)[]> = {
