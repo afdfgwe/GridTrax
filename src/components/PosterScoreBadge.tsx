@@ -11,11 +11,14 @@ const PosterScoreBadge = ({score}: { score?: number }) => {
                 position: 'absolute',
                 right: 2,
                 bottom: 2,
+                px: 0.5,
+                py: 0.25,
+                borderRadius: 0.75,
+                backgroundColor: 'rgba(0, 0, 0, 0.78)',
                 color: '#FFE082',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 lineHeight: 1,
-                textShadow: '0 1px 3px rgba(0, 0, 0, 0.9)',
                 pointerEvents: 'none',
             }}
         >

@@ -2,6 +2,7 @@ import {Box, CircularProgress, CssBaseline, ThemeProvider} from '@mui/material';
 import React, {Suspense, useMemo} from 'react';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
 import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
 import {useThemeStore} from './store/useThemeStore';
 import {createAppTheme} from './theme/theme';
 import {getThemeConfig} from './theme/themes';
@@ -28,6 +29,7 @@ const App: React.FC = () => {
         <ThemeProvider theme={theme}>
             <CssBaseline/>
             <BrowserRouter>
+                <ScrollToTop/>
                 <Layout>
                     <Suspense fallback={<LoadingFallback/>}>
                         <Routes>

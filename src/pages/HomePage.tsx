@@ -1,4 +1,6 @@
 import SortIcon from '@mui/icons-material/Sort';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
     Box,
     Card,
@@ -10,6 +12,7 @@ import {
     IconButton,
     Menu,
     MenuItem,
+    Tooltip,
     Typography
 } from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
@@ -79,6 +82,7 @@ const sortRecords = (items: ProgressRecord[], mode: SortMode, scores: Record<str
 const STORAGE_PREFIX = 'gridtrax-sort-';
 const FILTER_STORAGE_PREFIX = 'gridtrax-media-filter-';
 const ALL_STATUSES: WatchStatus[] = ['Do', 'Wish', 'Collect', 'OnHold', 'Dropped'];
+const FILMS_PER_PAGE = 15;
 
 const getSectionSortMode = (status: WatchStatus): SortMode => {
     try {
@@ -240,13 +244,19 @@ const HomePage: React.FC = () => {
         return init;
     });
 
+    const [sectionPages, setSectionPages] = useState<Record<WatchStatus, number>>({
+        Do: 0, Wish: 0, Collect: 0, OnHold: 0, Dropped: 0,
+    });
+
     const handleSortChange = useCallback((status: WatchStatus, mode: SortMode) => {
         setSortModes((prev) => ({...prev, [status]: mode}));
+        setSectionPages((prev) => ({...prev, [status]: 0}));
         saveSectionSortMode(status, mode);
     }, []);
 
     const handleMediaFilterChange = useCallback((status: WatchStatus, filter: MediaFilter) => {
         setMediaFilters((prev) => ({...prev, [status]: filter}));
+        setSectionPages((prev) => ({...prev, [status]: 0}));
         saveSectionMediaFilter(status, filter);
     }, []);
 
@@ -302,7 +312,7 @@ const HomePage: React.FC = () => {
         const key = `${record.type}-${record.tmdb_id}-${isTv ? tvRecord?.season_number : ''}`;
 
         return (
-            <Grid key={key} size={{xs: 4, sm: 4, md: 3, lg: 2.4}}>
+            <Grid key={key} size={{xs: 4, sm: 3, lg: 2.4}}>
                 <Card
                     sx={{
                         height: '100%',
@@ -380,7 +390,17 @@ const HomePage: React.FC = () => {
     };
 
     // ─── Section header with sort and type filter ─────────────
-    const renderSectionHeader = (status: WatchStatus, count: number) => (
+    const renderSectionHeader = (status: WatchStatus, count: number) => {
+        const totalPages = Math.max(Math.ceil(count / FILMS_PER_PAGE), 1);
+        const currentPage = Math.min(sectionPages[status], totalPages - 1);
+        const pageButtonSx = {
+            color: 'text.secondary',
+            border: `1px solid ${alpha(primary, 0.15)}`,
+            borderRadius: 1.5,
+            p: 0.5,
+        };
+
+        return (
         <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', rowGap: 1, mb: 2}}>
             <Typography
                 variant="subtitle1"
@@ -388,6 +408,8 @@ const HomePage: React.FC = () => {
                 sx={{
                     display: 'flex',
                     alignItems: 'center',
+                    width: {xs: status === 'Do' ? 'auto' : '100%', sm: 'auto'},
+                    flexShrink: 0,
                     '&::before': {
                         content: '""',
                         width: 4,
@@ -410,8 +432,42 @@ const HomePage: React.FC = () => {
                 onFilterChange={(filter) => handleMediaFilterChange(status, filter)}
                 primary={primary}
             />
+            {status !== 'Do' && (
+                <Box component="nav" aria-label={`${STATUS_LABELS[status]}分页`} sx={{display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto', flexShrink: 0}}>
+                    <Tooltip title="上一页">
+                        <span>
+                            <IconButton
+                                size="small"
+                                aria-label={`${STATUS_LABELS[status]}上一页`}
+                                disabled={currentPage === 0}
+                                onClick={() => setSectionPages((prev) => ({...prev, [status]: currentPage - 1}))}
+                                sx={pageButtonSx}
+                            >
+                                <ChevronLeftIcon sx={{fontSize: 16}}/>
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                    <Typography variant="caption" aria-live="polite" sx={{color: 'text.secondary', minWidth: 32, textAlign: 'center', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums'}}>
+                        {currentPage + 1}/{totalPages}
+                    </Typography>
+                    <Tooltip title="下一页">
+                        <span>
+                            <IconButton
+                                size="small"
+                                aria-label={`${STATUS_LABELS[status]}下一页`}
+                                disabled={currentPage === totalPages - 1}
+                                onClick={() => setSectionPages((prev) => ({...prev, [status]: currentPage + 1}))}
+                                sx={pageButtonSx}
+                            >
+                                <ChevronRightIcon sx={{fontSize: 16}}/>
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Box>
+            )}
         </Box>
-    );
+        );
+    };
 
     return (
         <Box sx={{minHeight: '100vh'}}>
@@ -474,6 +530,9 @@ const HomePage: React.FC = () => {
                         {(['Wish', 'Collect', 'OnHold', 'Dropped'] as const).map((status) => {
                             if (itemsByStatus[status].length === 0) return null;
                             const items = visibleItemsByStatus[status];
+                            const totalPages = Math.max(Math.ceil(items.length / FILMS_PER_PAGE), 1);
+                            const currentPage = Math.min(sectionPages[status], totalPages - 1);
+                            const pageItems = items.slice(currentPage * FILMS_PER_PAGE, (currentPage + 1) * FILMS_PER_PAGE);
 
                             return (
                                 <Box key={status} sx={{mb: 5}}>
@@ -482,7 +541,7 @@ const HomePage: React.FC = () => {
                                         <Typography variant="body2" color="text.secondary">没有符合条件的影片</Typography>
                                     )}
                                     <Grid container spacing={{xs: 1, sm: 2}}>
-                                        {items.map(renderCompactCard)}
+                                        {pageItems.map(renderCompactCard)}
                                     </Grid>
                                 </Box>
                             );
