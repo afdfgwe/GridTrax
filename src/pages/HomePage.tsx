@@ -295,7 +295,9 @@ const HomePage: React.FC = () => {
         const titleText = isTv
             ? (tvRecord?.show_name || tvRecord?.name || `剧集 ID: ${record.tmdb_id}`)
             : (record.name || `电影 ID: ${record.tmdb_id}`);
-        const tagText = isTv ? (tvRecord?.name || `第 ${tvRecord?.season_number} 季`) : '电影';
+        const tagText = isTv
+            ? (tvRecord?.name && tvRecord.name !== titleText ? tvRecord.name : `第 ${tvRecord?.season_number} 季`)
+            : '电影';
         const year = years[`${record.type}-${record.tmdb_id}`];
         const key = `${record.type}-${record.tmdb_id}-${isTv ? tvRecord?.season_number : ''}`;
 
@@ -345,7 +347,7 @@ const HomePage: React.FC = () => {
                                 {titleText}
                             </Typography>
                             <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 0.75}, minWidth: 0, mt: 0.5}}>
-                                {isTv && titleText !== tagText ? (
+                                {isTv ? (
                                     <Typography
                                         component="span"
                                         noWrap
@@ -364,7 +366,7 @@ const HomePage: React.FC = () => {
                                         {tagText}
                                     </Typography>
                                 ) : (
-                                    <Typography component="span" variant="caption" color="text.secondary" noWrap title={tagText} sx={{minWidth: 0, fontSize: {xs: '0.65rem', sm: '0.75rem'}}}>
+                                    <Typography component="span" variant="caption" color="text.secondary" noWrap title={tagText} sx={{minWidth: 0, fontSize: '0.75rem'}}>
                                         {tagText}
                                     </Typography>
                                 )}
