@@ -13,7 +13,7 @@ const tmdbAxios = axios.create({
     baseURL: BASE_URL,
     headers: {
         'Content-Type': 'application/json;charset=utf-8',
-        ...(ENV_BEARER ? { Authorization: `Bearer ${ENV_BEARER}` } : {}),
+        ...(ENV_BEARER ? {Authorization: `Bearer ${ENV_BEARER}`} : {}),
     },
 });
 
@@ -26,7 +26,7 @@ export const getBackdropUrl = (path?: string, size = 'w1280') =>
 // Search multi (movies + TV)
 export async function searchMulti(query: string, page = 1): Promise<TMDBSearchResult[]> {
     const res = await tmdbAxios.get('/search/multi', {
-        params: { query, page, language: 'zh-CN', include_adult: false },
+        params: {query, page, language: 'zh-CN', include_adult: false},
     });
     return (res.data.results as TMDBSearchResult[]).filter(
         (r) => r.media_type === 'tv' || r.media_type === 'movie'
@@ -36,7 +36,7 @@ export async function searchMulti(query: string, page = 1): Promise<TMDBSearchRe
 // TV Detail
 export async function getTVShow(tvId: number): Promise<TMDBTVShow> {
     const res = await tmdbAxios.get(`/tv/${tvId}`, {
-        params: { language: 'zh-CN' },
+        params: {language: 'zh-CN'},
     });
     return res.data as TMDBTVShow;
 }
@@ -44,7 +44,7 @@ export async function getTVShow(tvId: number): Promise<TMDBTVShow> {
 // Season Detail (with episodes)
 export async function getTVSeason(tvId: number, seasonNumber: number): Promise<TMDBSeason> {
     const res = await tmdbAxios.get(`/tv/${tvId}/season/${seasonNumber}`, {
-        params: { language: 'zh-CN' },
+        params: {language: 'zh-CN'},
     });
     return res.data as TMDBSeason;
 }
@@ -52,7 +52,7 @@ export async function getTVSeason(tvId: number, seasonNumber: number): Promise<T
 // Movie Detail
 export async function getMovie(movieId: number): Promise<TMDBMovie> {
     const res = await tmdbAxios.get(`/movie/${movieId}`, {
-        params: { language: 'zh-CN' },
+        params: {language: 'zh-CN'},
     });
     return res.data as TMDBMovie;
 }

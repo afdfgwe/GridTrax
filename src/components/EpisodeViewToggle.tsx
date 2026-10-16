@@ -1,9 +1,9 @@
 import GridViewIcon from '@mui/icons-material/GridView';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import { IconButton, Tooltip } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import type { TMDBEpisode } from '../types';
-import { getEpisodeTitle } from './episodeTitle';
+import {IconButton, Tooltip} from '@mui/material';
+import {alpha, useTheme} from '@mui/material/styles';
+import type {TMDBEpisode} from '../types';
+import {getEpisodeTitle} from './episodeTitle';
 
 interface EpisodeViewToggleProps {
     episodes: TMDBEpisode[];
@@ -11,7 +11,7 @@ interface EpisodeViewToggleProps {
     onChange: () => void;
 }
 
-export default function EpisodeViewToggle({ episodes, showTitles, onChange }: EpisodeViewToggleProps) {
+export default function EpisodeViewToggle({episodes, showTitles, onChange}: EpisodeViewToggleProps) {
     const theme = useTheme();
     const primary = theme.palette.primary.main;
     if (!episodes.some((episode) => getEpisodeTitle(episode))) return null;
@@ -25,7 +25,7 @@ export default function EpisodeViewToggle({ episodes, showTitles, onChange }: Ep
                 onClick={onChange}
                 aria-label={label}
                 sx={{
-                    display: { xs: 'inline-flex', sm: 'none' },
+                    display: {xs: 'inline-flex', sm: 'none'},
                     flexShrink: 0,
                     border: `1px solid ${alpha(primary, showTitles ? 0.45 : 0.2)}`,
                     borderRadius: 1.5,
@@ -33,7 +33,7 @@ export default function EpisodeViewToggle({ episodes, showTitles, onChange }: Ep
                     backgroundColor: showTitles ? alpha(primary, 0.08) : 'transparent',
                 }}
             >
-                {showTitles ? <GridViewIcon fontSize="small" /> : <ViewListIcon fontSize="small" />}
+                {showTitles ? <GridViewIcon fontSize="small"/> : <ViewListIcon fontSize="small"/>}
             </IconButton>
         </Tooltip>
     );

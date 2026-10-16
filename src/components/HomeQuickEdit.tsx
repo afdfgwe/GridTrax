@@ -10,11 +10,11 @@ import {
     ToggleButtonGroup,
     Typography,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import {alpha, useTheme} from '@mui/material/styles';
 import React from 'react';
-import { useProgressStore } from '../store/useProgressStore';
-import { STATUS_LABELS, type WatchStatus } from '../types';
-import { StatusIcons } from './GlobalStatusPicker';
+import {useProgressStore} from '../store/useProgressStore';
+import {STATUS_LABELS, type WatchStatus} from '../types';
+import {StatusIcons} from './GlobalStatusPicker';
 
 interface HomeQuickEditProps {
     recordKey: string; // e.g. 'tv_season' or 'movie'
@@ -30,15 +30,14 @@ interface HomeQuickEditProps {
 }
 
 
-
 const STATUSES: WatchStatus[] = ['Wish', 'Do', 'Collect', 'OnHold', 'Dropped'];
 
 const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
-    type,
-    tmdbId,
-    seasonNumber,
-    meta,
-}) => {
+                                                         type,
+                                                         tmdbId,
+                                                         seasonNumber,
+                                                         meta,
+                                                     }) => {
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
 
@@ -65,7 +64,7 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
         if (type === 'tv_season' && seasonNumber !== undefined) {
             setSeasonStatus(tmdbId, seasonNumber, status, meta);
         } else if (type === 'movie') {
-            setMovieStatus(tmdbId, status, { name: meta?.name, poster_path: meta?.poster_path });
+            setMovieStatus(tmdbId, status, {name: meta?.name, poster_path: meta?.poster_path});
         }
     };
 
@@ -84,13 +83,16 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
         <>
             <IconButton
                 size="small"
-                onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setOpen(true);
+                }}
                 sx={{
                     color: 'text.secondary',
-                    '&:hover': { color: primary, backgroundColor: alpha(primary, 0.1) },
+                    '&:hover': {color: primary, backgroundColor: alpha(primary, 0.1)},
                 }}
             >
-                <EditIcon fontSize="small" />
+                <EditIcon fontSize="small"/>
             </IconButton>
 
             <Dialog
@@ -105,8 +107,9 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
                     },
                 }}
             >
-                <DialogTitle sx={{ pb: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <DialogTitle
+                    sx={{pb: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1}}>
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap'}}>
                         <Typography fontWeight={700} variant="subtitle1">{titleText}</Typography>
                         {tagText && tagText !== titleText && (
                             <Typography
@@ -132,16 +135,16 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
                             color: 'text.secondary',
                             mt: -0.5,
                             mr: -1,
-                            '&:hover': { color: 'error.main', backgroundColor: alpha(theme.palette.error.main, 0.1) },
+                            '&:hover': {color: 'error.main', backgroundColor: alpha(theme.palette.error.main, 0.1)},
                         }}
                         title="从追踪列表中删除"
                     >
-                        <DeleteIcon fontSize="small" />
+                        <DeleteIcon fontSize="small"/>
                     </IconButton>
                 </DialogTitle>
 
                 <DialogContent>
-                    <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{mb: 1, display: 'block'}}>
                         观看状态
                     </Typography>
                     <ToggleButtonGroup
@@ -174,9 +177,9 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
                                     '&.Mui-selected': {
                                         background: primary,
                                         color: theme.palette.getContrastText(primary),
-                                        '&:hover': { background: alpha(primary, 0.85) },
+                                        '&:hover': {background: alpha(primary, 0.85)},
                                     },
-                                    '&:hover': { background: alpha(primary, 0.2) },
+                                    '&:hover': {background: alpha(primary, 0.2)},
                                 }}
                             >
                                 {StatusIcons[s]} {STATUS_LABELS[s]}

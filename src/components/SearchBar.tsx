@@ -1,9 +1,9 @@
 import SearchIcon from '@mui/icons-material/Search';
-import { IconButton, InputBase, Paper } from '@mui/material';
-import React, { useCallback, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {IconButton, InputBase, Paper} from '@mui/material';
+import React, {useCallback, useRef, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 
-const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({ onExpandChange }) => {
+const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({onExpandChange}) => {
     const navigate = useNavigate();
     const [expanded, setExpanded] = useState(false);
     const [query, setQuery] = useState('');
@@ -43,7 +43,7 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
                 p: '2px 4px',
                 display: 'flex',
                 alignItems: 'center',
-                width: expanded ? { xs: '100%', sm: 300, md: 400 } : 48,
+                width: expanded ? {xs: '100%', sm: 300, md: 400} : 48,
                 minWidth: 0,
                 transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s',
                 backgroundColor: expanded ? 'background.paper' : 'transparent',
@@ -55,11 +55,11 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
         >
             <IconButton
                 type={expanded ? "submit" : "button"}
-                sx={{ p: '10px', color: expanded ? 'primary.main' : 'text.secondary' }}
+                sx={{p: '10px', color: expanded ? 'primary.main' : 'text.secondary'}}
                 aria-label="search"
                 onClick={expanded ? handleSearch : handleExpand}
             >
-                <SearchIcon />
+                <SearchIcon/>
             </IconButton>
             <InputBase
                 inputRef={inputRef}

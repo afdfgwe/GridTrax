@@ -1,4 +1,4 @@
-import type { BackupPayload, EpisodeRecord, ProgressData, ProgressRecord, WatchStatus } from '../types/index.ts';
+import type {BackupPayload, EpisodeRecord, ProgressData, ProgressRecord, WatchStatus} from '../types/index.ts';
 
 function object(value: unknown): Record<string, unknown> {
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid object');
@@ -35,14 +35,14 @@ function cleanProgress(value: unknown): ProgressData {
             tmdb_id: id,
             rating,
             global_comment: text(record.global_comment),
-            ...(status === undefined ? {} : { global_status: status as WatchStatus }),
-            ...(record.name === undefined ? {} : { name: text(record.name) }),
-            ...(record.poster_path == null ? {} : { poster_path: text(record.poster_path) }),
-            ...(record.last_interacted === undefined ? {} : { last_interacted: number(record.last_interacted) }),
+            ...(status === undefined ? {} : {global_status: status as WatchStatus}),
+            ...(record.name === undefined ? {} : {name: text(record.name)}),
+            ...(record.poster_path == null ? {} : {poster_path: text(record.poster_path)}),
+            ...(record.last_interacted === undefined ? {} : {last_interacted: number(record.last_interacted)}),
         };
         if (record.type === 'movie') {
             if (key !== `tmdb_movie_${id}`) throw new Error('Invalid movie key');
-            records[key] = { ...common, type: 'movie' };
+            records[key] = {...common, type: 'movie'};
         } else if (record.type === 'tv_season') {
             const season = number(record.season_number, true);
             if (key !== `tmdb_tv_${id}_s${season}`) throw new Error('Invalid season key');
@@ -52,21 +52,21 @@ function cleanProgress(value: unknown): ProgressData {
                 if (!/^\d+$/.test(episodeKey) || !Number.isSafeInteger(Number(episodeKey)) || typeof episode.watched !== 'boolean') {
                     throw new Error('Invalid episode');
                 }
-                episodes[episodeKey] = { watched: episode.watched, comment: text(episode.comment) };
+                episodes[episodeKey] = {watched: episode.watched, comment: text(episode.comment)};
             }
             records[key] = {
                 ...common,
                 type: 'tv_season',
                 season_number: season,
                 episodes,
-                ...(record.show_name === undefined ? {} : { show_name: text(record.show_name) }),
-                ...(record.episode_count === undefined ? {} : { episode_count: number(record.episode_count, true) }),
+                ...(record.show_name === undefined ? {} : {show_name: text(record.show_name)}),
+                ...(record.episode_count === undefined ? {} : {episode_count: number(record.episode_count, true)}),
             };
         } else {
             throw new Error('Invalid record type');
         }
     }
-    return { user_id: text(data.user_id), last_sync: number(data.last_sync), records };
+    return {user_id: text(data.user_id), last_sync: number(data.last_sync), records};
 }
 
 export function parseBackup(json: string): ProgressData {
@@ -81,7 +81,7 @@ export function parseBackup(json: string): ProgressData {
 
 export function createBackup(data: ProgressData): BackupPayload {
     return {
-        metadata: { version: 4, exported_at: new Date().toISOString() },
+        metadata: {version: 4, exported_at: new Date().toISOString()},
         progressData: cleanProgress(data),
     };
 }

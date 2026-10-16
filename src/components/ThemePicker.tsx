@@ -1,13 +1,13 @@
 import CheckIcon from '@mui/icons-material/Check';
 import PaletteIcon from '@mui/icons-material/Palette';
-import { Box, IconButton, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
-import React, { useState } from 'react';
-import { useThemeStore } from '../store/useThemeStore';
-import { PREDEFINED_THEMES } from '../theme/themes';
+import {Box, IconButton, Menu, MenuItem, Tooltip, Typography} from '@mui/material';
+import React, {useState} from 'react';
+import {useThemeStore} from '../store/useThemeStore';
+import {PREDEFINED_THEMES} from '../theme/themes';
 
 const ThemePicker: React.FC = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const { themeId, setThemeId } = useThemeStore();
+    const {themeId, setThemeId} = useThemeStore();
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
@@ -20,8 +20,9 @@ const ThemePicker: React.FC = () => {
     return (
         <Box>
             <Tooltip title="切换主题" arrow>
-                <IconButton aria-label="切换主题" aria-haspopup="menu" aria-expanded={Boolean(anchorEl)} onClick={handleClick} sx={{ color: 'text.secondary' }}>
-                    <PaletteIcon />
+                <IconButton aria-label="切换主题" aria-haspopup="menu" aria-expanded={Boolean(anchorEl)}
+                            onClick={handleClick} sx={{color: 'text.secondary'}}>
+                    <PaletteIcon/>
                 </IconButton>
             </Tooltip>
             <Menu
@@ -29,10 +30,10 @@ const ThemePicker: React.FC = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
                 PaperProps={{
-                    sx: { minWidth: 200, borderRadius: 2, mt: 1 },
+                    sx: {minWidth: 200, borderRadius: 2, mt: 1},
                 }}
             >
-                <Box sx={{ px: 2, py: 1.5, pb: 1 }}>
+                <Box sx={{px: 2, py: 1.5, pb: 1}}>
                     <Typography variant="body2" color="text.secondary" fontWeight={700}>
                         选择主题
                     </Typography>
@@ -52,7 +53,7 @@ const ThemePicker: React.FC = () => {
                             px: 2,
                         }}
                     >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5}}>
                             <Box
                                 sx={{
                                     width: 16,
@@ -67,7 +68,7 @@ const ThemePicker: React.FC = () => {
                                 {t.name}
                             </Typography>
                         </Box>
-                        {t.id === themeId && <CheckIcon fontSize="small" sx={{ color: t.primary.main }} />}
+                        {t.id === themeId && <CheckIcon fontSize="small" sx={{color: t.primary.main}}/>}
                     </MenuItem>
                 ))}
             </Menu>

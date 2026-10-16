@@ -1,5 +1,5 @@
-import { createTheme, type PaletteMode, type Theme } from '@mui/material/styles';
-import { type BaseThemeConfig } from './themes';
+import {createTheme, type PaletteMode, type Theme} from '@mui/material/styles';
+import {type BaseThemeConfig} from './themes';
 
 // Base Material You theme configuration
 export const createAppTheme = (config: BaseThemeConfig, mode?: PaletteMode): Theme => {
@@ -11,14 +11,14 @@ export const createAppTheme = (config: BaseThemeConfig, mode?: PaletteMode): The
             primary: config.primary,
             secondary: config.secondary,
             background: config.background,
-            surface: { main: config.background.default }, // Fallback standard surface
+            surface: {main: config.background.default}, // Fallback standard surface
             text: config.text,
         },
         typography: {
             fontFamily: '"Inter", "Noto Sans SC", "Roboto", sans-serif',
-            h4: { fontWeight: 700 },
-            h5: { fontWeight: 600 },
-            h6: { fontWeight: 600 },
+            h4: {fontWeight: 700},
+            h5: {fontWeight: 600},
+            h6: {fontWeight: 600},
         },
         shape: {
             borderRadius: 6,
@@ -74,6 +74,7 @@ declare module '@mui/material/styles' {
     interface Palette {
         surface: Palette['primary'];
     }
+
     interface PaletteOptions {
         surface?: PaletteOptions['primary'];
     }
@@ -81,5 +82,6 @@ declare module '@mui/material/styles' {
 
 // We don't export a single defaultTheme anymore since it's dependent on the store,
 // but we can export a dummy default if needed for tests.
-import { PREDEFINED_THEMES } from './themes';
+import {PREDEFINED_THEMES} from './themes';
+
 export const defaultTheme = createAppTheme(PREDEFINED_THEMES[0], 'dark');

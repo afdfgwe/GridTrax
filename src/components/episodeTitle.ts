@@ -1,4 +1,4 @@
-import type { TMDBEpisode } from '../types';
+import type {TMDBEpisode} from '../types';
 
 export function getEpisodeTitle(episode: Pick<TMDBEpisode, 'name'>): string {
     const title = episode.name?.trim() ?? '';

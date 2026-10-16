@@ -6,10 +6,10 @@ import {
     Typography,
     useMediaQuery,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import React, { useCallback, useState } from 'react';
-import { useProgressStore } from '../store/useProgressStore';
-import type { TMDBEpisode } from '../types';
+import {alpha, useTheme} from '@mui/material/styles';
+import React, {useCallback, useState} from 'react';
+import {useProgressStore} from '../store/useProgressStore';
+import type {TMDBEpisode} from '../types';
 import EpisodeCell from './EpisodeCell';
 
 interface EpisodeGridProps {
@@ -21,7 +21,14 @@ interface EpisodeGridProps {
     showTitles?: boolean;
 }
 
-const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes, metaPayload, hideProgress = false, showTitles = false }) => {
+const EpisodeGrid: React.FC<EpisodeGridProps> = ({
+                                                     tvId,
+                                                     seasonNumber,
+                                                     episodes,
+                                                     metaPayload,
+                                                     hideProgress = false,
+                                                     showTitles = false
+                                                 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const titleView = isMobile && showTitles;
@@ -62,7 +69,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
         <Box>
             {/* Progress bar */}
             {!hideProgress && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5}}>
                     <LinearProgress
                         variant="determinate"
                         value={progress}
@@ -77,7 +84,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
                             },
                         }}
                     />
-                    <Typography variant="caption" sx={{ color: 'text.secondary', minWidth: 60, textAlign: 'right' }}>
+                    <Typography variant="caption" sx={{color: 'text.secondary', minWidth: 60, textAlign: 'right'}}>
                         {watchedCount} / {episodes.length}
                     </Typography>
                 </Box>
@@ -113,13 +120,13 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
                 open={!!snackbar}
                 autoHideDuration={2500}
                 onClose={() => setSnackbar(null)}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
             >
                 <Alert
                     onClose={() => setSnackbar(null)}
                     severity="success"
                     variant="filled"
-                    sx={{ borderRadius: 2 }}
+                    sx={{borderRadius: 2}}
                 >
                     {snackbar}
                 </Alert>

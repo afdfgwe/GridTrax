@@ -1,9 +1,9 @@
 import CheckIcon from '@mui/icons-material/Check';
-import { Box, ListSubheader, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import React, { useCallback, useRef, useState } from 'react';
-import type { TMDBEpisode } from '../types';
-import { getEpisodeTitle } from './episodeTitle';
+import {Box, ListSubheader, Menu, MenuItem, Tooltip, Typography} from '@mui/material';
+import {alpha, useTheme} from '@mui/material/styles';
+import React, {useCallback, useRef, useState} from 'react';
+import type {TMDBEpisode} from '../types';
+import {getEpisodeTitle} from './episodeTitle';
 
 interface EpisodeCellProps {
     episode: TMDBEpisode;
@@ -16,12 +16,12 @@ interface EpisodeCellProps {
 const LONG_PRESS_DURATION = 500;
 
 const EpisodeCell: React.FC<EpisodeCellProps> = ({
-    episode,
-    watched,
-    showTitle = false,
-    onSingleClick,
-    onWatchUpTo,
-}) => {
+                                                     episode,
+                                                     watched,
+                                                     showTitle = false,
+                                                     onSingleClick,
+                                                     onWatchUpTo,
+                                                 }) => {
     const theme = useTheme();
     const [pressed, setPressed] = useState(false);
     const [ripple, setRipple] = useState(false);
@@ -92,7 +92,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
             if (isMenuOpen) return;
 
             const touch = e.touches[0];
-            touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+            touchStartPos.current = {x: touch.clientX, y: touch.clientY};
 
             const target = e.currentTarget as HTMLElement;
             didLongPress.current = false;
@@ -183,11 +183,11 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                             第 {episode.episode_number} 集
                         </Typography>
                         {episodeTitle && (
-                            <Typography variant="caption" display="block" sx={{ opacity: 0.8 }}>
+                            <Typography variant="caption" display="block" sx={{opacity: 0.8}}>
                                 {episodeTitle}
                             </Typography>
                         )}
-                        <Typography variant="caption" display="block" sx={{ opacity: 0.6, mt: 0.3 }}>
+                        <Typography variant="caption" display="block" sx={{opacity: 0.6, mt: 0.3}}>
                             长按/右键打开菜单
                         </Typography>
                     </Box>
@@ -198,125 +198,142 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                 disableFocusListener
                 disableTouchListener
             >
-            <Box
-                component="button"
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={() => {
-                    if (longPressTimer.current) {
-                        clearTimeout(longPressTimer.current);
-                        longPressTimer.current = null;
-                    }
-                    setPressed(false);
-                }}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onTouchMove={handleTouchMove}
-                onTouchCancel={() => {
-                    if (longPressTimer.current) {
-                        clearTimeout(longPressTimer.current);
-                        longPressTimer.current = null;
-                    }
-                    touchStartPos.current = null;
-                    didLongPress.current = true;
-                    setPressed(false);
-                }}
-                onContextMenu={handleContextMenu}
-                sx={{
-                    position: 'relative',
-                    width: showTitle ? '100%' : { xs: 44, sm: 36 },
-                    height: showTitle ? 88 : { xs: 44, sm: 36 },
-                    minWidth: showTitle ? 0 : { xs: 44, sm: 36 },
-                    boxSizing: 'border-box',
-                    p: showTitle ? 1.25 : 0,
-                    border: 'none',
-                    outline: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    overflow: 'hidden',
-                    transition: 'transform 120ms ease, background-color 180ms ease, box-shadow 180ms ease',
-                    background: watched
-                        ? primary
-                        : alpha(primary, 0.12),
-                    boxShadow: watched
-                        ? `0 0 0 2px ${alpha(primary, 0.5)}`
-                        : `inset 0 0 0 2px ${alpha(primary, 0.3)}`,
-                    transform: pressed ? 'scale(0.82)' : ripple ? 'scale(0.92)' : 'scale(1)',
-                    '&:hover': {
-                        background: watched ? alpha(primary, 0.85) : alpha(primary, 0.22),
-                        boxShadow: `0 0 0 2px ${alpha(primary, 0.7)}`,
-                    },
-                    display: 'flex',
-                    flexDirection: showTitle ? 'column' : 'row',
-                    alignItems: showTitle ? 'stretch' : 'center',
-                    justifyContent: showTitle ? 'flex-start' : 'center',
-                    gap: showTitle ? 0.5 : 0,
-                    textAlign: showTitle ? 'left' : 'center',
-                    '&:focus-visible': { outline: `2px solid ${primary}`, outlineOffset: 2 },
-                    // Ripple overlay
-                    '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: '4px',
-                        background: alpha('#fff', ripple ? 0.25 : 0),
-                        transition: 'background 350ms ease',
-                    },
-                    // Touch target ensure >= 44dp on mobile
-                    '@media (pointer: coarse)': {
-                        width: showTitle ? '100%' : 44,
-                        height: showTitle ? 88 : 44,
-                        minWidth: showTitle ? 0 : 44,
-                    },
-                    // Allow pan-y scrolling but prevent default tap delay;
-                    // touchAction: 'none' would block scroll — use manipulation instead
-                    touchAction: 'manipulation',
-                    WebkitTapHighlightColor: 'transparent',
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                }}
-                aria-label={`第 ${episode.episode_number} 集${showTitle && episodeTitle ? ` ${episodeTitle}` : ''}${watched ? '（已看）' : ''}`}
-                aria-pressed={watched}
-                aria-controls={isMenuOpen ? 'episode-context-menu' : undefined}
-                aria-haspopup="true"
-                aria-expanded={isMenuOpen ? 'true' : undefined}
-            >
-                {showTitle ? (
-                    <>
-                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5, pointerEvents: 'none' }}>
-                            <Typography component="span" sx={{ fontSize: '0.75rem', lineHeight: '18px', fontWeight: 600, color: watched ? primaryContrast : 'text.secondary' }}>
-                                第 {episode.episode_number} 集
-                            </Typography>
-                            <CheckIcon sx={{ width: 16, height: 16, flexShrink: 0, visibility: watched ? 'visible' : 'hidden', color: primaryContrast }} />
-                        </Box>
-                        {episodeTitle && (
-                            <Typography
-                                component="span"
-                                sx={{
-                                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                                    overflow: 'hidden', overflowWrap: 'anywhere', minWidth: 0,
-                                    fontSize: '0.8125rem', lineHeight: '20px', fontWeight: 600,
-                                    color: watched ? primaryContrast : 'text.primary', pointerEvents: 'none',
-                                }}
-                            >
-                                {episodeTitle}
-                            </Typography>
-                        )}
-                    </>
-                ) : <Typography
-                    variant="caption"
-                    sx={{
-                        color: watched ? primaryContrast : alpha(primary, 0.9),
-                        fontWeight: 700,
-                        fontSize: '10px',
-                        lineHeight: 1,
-                        userSelect: 'none',
-                        pointerEvents: 'none',
+                <Box
+                    component="button"
+                    onMouseDown={handleMouseDown}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={() => {
+                        if (longPressTimer.current) {
+                            clearTimeout(longPressTimer.current);
+                            longPressTimer.current = null;
+                        }
+                        setPressed(false);
                     }}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchMove={handleTouchMove}
+                    onTouchCancel={() => {
+                        if (longPressTimer.current) {
+                            clearTimeout(longPressTimer.current);
+                            longPressTimer.current = null;
+                        }
+                        touchStartPos.current = null;
+                        didLongPress.current = true;
+                        setPressed(false);
+                    }}
+                    onContextMenu={handleContextMenu}
+                    sx={{
+                        position: 'relative',
+                        width: showTitle ? '100%' : {xs: 44, sm: 36},
+                        height: showTitle ? 88 : {xs: 44, sm: 36},
+                        minWidth: showTitle ? 0 : {xs: 44, sm: 36},
+                        boxSizing: 'border-box',
+                        p: showTitle ? 1.25 : 0,
+                        border: 'none',
+                        outline: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        transition: 'transform 120ms ease, background-color 180ms ease, box-shadow 180ms ease',
+                        background: watched
+                            ? primary
+                            : alpha(primary, 0.12),
+                        boxShadow: watched
+                            ? `0 0 0 2px ${alpha(primary, 0.5)}`
+                            : `inset 0 0 0 2px ${alpha(primary, 0.3)}`,
+                        transform: pressed ? 'scale(0.82)' : ripple ? 'scale(0.92)' : 'scale(1)',
+                        '&:hover': {
+                            background: watched ? alpha(primary, 0.85) : alpha(primary, 0.22),
+                            boxShadow: `0 0 0 2px ${alpha(primary, 0.7)}`,
+                        },
+                        display: 'flex',
+                        flexDirection: showTitle ? 'column' : 'row',
+                        alignItems: showTitle ? 'stretch' : 'center',
+                        justifyContent: showTitle ? 'flex-start' : 'center',
+                        gap: showTitle ? 0.5 : 0,
+                        textAlign: showTitle ? 'left' : 'center',
+                        '&:focus-visible': {outline: `2px solid ${primary}`, outlineOffset: 2},
+                        // Ripple overlay
+                        '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: '4px',
+                            background: alpha('#fff', ripple ? 0.25 : 0),
+                            transition: 'background 350ms ease',
+                        },
+                        // Touch target ensure >= 44dp on mobile
+                        '@media (pointer: coarse)': {
+                            width: showTitle ? '100%' : 44,
+                            height: showTitle ? 88 : 44,
+                            minWidth: showTitle ? 0 : 44,
+                        },
+                        // Allow pan-y scrolling but prevent default tap delay;
+                        // touchAction: 'none' would block scroll — use manipulation instead
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'transparent',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                    }}
+                    aria-label={`第 ${episode.episode_number} 集${showTitle && episodeTitle ? ` ${episodeTitle}` : ''}${watched ? '（已看）' : ''}`}
+                    aria-pressed={watched}
+                    aria-controls={isMenuOpen ? 'episode-context-menu' : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={isMenuOpen ? 'true' : undefined}
                 >
-                    {episode.episode_number}
-                </Typography>}
-            </Box>
+                    {showTitle ? (
+                        <>
+                            <Box component="span" sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: 0.5,
+                                pointerEvents: 'none'
+                            }}>
+                                <Typography component="span" sx={{
+                                    fontSize: '0.75rem',
+                                    lineHeight: '18px',
+                                    fontWeight: 600,
+                                    color: watched ? primaryContrast : 'text.secondary'
+                                }}>
+                                    第 {episode.episode_number} 集
+                                </Typography>
+                                <CheckIcon sx={{
+                                    width: 16,
+                                    height: 16,
+                                    flexShrink: 0,
+                                    visibility: watched ? 'visible' : 'hidden',
+                                    color: primaryContrast
+                                }}/>
+                            </Box>
+                            {episodeTitle && (
+                                <Typography
+                                    component="span"
+                                    sx={{
+                                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden', overflowWrap: 'anywhere', minWidth: 0,
+                                        fontSize: '0.8125rem', lineHeight: '20px', fontWeight: 600,
+                                        color: watched ? primaryContrast : 'text.primary', pointerEvents: 'none',
+                                    }}
+                                >
+                                    {episodeTitle}
+                                </Typography>
+                            )}
+                        </>
+                    ) : <Typography
+                        variant="caption"
+                        sx={{
+                            color: watched ? primaryContrast : alpha(primary, 0.9),
+                            fontWeight: 700,
+                            fontSize: '10px',
+                            lineHeight: 1,
+                            userSelect: 'none',
+                            pointerEvents: 'none',
+                        }}
+                    >
+                        {episode.episode_number}
+                    </Typography>}
+                </Box>
             </Tooltip>
 
             <Menu
@@ -336,12 +353,18 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                     horizontal: 'center',
                 }}
                 PaperProps={{
-                    sx: { borderRadius: 2, mt: 0.5, minWidth: 140, maxWidth: 'min(320px, calc(100vw - 32px))' }
+                    sx: {borderRadius: 2, mt: 0.5, minWidth: 140, maxWidth: 'min(320px, calc(100vw - 32px))'}
                 }}
             >
-                <ListSubheader disableSticky sx={{ lineHeight: 1.5, py: 1, whiteSpace: 'normal', overflowWrap: 'anywhere', color: 'text.primary' }}>
+                <ListSubheader disableSticky sx={{
+                    lineHeight: 1.5,
+                    py: 1,
+                    whiteSpace: 'normal',
+                    overflowWrap: 'anywhere',
+                    color: 'text.primary'
+                }}>
                     第 {episode.episode_number} 集
-                    {episodeTitle && <Typography variant="body2" sx={{ mt: 0.5 }}>{episodeTitle}</Typography>}
+                    {episodeTitle && <Typography variant="body2" sx={{mt: 0.5}}>{episodeTitle}</Typography>}
                 </ListSubheader>
                 <MenuItem onClick={(e) => {
                     handleMenuClose(e);

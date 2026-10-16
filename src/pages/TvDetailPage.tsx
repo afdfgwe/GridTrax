@@ -10,16 +10,16 @@ import {
     Skeleton,
     Typography,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { getBackdropUrl, getPosterUrl, getTVShow } from '../api/tmdb';
+import {alpha, useTheme} from '@mui/material/styles';
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {getBackdropUrl, getPosterUrl, getTVShow} from '../api/tmdb';
 import SeasonBlock from '../components/SeasonBlock';
-import { useProgressStore } from '../store/useProgressStore';
-import type { TMDBTVShow } from '../types';
+import {useProgressStore} from '../store/useProgressStore';
+import type {TMDBTVShow} from '../types';
 
 const TvDetailPage: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
+    const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [show, setShow] = useState<TMDBTVShow | null>(null);
     const [loading, setLoading] = useState(true);
@@ -45,7 +45,7 @@ const TvDetailPage: React.FC = () => {
             .finally(() => {
                 if (isMounted) setLoading(false);
             });
-            
+
         return () => {
             isMounted = false;
         };
@@ -61,12 +61,12 @@ const TvDetailPage: React.FC = () => {
 
     return (
         <React.Fragment>
-            <Box sx={{ minHeight: '100vh', backgroundColor: theme.palette.background.default }}>
+            <Box sx={{minHeight: '100vh', backgroundColor: theme.palette.background.default}}>
                 {/* Backdrop Hero */}
                 <Box
                     sx={{
                         position: 'relative',
-                        height: { xs: 220, sm: 300, md: 380 },
+                        height: {xs: 220, sm: 300, md: 380},
                         overflow: 'hidden',
                         mb: -6,
                     }}
@@ -103,37 +103,44 @@ const TvDetailPage: React.FC = () => {
                             left: 16,
                             backgroundColor: alpha('#000', 0.5),
                             color: '#fff',
-                            '&:hover': { backgroundColor: alpha('#000', 0.7) },
+                            '&:hover': {backgroundColor: alpha('#000', 0.7)},
                         }}
                     >
-                        <ArrowBackIcon />
+                        <ArrowBackIcon/>
                     </IconButton>
                 </Box>
 
-                <Container maxWidth="lg" sx={{ pt: 6, pb: 8, position: 'relative' }}>
-                    {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+                <Container maxWidth="lg" sx={{pt: 6, pb: 8, position: 'relative'}}>
+                    {error && <Alert severity="error" sx={{mb: 3}}>{error}</Alert>}
 
                     {loading ? (
-                        <Box sx={{ display: 'flex', gap: 3 }}>
-                            <Skeleton variant="rounded" width={140} height={210} sx={{ borderRadius: 1.5, flexShrink: 0 }} />
-                            <Box sx={{ flex: 1 }}>
-                                <Skeleton variant="text" width="60%" height={40} />
-                                <Skeleton variant="text" width="30%" height={24} sx={{ mb: 1 }} />
-                                <Skeleton variant="rounded" height={80} />
+                        <Box sx={{display: 'flex', gap: 3}}>
+                            <Skeleton variant="rounded" width={140} height={210}
+                                      sx={{borderRadius: 1.5, flexShrink: 0}}/>
+                            <Box sx={{flex: 1}}>
+                                <Skeleton variant="text" width="60%" height={40}/>
+                                <Skeleton variant="text" width="30%" height={24} sx={{mb: 1}}/>
+                                <Skeleton variant="rounded" height={80}/>
                             </Box>
                         </Box>
                     ) : show ? (
                         <>
                             {/* Show Header */}
-                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 3 }, mb: 4, alignItems: { xs: 'center', sm: 'flex-start' } }}>
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: {xs: 'column', sm: 'row'},
+                                gap: {xs: 2, sm: 3},
+                                mb: 4,
+                                alignItems: {xs: 'center', sm: 'flex-start'}
+                            }}>
                                 {/* Poster */}
                                 <Box
                                     component="img"
                                     src={getPosterUrl(show.poster_path, 'w342')}
                                     alt={show.name}
                                     sx={{
-                                        width: { xs: 160, sm: 140 },
-                                        maxWidth: { xs: '55vw', sm: 'none' },
+                                        width: {xs: 160, sm: 140},
+                                        maxWidth: {xs: '55vw', sm: 'none'},
                                         aspectRatio: '2/3',
                                         objectFit: 'cover',
                                         borderRadius: 2,
@@ -145,8 +152,8 @@ const TvDetailPage: React.FC = () => {
                                     }}
                                 />
                                 {/* Info */}
-                                <Box sx={{ flex: 1, pt: { xs: 0, sm: 1 } }}>
-                                    <Typography variant="h4" fontWeight={800} gutterBottom sx={{ lineHeight: 1.2 }}>
+                                <Box sx={{flex: 1, pt: {xs: 0, sm: 1}}}>
+                                    <Typography variant="h4" fontWeight={800} gutterBottom sx={{lineHeight: 1.2}}>
                                         {show.name}
                                     </Typography>
                                     {show.original_name !== show.name && (
@@ -154,22 +161,27 @@ const TvDetailPage: React.FC = () => {
                                             {show.original_name}
                                         </Typography>
                                     )}
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                                    <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5}}>
                                         <Chip
-                                            icon={<StarIcon sx={{ fontSize: '14px !important', color: '#FFD54F !important' }} />}
+                                            icon={<StarIcon
+                                                sx={{fontSize: '14px !important', color: '#FFD54F !important'}}/>}
                                             label={show.vote_average.toFixed(1)}
                                             size="small"
-                                            sx={{ backgroundColor: alpha('#FFD54F', 0.15), color: '#FFD54F', fontWeight: 700 }}
+                                            sx={{
+                                                backgroundColor: alpha('#FFD54F', 0.15),
+                                                color: '#FFD54F',
+                                                fontWeight: 700
+                                            }}
                                         />
                                         <Chip
                                             label={show.first_air_date?.slice(0, 4)}
                                             size="small"
-                                            sx={{ backgroundColor: alpha(primary, 0.15), color: primary }}
+                                            sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
                                         />
                                         <Chip
                                             label={`${show.number_of_seasons} 季 · ${show.number_of_episodes} 集`}
                                             size="small"
-                                            sx={{ backgroundColor: alpha(primary, 0.15), color: primary }}
+                                            sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
                                         />
                                         {show.genres.slice(0, 3).map((g) => (
                                             <Chip
@@ -177,11 +189,11 @@ const TvDetailPage: React.FC = () => {
                                                 label={g.name}
                                                 size="small"
                                                 variant="outlined"
-                                                sx={{ borderColor: alpha(primary, 0.4), color: 'text.secondary' }}
+                                                sx={{borderColor: alpha(primary, 0.4), color: 'text.secondary'}}
                                             />
                                         ))}
                                     </Box>
-                                    <Box sx={{ position: 'relative' }}>
+                                    <Box sx={{position: 'relative'}}>
                                         <Typography
                                             variant="body2"
                                             color="text.secondary"
@@ -199,7 +211,13 @@ const TvDetailPage: React.FC = () => {
                                             <Button
                                                 size="small"
                                                 onClick={() => setExpandedOverview(!expandedOverview)}
-                                                sx={{ p: 0, minWidth: 'auto', fontSize: '0.75rem', mt: 0.5, textTransform: 'none' }}
+                                                sx={{
+                                                    p: 0,
+                                                    minWidth: 'auto',
+                                                    fontSize: '0.75rem',
+                                                    mt: 0.5,
+                                                    textTransform: 'none'
+                                                }}
                                             >
                                                 {expandedOverview ? '收起' : '展开阅读'}
                                             </Button>
@@ -209,7 +227,7 @@ const TvDetailPage: React.FC = () => {
                             </Box>
 
                             {/* Season Blocks */}
-                            <Typography variant="h6" fontWeight={700} sx={{ mb: 2, color: primary }}>
+                            <Typography variant="h6" fontWeight={700} sx={{mb: 2, color: primary}}>
                                 全部季数
                             </Typography>
                             {regularSeasons.map((season, idx) => (

@@ -1,18 +1,38 @@
 import SortIcon from '@mui/icons-material/Sort';
-import { Box, Card, CardActionArea, CardContent, CardMedia, Container, Grid, IconButton, Menu, MenuItem, Typography } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import React, { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getPosterUrl } from '../api/tmdb';
+import {
+    Box,
+    Card,
+    CardActionArea,
+    CardContent,
+    CardMedia,
+    Container,
+    Grid,
+    IconButton,
+    Menu,
+    MenuItem,
+    Typography
+} from '@mui/material';
+import {alpha, useTheme} from '@mui/material/styles';
+import React, {useCallback, useMemo, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {getPosterUrl} from '../api/tmdb';
 import HomeActiveCard from '../components/HomeActiveCard';
 import HomeMovieActiveCard from '../components/HomeMovieActiveCard';
-import { useBackfillPosters } from '../hooks/useBackfillPosters';
-import { useProgressStore } from '../store/useProgressStore';
-import { STATUS_LABELS, type MovieRecord, type ProgressRecord, type SeasonRecord, type SortMode, type WatchStatus } from '../types';
+import PosterScoreBadge from '../components/PosterScoreBadge';
+import {useHomeMediaDetails} from '../hooks/useHomeMediaDetails';
+import {useProgressStore} from '../store/useProgressStore';
+import {
+    STATUS_LABELS,
+    type MovieRecord,
+    type ProgressRecord,
+    type SeasonRecord,
+    type SortMode,
+    type WatchStatus
+} from '../types';
 
 // ─── Sorting helpers ─────────────────────────────────────────
 
-const zhCollator = new Intl.Collator('zh-Hans-CN', { sensitivity: 'base', numeric: true });
+const zhCollator = new Intl.Collator('zh-Hans-CN', {sensitivity: 'base', numeric: true});
 
 const SORT_LABELS: Record<SortMode, string> = {
     recent: '最近互动',
@@ -48,12 +68,16 @@ const getSectionSortMode = (status: WatchStatus): SortMode => {
     try {
         const stored = localStorage.getItem(STORAGE_PREFIX + status);
         if (stored === 'recent' || stored === 'name') return stored;
-    } catch { /* noop */ }
+    } catch { /* noop */
+    }
     return 'recent';
 };
 
 const saveSectionSortMode = (status: WatchStatus, mode: SortMode) => {
-    try { localStorage.setItem(STORAGE_PREFIX + status, mode); } catch { /* noop */ }
+    try {
+        localStorage.setItem(STORAGE_PREFIX + status, mode);
+    } catch { /* noop */
+    }
 };
 
 // ─── SectionSortButton sub-component ─────────────────────────
@@ -64,7 +88,7 @@ interface SectionSortButtonProps {
     primary: string;
 }
 
-const SectionSortButton: React.FC<SectionSortButtonProps> = ({ sortMode, onSortChange, primary }) => {
+const SectionSortButton: React.FC<SectionSortButtonProps> = ({sortMode, onSortChange, primary}) => {
     const [anchor, setAnchor] = useState<null | HTMLElement>(null);
     return (
         <>
@@ -81,23 +105,26 @@ const SectionSortButton: React.FC<SectionSortButtonProps> = ({ sortMode, onSortC
                     ml: 1,
                 }}
             >
-                <SortIcon sx={{ fontSize: 16 }} />
+                <SortIcon sx={{fontSize: 16}}/>
                 <Typography variant="caption" fontSize="0.7rem" fontWeight={600}>{SORT_LABELS[sortMode]}</Typography>
             </IconButton>
             <Menu
                 anchorEl={anchor}
                 open={Boolean(anchor)}
                 onClose={() => setAnchor(null)}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 130 } } }}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+                transformOrigin={{vertical: 'top', horizontal: 'right'}}
+                slotProps={{paper: {sx: {borderRadius: 2, minWidth: 130}}}}
             >
                 {(['recent', 'name'] as SortMode[]).map((mode) => (
                     <MenuItem
                         key={mode}
                         selected={sortMode === mode}
-                        onClick={() => { onSortChange(mode); setAnchor(null); }}
-                        sx={{ fontSize: '0.85rem', fontWeight: sortMode === mode ? 700 : 400 }}
+                        onClick={() => {
+                            onSortChange(mode);
+                            setAnchor(null);
+                        }}
+                        sx={{fontSize: '0.85rem', fontWeight: sortMode === mode ? 700 : 400}}
                     >
                         {SORT_LABELS[mode]}
                     </MenuItem>
@@ -123,7 +150,7 @@ const HomePage: React.FC = () => {
     });
 
     const handleSortChange = useCallback((status: WatchStatus, mode: SortMode) => {
-        setSortModes((prev) => ({ ...prev, [status]: mode }));
+        setSortModes((prev) => ({...prev, [status]: mode}));
         saveSectionSortMode(status, mode);
     }, []);
 
@@ -131,7 +158,7 @@ const HomePage: React.FC = () => {
         return Object.values(records).filter((record) => record.global_status);
     }, [records]);
 
-    useBackfillPosters(trackedItems);
+    const scores = useHomeMediaDetails(trackedItems);
 
     const itemsByStatus = useMemo(() => {
         const groups: Record<WatchStatus, (SeasonRecord | MovieRecord)[]> = {
@@ -165,7 +192,7 @@ const HomePage: React.FC = () => {
         const key = `${record.type}-${record.tmdb_id}-${isTv ? tvRecord?.season_number : ''}`;
 
         return (
-            <Grid key={key} size={{ xs: 6, sm: 4, md: 3, lg: 2.4 }}>
+            <Grid key={key} size={{xs: 6, sm: 4, md: 3, lg: 2.4}}>
                 <Card
                     sx={{
                         height: '100%',
@@ -181,23 +208,31 @@ const HomePage: React.FC = () => {
                 >
                     <CardActionArea
                         onClick={() => handleCardClick(record)}
-                        sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
+                        sx={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch'}}
                     >
-                        <Box sx={{ position: 'relative' }}>
+                        <Box sx={{position: 'relative'}}>
                             {record.poster_path ? (
                                 <CardMedia
                                     component="img"
                                     image={getPosterUrl(record.poster_path, 'w342')}
                                     alt={titleText}
-                                    sx={{ aspectRatio: '2/3', objectFit: 'cover', backgroundColor: alpha('#fff', 0.05) }}
+                                    sx={{aspectRatio: '2/3', objectFit: 'cover', backgroundColor: alpha('#fff', 0.05)}}
                                 />
                             ) : (
-                                <Box sx={{ aspectRatio: '2/3', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(primary, 0.1) }}>
+                                <Box sx={{
+                                    aspectRatio: '2/3',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: alpha(primary, 0.1)
+                                }}>
                                     <Typography variant="caption" color="primary">No Poster</Typography>
                                 </Box>
                             )}
+                            {record.poster_path &&
+                                <PosterScoreBadge score={scores[`${record.type}-${record.tmdb_id}`]}/>}
                         </Box>
-                        <CardContent sx={{ flex: 1, p: 1.5, pb: '12px !important' }}>
+                        <CardContent sx={{flex: 1, p: 1.5, pb: '12px !important'}}>
                             <Typography variant="body2" fontWeight={700} noWrap title={titleText}>
                                 {titleText}
                             </Typography>
@@ -218,7 +253,7 @@ const HomePage: React.FC = () => {
                                     {tagText}
                                 </Typography>
                             ) : (
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                                <Typography variant="caption" color="text.secondary" sx={{display: 'block', mt: 0.5}}>
                                     {tagText}
                                 </Typography>
                             )}
@@ -231,14 +266,21 @@ const HomePage: React.FC = () => {
 
     // ─── Section header with inline sort button ──────────────
     const renderSectionHeader = (status: WatchStatus, count: number) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{display: 'flex', alignItems: 'center', mb: 2}}>
             <Typography
                 variant="subtitle1"
                 fontWeight={700}
                 sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    '&::before': { content: '""', width: 4, height: 16, backgroundColor: primary, mr: 1, borderRadius: 1 },
+                    '&::before': {
+                        content: '""',
+                        width: 4,
+                        height: 16,
+                        backgroundColor: primary,
+                        mr: 1,
+                        borderRadius: 1
+                    },
                 }}
             >
                 {STATUS_LABELS[status]} ({count})
@@ -252,15 +294,15 @@ const HomePage: React.FC = () => {
     );
 
     return (
-        <Box sx={{ minHeight: '100vh' }}>
-            <Container maxWidth="lg" sx={{ pt: 2, pb: 6 }}>
-                <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
+        <Box sx={{minHeight: '100vh'}}>
+            <Container maxWidth="lg" sx={{pt: 2, pb: 6}}>
+                <Typography variant="h5" fontWeight={700} sx={{mb: 3}}>
                     正在追踪
                 </Typography>
 
                 {trackedItems.length === 0 ? (
-                    <Box sx={{ textAlign: 'center', py: 10 }}>
-                        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+                    <Box sx={{textAlign: 'center', py: 10}}>
+                        <Typography variant="h6" color="text.secondary" sx={{mb: 2}}>
                             还没有追踪任何项目
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
@@ -271,7 +313,7 @@ const HomePage: React.FC = () => {
                     <Box>
                         {/* ── 在看 (Do) Section ─────────────── */}
                         {itemsByStatus.Do.length > 0 && (
-                            <Box sx={{ mb: 6 }}>
+                            <Box sx={{mb: 6}}>
                                 {renderSectionHeader('Do', itemsByStatus.Do.length)}
                                 {itemsByStatus.Do.map((record) => {
                                     if (record.type === 'tv_season') {
@@ -284,6 +326,7 @@ const HomePage: React.FC = () => {
                                                 showName={(record as SeasonRecord).show_name}
                                                 posterPath={record.poster_path}
                                                 episodeCount={record.episode_count}
+                                                score={scores[`tv_season-${record.tmdb_id}`]}
                                             />
                                         );
                                     } else {
@@ -294,6 +337,7 @@ const HomePage: React.FC = () => {
                                                 movieId={record.tmdb_id}
                                                 name={mvRecord.name}
                                                 posterPath={mvRecord.poster_path}
+                                                score={scores[`movie-${record.tmdb_id}`]}
                                             />
                                         );
                                     }
@@ -307,7 +351,7 @@ const HomePage: React.FC = () => {
                             if (items.length === 0) return null;
 
                             return (
-                                <Box key={status} sx={{ mb: 5 }}>
+                                <Box key={status} sx={{mb: 5}}>
                                     {renderSectionHeader(status, items.length)}
                                     <Grid container spacing={2}>
                                         {items.map(renderCompactCard)}

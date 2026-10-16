@@ -1,16 +1,17 @@
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
-import { Box, Card, IconButton, LinearProgress, Tooltip, Typography } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getPosterUrl, getTVSeason } from '../api/tmdb';
-import { useProgressStore } from '../store/useProgressStore';
-import type { TMDBSeason } from '../types';
+import {Box, Card, IconButton, LinearProgress, Tooltip, Typography} from '@mui/material';
+import {alpha, useTheme} from '@mui/material/styles';
+import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {getPosterUrl, getTVSeason} from '../api/tmdb';
+import {useProgressStore} from '../store/useProgressStore';
+import type {TMDBSeason} from '../types';
 import EpisodeGrid from './EpisodeGrid';
 import EpisodeViewToggle from './EpisodeViewToggle';
 import HomeQuickEdit from './HomeQuickEdit';
+import PosterScoreBadge from './PosterScoreBadge';
 
 const EPISODES_PER_PAGE = 18;
 
@@ -21,16 +22,18 @@ interface HomeActiveCardProps {
     showName?: string;
     posterPath?: string;
     episodeCount?: number;
+    score?: number;
 }
 
 const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
-    tvId,
-    seasonNumber,
-    name,
-    showName,
-    posterPath,
-    episodeCount
-}) => {
+                                                           tvId,
+                                                           seasonNumber,
+                                                           name,
+                                                           showName,
+                                                           posterPath,
+                                                           episodeCount,
+                                                           score,
+                                                       }) => {
     const theme = useTheme();
     const navigate = useNavigate();
     const [season, setSeason] = useState<TMDBSeason | null>(null);
@@ -39,7 +42,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
     const [loadingSeason, setLoadingSeason] = useState(true);
 
-    const { getSeasonRecord } = useProgressStore();
+    const {getSeasonRecord} = useProgressStore();
     const record = getSeasonRecord(tvId, seasonNumber);
 
     useEffect(() => {
@@ -78,7 +81,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const titleText = showName || name || `剧集 ID: ${tvId}`;
     const tagText = name || `第 ${seasonNumber} 季`;
     const poster = posterPath ? getPosterUrl(posterPath, 'w154') : undefined;
-    const meta = { name, show_name: showName, poster_path: posterPath, episode_count: episodeCount };
+    const meta = {name, show_name: showName, poster_path: posterPath, episode_count: episodeCount};
     const totalEpisodes = season?.episodes.length ?? episodeCount ?? 0;
     const rawWatchedCount = record
         ? Object.values(record.episodes).filter((episode) => episode.watched).length
@@ -119,10 +122,17 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                 }
             }}
         >
-            <Box sx={{ display: 'flex', p: 2 }}>
+            <Box sx={{display: 'flex', p: 2}}>
                 {/* Poster */}
                 <Box
-                    sx={{ cursor: 'pointer', flexShrink: 0 }}
+                    sx={{
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        position: 'relative',
+                        width: {xs: 64, sm: 80},
+                        height: {xs: 96, sm: 120},
+                        mr: 2
+                    }}
                     onClick={handleCardClick}
                 >
                     {poster ? (
@@ -130,18 +140,39 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                             component="img"
                             src={poster}
                             alt={titleText}
-                            sx={{ width: { xs: 64, sm: 80 }, aspectRatio: '2/3', height: 'auto', borderRadius: 1.5, objectFit: 'cover', mr: 2 }}
+                            sx={{
+                                display: 'block',
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: 1.5,
+                                objectFit: 'cover'
+                            }}
                         />
                     ) : (
-                        <Box sx={{ width: { xs: 64, sm: 80 }, aspectRatio: '2/3', height: 'auto', borderRadius: 1.5, backgroundColor: alpha(primary, 0.1), mr: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Box sx={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: 1.5,
+                            backgroundColor: alpha(primary, 0.1),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
                             <Typography variant="caption" color="primary">No Poster</Typography>
                         </Box>
                     )}
+                    {poster && <PosterScoreBadge score={score}/>}
                 </Box>
 
                 {/* Info */}
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', cursor: 'pointer' }} onClick={handleCardClick}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 0.5 }}>
+                <Box sx={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                }} onClick={handleCardClick}>
+                    <Box sx={{display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 0.5}}>
                         <Typography variant="h6" fontWeight={700}>{titleText}</Typography>
                         {tagText && titleText !== tagText && (
                             <Typography
@@ -160,7 +191,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                             </Typography>
                         )}
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                         <Typography variant="body2" color="text.secondary">
                             {episodeCount ? `共 ${episodeCount} 集` : '在看'}
                         </Typography>
@@ -168,7 +199,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                 </Box>
 
                 {/* Quick Edit Button */}
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', pt: 0.5 }}>
+                <Box sx={{display: 'flex', alignItems: 'flex-start', pt: 0.5}}>
                     <HomeQuickEdit
                         recordKey={`tv_${tvId}_s${seasonNumber}`}
                         type="tv_season"
@@ -179,8 +210,8 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                 </Box>
             </Box>
 
-            <Box sx={{ px: { xs: 2, sm: 3 }, pb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+            <Box sx={{px: {xs: 2, sm: 3}, pb: 2}}>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5}}>
                     <LinearProgress
                         variant="determinate"
                         value={progress}
@@ -195,27 +226,27 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                             },
                         }}
                     />
-                    <Typography variant="caption" sx={{ color: 'text.secondary', minWidth: 60, textAlign: 'right' }}>
+                    <Typography variant="caption" sx={{color: 'text.secondary', minWidth: 60, textAlign: 'right'}}>
                         {watchedCount} / {totalEpisodes || '?'}
                     </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mb: 1}}>
                     <Tooltip title="上一页">
                         <span>
                             <IconButton
                                 size="small"
                                 disabled={loadingSeason || currentPage <= 0}
                                 onClick={() => setEpisodePage((page) => Math.max(page - 1, 0))}
-                                sx={{ border: `1px solid ${alpha(primary, 0.2)}`, borderRadius: 1.5 }}
+                                sx={{border: `1px solid ${alpha(primary, 0.2)}`, borderRadius: 1.5}}
                             >
-                                <ChevronLeftIcon fontSize="small" />
+                                <ChevronLeftIcon fontSize="small"/>
                             </IconButton>
                         </span>
                     </Tooltip>
                     <Typography
                         variant="caption"
-                        sx={{ color: 'text.secondary', minWidth: 112, textAlign: 'center', fontWeight: 600 }}
+                        sx={{color: 'text.secondary', minWidth: 112, textAlign: 'center', fontWeight: 600}}
                     >
                         {season ? `第 ${pageFirstEpisode}-${pageLastEpisode} 集` : '正在加载集数…'}
                     </Typography>
@@ -225,9 +256,9 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                                 size="small"
                                 disabled={loadingSeason || currentPage >= totalPages - 1}
                                 onClick={() => setEpisodePage((page) => Math.min(page + 1, totalPages - 1))}
-                                sx={{ border: `1px solid ${alpha(primary, 0.2)}`, borderRadius: 1.5 }}
+                                sx={{border: `1px solid ${alpha(primary, 0.2)}`, borderRadius: 1.5}}
                             >
-                                <ChevronRightIcon fontSize="small" />
+                                <ChevronRightIcon fontSize="small"/>
                             </IconButton>
                         </span>
                     </Tooltip>
@@ -244,7 +275,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                                 backgroundColor: episodeOrder === 'desc' ? alpha(primary, 0.08) : 'transparent',
                             }}
                         >
-                            <SwapVertIcon fontSize="small" />
+                            <SwapVertIcon fontSize="small"/>
                         </IconButton>
                     </Tooltip>
                     <EpisodeViewToggle

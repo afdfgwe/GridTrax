@@ -1,9 +1,9 @@
 import MovieIcon from '@mui/icons-material/Movie';
-import { AppBar, Box, Container, Toolbar, Typography, useScrollTrigger } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import type { SxProps, Theme } from '@mui/material/styles';
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import {AppBar, Box, Container, Toolbar, Typography, useScrollTrigger} from '@mui/material';
+import {alpha, useTheme} from '@mui/material/styles';
+import type {SxProps, Theme} from '@mui/material/styles';
+import React, {useState} from 'react';
+import {Link} from 'react-router-dom';
 import DataBackupPanel from './DataBackupPanel';
 import SearchBar from './SearchBar';
 import ThemePicker from './ThemePicker';
@@ -13,7 +13,7 @@ interface Props {
 }
 
 function ElevationScroll(props: Props) {
-    const { children } = props;
+    const {children} = props;
     const trigger = useScrollTrigger({
         disableHysteresis: true,
         threshold: 0,
@@ -38,25 +38,26 @@ interface LayoutProps {
     children: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({children}) => {
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default' }}>
+        <Box sx={{display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default'}}>
             <ElevationScroll>
-                <AppBar position="fixed" color="transparent" elevation={0} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+                <AppBar position="fixed" color="transparent" elevation={0}
+                        sx={{zIndex: (theme) => theme.zIndex.drawer + 1}}>
                     <Container maxWidth="xl">
-                        <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+                        <Toolbar disableGutters sx={{justifyContent: 'space-between'}}>
                             {/* Logo Section - Hidden on mobile when search is expanded */}
                             <Box
                                 component={Link}
                                 to="/"
                                 sx={{
-                                    display: { xs: isSearchExpanded ? 'none' : 'flex', sm: 'flex' },
+                                    display: {xs: isSearchExpanded ? 'none' : 'flex', sm: 'flex'},
                                     alignItems: 'center',
                                     textDecoration: 'none',
                                     color: 'inherit',
-                                    gap: { xs: 1, sm: 1.5 },
+                                    gap: {xs: 1, sm: 1.5},
                                     flexShrink: 0
                                 }}
                             >
@@ -72,7 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         color: 'primary.main',
                                     }}
                                 >
-                                    <MovieIcon />
+                                    <MovieIcon/>
                                 </Box>
                                 <Typography
                                     variant="h6"
@@ -89,18 +90,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 </Typography>
                             </Box>
 
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, minWidth: 0, flexGrow: { xs: isSearchExpanded ? 1 : 0, sm: 0 }, justifyContent: 'flex-end' }}>
-                                <SearchBar onExpandChange={setIsSearchExpanded} />
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
-                                    <DataBackupPanel />
-                                    <ThemePicker />
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: {xs: 0.5, sm: 1},
+                                minWidth: 0,
+                                flexGrow: {xs: isSearchExpanded ? 1 : 0, sm: 0},
+                                justifyContent: 'flex-end'
+                            }}>
+                                <SearchBar onExpandChange={setIsSearchExpanded}/>
+                                <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 1}, flexShrink: 0}}>
+                                    <DataBackupPanel/>
+                                    <ThemePicker/>
                                 </Box>
                             </Box>
                         </Toolbar>
                     </Container>
                 </AppBar>
             </ElevationScroll>
-            <Box component="main" sx={{ flexGrow: 1, pt: { xs: 8, sm: 9 }, pb: 4 }}>
+            <Box component="main" sx={{flexGrow: 1, pt: {xs: 8, sm: 9}, pb: 4}}>
                 {children}
             </Box>
         </Box>

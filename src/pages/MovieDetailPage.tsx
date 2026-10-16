@@ -9,16 +9,16 @@ import {
     Skeleton,
     Typography,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { getBackdropUrl, getMovie, getPosterUrl } from '../api/tmdb';
+import {alpha, useTheme} from '@mui/material/styles';
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {getBackdropUrl, getMovie, getPosterUrl} from '../api/tmdb';
 import GlobalStatusPicker from '../components/GlobalStatusPicker';
-import { useProgressStore } from '../store/useProgressStore';
-import type { TMDBMovie, WatchStatus } from '../types';
+import {useProgressStore} from '../store/useProgressStore';
+import type {TMDBMovie, WatchStatus} from '../types';
 
 const MovieDetailPage: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
+    const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [movie, setMovie] = useState<TMDBMovie | null>(null);
     const [loading, setLoading] = useState(true);
@@ -37,7 +37,7 @@ const MovieDetailPage: React.FC = () => {
         getMovie(Number(id))
             .then((m) => {
                 setMovie(m);
-                ensureMovieRecord(m.id, { name: m.title, poster_path: m.poster_path });
+                ensureMovieRecord(m.id, {name: m.title, poster_path: m.poster_path});
             })
             .catch(() => setError('加载失败，请刷新重试。'))
             .finally(() => setLoading(false));
@@ -49,18 +49,24 @@ const MovieDetailPage: React.FC = () => {
 
     return (
         <React.Fragment>
-            <Box sx={{ minHeight: '100vh', backgroundColor: theme.palette.background.default }}>
+            <Box sx={{minHeight: '100vh', backgroundColor: theme.palette.background.default}}>
                 {/* Backdrop */}
-                <Box sx={{ position: 'relative', height: { xs: 220, sm: 300, md: 380 }, overflow: 'hidden', mb: -6, backgroundColor: 'background.paper' }}>
+                <Box sx={{
+                    position: 'relative',
+                    height: {xs: 220, sm: 300, md: 380},
+                    overflow: 'hidden',
+                    mb: -6,
+                    backgroundColor: 'background.paper'
+                }}>
                     {movie?.backdrop_path ? (
                         <Box
                             component="img"
                             src={getBackdropUrl(movie.backdrop_path)}
                             alt=""
-                            sx={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.4)' }}
+                            sx={{width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.4)'}}
                         />
                     ) : (
-                        <Skeleton variant="rectangular" width="100%" height="100%" animation="wave" />
+                        <Skeleton variant="rectangular" width="100%" height="100%" animation="wave"/>
                     )}
                     <Box
                         sx={{
@@ -73,36 +79,43 @@ const MovieDetailPage: React.FC = () => {
                         sx={{
                             position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', left: 16,
                             backgroundColor: alpha('#000', 0.5), color: '#fff',
-                            '&:hover': { backgroundColor: alpha('#000', 0.7) },
+                            '&:hover': {backgroundColor: alpha('#000', 0.7)},
                         }}
                     >
-                        <ArrowBackIcon />
+                        <ArrowBackIcon/>
                     </IconButton>
                 </Box>
 
-                <Container maxWidth="lg" sx={{ pt: 6, pb: 8, overflow: 'visible' }}>
-                    {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+                <Container maxWidth="lg" sx={{pt: 6, pb: 8, overflow: 'visible'}}>
+                    {error && <Alert severity="error" sx={{mb: 3}}>{error}</Alert>}
 
                     {loading ? (
-                        <Box sx={{ display: 'flex', gap: 3 }}>
-                            <Skeleton variant="rounded" width={140} height={210} sx={{ borderRadius: 1.5, flexShrink: 0 }} />
-                            <Box sx={{ flex: 1 }}>
-                                <Skeleton variant="text" width="60%" height={40} />
-                                <Skeleton variant="text" width="30%" height={24} sx={{ mb: 1 }} />
-                                <Skeleton variant="rounded" height={80} />
+                        <Box sx={{display: 'flex', gap: 3}}>
+                            <Skeleton variant="rounded" width={140} height={210}
+                                      sx={{borderRadius: 1.5, flexShrink: 0}}/>
+                            <Box sx={{flex: 1}}>
+                                <Skeleton variant="text" width="60%" height={40}/>
+                                <Skeleton variant="text" width="30%" height={24} sx={{mb: 1}}/>
+                                <Skeleton variant="rounded" height={80}/>
                             </Box>
                         </Box>
                     ) : movie ? (
                         <>
                             {/* Movie Header */}
-                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 3 }, mb: 4, alignItems: { xs: 'center', sm: 'flex-start' } }}>
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: {xs: 'column', sm: 'row'},
+                                gap: {xs: 2, sm: 3},
+                                mb: 4,
+                                alignItems: {xs: 'center', sm: 'flex-start'}
+                            }}>
                                 <Box
                                     component="img"
                                     src={getPosterUrl(movie.poster_path, 'w342')}
                                     alt={movie.title}
                                     sx={{
-                                        width: { xs: 160, sm: 150 },
-                                        maxWidth: { xs: '55vw', sm: 'none' },
+                                        width: {xs: 160, sm: 150},
+                                        maxWidth: {xs: '55vw', sm: 'none'},
                                         aspectRatio: '2/3',
                                         objectFit: 'cover',
                                         borderRadius: 2,
@@ -113,8 +126,8 @@ const MovieDetailPage: React.FC = () => {
                                         zIndex: 2,
                                     }}
                                 />
-                                <Box sx={{ flex: 1 }}>
-                                    <Typography variant="h4" fontWeight={800} gutterBottom sx={{ lineHeight: 1.2 }}>
+                                <Box sx={{flex: 1}}>
+                                    <Typography variant="h4" fontWeight={800} gutterBottom sx={{lineHeight: 1.2}}>
                                         {movie.title}
                                     </Typography>
                                     {movie.original_title !== movie.title && (
@@ -122,23 +135,28 @@ const MovieDetailPage: React.FC = () => {
                                             {movie.original_title}
                                         </Typography>
                                     )}
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                                    <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5}}>
                                         <Chip
-                                            icon={<StarIcon sx={{ fontSize: '14px !important', color: '#FFD54F !important' }} />}
+                                            icon={<StarIcon
+                                                sx={{fontSize: '14px !important', color: '#FFD54F !important'}}/>}
                                             label={movie.vote_average.toFixed(1)}
                                             size="small"
-                                            sx={{ backgroundColor: alpha('#FFD54F', 0.15), color: '#FFD54F', fontWeight: 700 }}
+                                            sx={{
+                                                backgroundColor: alpha('#FFD54F', 0.15),
+                                                color: '#FFD54F',
+                                                fontWeight: 700
+                                            }}
                                         />
                                         <Chip
                                             label={movie.release_date?.slice(0, 4)}
                                             size="small"
-                                            sx={{ backgroundColor: alpha(primary, 0.15), color: primary }}
+                                            sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
                                         />
                                         {movie.runtime && (
                                             <Chip
                                                 label={`${movie.runtime} 分钟`}
                                                 size="small"
-                                                sx={{ backgroundColor: alpha(primary, 0.15), color: primary }}
+                                                sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
                                             />
                                         )}
                                         {movie.genres.slice(0, 3).map((g) => (
@@ -147,7 +165,7 @@ const MovieDetailPage: React.FC = () => {
                                                 label={g.name}
                                                 size="small"
                                                 variant="outlined"
-                                                sx={{ borderColor: alpha(primary, 0.4), color: 'text.secondary' }}
+                                                sx={{borderColor: alpha(primary, 0.4), color: 'text.secondary'}}
                                             />
                                         ))}
                                     </Box>
@@ -167,13 +185,16 @@ const MovieDetailPage: React.FC = () => {
                                     mb: 2,
                                 }}
                             >
-                                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+                                <Typography variant="subtitle2" color="text.secondary" sx={{mb: 1.5}}>
                                     观看状态
                                 </Typography>
                                 {record && (
                                     <GlobalStatusPicker
                                         status={record.global_status || 'Wish'}
-                                        onStatusChange={(s: WatchStatus) => setMovieStatus(movie.id, s, { name: movie.title, poster_path: movie.poster_path })}
+                                        onStatusChange={(s: WatchStatus) => setMovieStatus(movie.id, s, {
+                                            name: movie.title,
+                                            poster_path: movie.poster_path
+                                        })}
                                     />
                                 )}
                             </Box>

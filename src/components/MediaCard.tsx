@@ -8,17 +8,17 @@ import {
     Typography,
     useMediaQuery,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import {alpha, useTheme} from '@mui/material/styles';
 import React from 'react';
-import { getPosterUrl } from '../api/tmdb';
-import type { TMDBSearchResult } from '../types';
+import {getPosterUrl} from '../api/tmdb';
+import type {TMDBSearchResult} from '../types';
 
 interface MediaCardProps {
     item: TMDBSearchResult;
     onClick: (item: TMDBSearchResult) => void;
 }
 
-const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
+const MediaCard: React.FC<MediaCardProps> = ({item, onClick}) => {
     const title = item.name ?? item.title ?? '未知作品';
     const year = (item.first_air_date ?? item.release_date ?? '').slice(0, 4);
     const score = item.vote_average?.toFixed(1) ?? '?';
@@ -46,7 +46,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
             }}
         >
             {/* Poster */}
-            <Box sx={{ position: 'relative' }}>
+            <Box sx={{position: 'relative'}}>
                 <CardMedia
                     component="img"
                     image={getPosterUrl(item.poster_path, 'w342')}
@@ -60,7 +60,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
                 {/* Score badge */}
                 {(item.vote_average ?? 0) > 0 && (
                     <Chip
-                        icon={<StarIcon sx={{ color: '#FFD54F !important', fontSize: '14px' }} />}
+                        icon={<StarIcon sx={{color: '#FFD54F !important', fontSize: '14px'}}/>}
                         label={score}
                         size="small"
                         sx={{
@@ -92,7 +92,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onClick }) => {
             </Box>
 
             {/* Info */}
-            <CardContent sx={{ flex: 1, pb: '12px !important' }}>
+            <CardContent sx={{flex: 1, pb: '12px !important'}}>
                 <Typography
                     variant="body2"
                     fontWeight={700}

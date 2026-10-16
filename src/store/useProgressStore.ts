@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import {create} from 'zustand';
+import {persist} from 'zustand/middleware';
 import type {
     EpisodeRecord,
     MovieRecord,
@@ -55,7 +55,7 @@ const defaultMovieRecord = (movieId: number, meta?: { name?: string; poster_path
     global_comment: '',
 });
 
-const defaultEpisodeRecord = (): EpisodeRecord => ({ watched: false, comment: '' });
+const defaultEpisodeRecord = (): EpisodeRecord => ({watched: false, comment: ''});
 
 export const useProgressStore = create<ProgressState>()(
     persist(
@@ -73,11 +73,11 @@ export const useProgressStore = create<ProgressState>()(
                         record.type === type && record.tmdb_id === tmdbId && !record.poster_path
                     );
                     if (entries.length === 0) return state;
-                    const records = { ...state.data.records };
+                    const records = {...state.data.records};
                     for (const [key, record] of entries) {
-                        records[key] = { ...record, poster_path: posterPath };
+                        records[key] = {...record, poster_path: posterPath};
                     }
-                    return { data: { ...state.data, records } };
+                    return {data: {...state.data, records}};
                 });
             },
 
@@ -103,7 +103,7 @@ export const useProgressStore = create<ProgressState>()(
                                     ...state.data,
                                     records: {
                                         ...state.data.records,
-                                        [key]: { ...rec, ...meta }
+                                        [key]: {...rec, ...meta}
                                     }
                                 }
                             };
@@ -131,7 +131,7 @@ export const useProgressStore = create<ProgressState>()(
                                     last_interacted: Date.now(),
                                     episodes: {
                                         ...record.episodes,
-                                        [epKey]: { ...current, watched: !current.watched },
+                                        [epKey]: {...current, watched: !current.watched},
                                     },
                                 },
                             },
@@ -145,7 +145,7 @@ export const useProgressStore = create<ProgressState>()(
                 get().ensureSeasonRecord(tvId, seasonNumber, meta);
                 set((state) => {
                     const record = state.data.records[key] as SeasonRecord;
-                    const updatedEpisodes = { ...record.episodes };
+                    const updatedEpisodes = {...record.episodes};
                     // Mark all episodes from 1 to episodeNumber (inclusive) as watched
                     for (let i = 1; i <= episodeNumber; i++) {
                         const epKey = String(i);
@@ -160,7 +160,7 @@ export const useProgressStore = create<ProgressState>()(
                             last_sync: Date.now(),
                             records: {
                                 ...state.data.records,
-                                [key]: { ...record, last_interacted: Date.now(), episodes: updatedEpisodes },
+                                [key]: {...record, last_interacted: Date.now(), episodes: updatedEpisodes},
                             },
                         },
                     };
@@ -213,7 +213,7 @@ export const useProgressStore = create<ProgressState>()(
                                     ...state.data,
                                     records: {
                                         ...state.data.records,
-                                        [key]: { ...rec, ...meta }
+                                        [key]: {...rec, ...meta}
                                     }
                                 }
                             };
@@ -231,7 +231,11 @@ export const useProgressStore = create<ProgressState>()(
                         ...state.data,
                         records: {
                             ...state.data.records,
-                            [key]: { ...(state.data.records[key] as MovieRecord), global_status: status, last_interacted: Date.now() },
+                            [key]: {
+                                ...(state.data.records[key] as MovieRecord),
+                                global_status: status,
+                                last_interacted: Date.now()
+                            },
                         },
                     },
                 }));
@@ -255,7 +259,7 @@ export const useProgressStore = create<ProgressState>()(
 
             removeRecord: (recordKey: string) => {
                 set((state) => {
-                    const newRecords = { ...state.data.records };
+                    const newRecords = {...state.data.records};
                     delete newRecords[recordKey];
                     return {
                         data: {
