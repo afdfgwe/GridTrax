@@ -11,6 +11,7 @@ interface HomeMovieActiveCardProps {
     name?: string;
     posterPath?: string;
     score?: number;
+    year?: string;
 }
 
 const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
@@ -18,6 +19,7 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
                                                                      name,
                                                                      posterPath,
                                                                      score,
+                                                                     year,
                                                                  }) => {
     const theme = useTheme();
     const navigate = useNavigate();
@@ -95,7 +97,9 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
                         <Typography variant="h6" fontWeight={700}>{titleText}</Typography>
                     </Box>
                     <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                        <Typography variant="body2" color="text.secondary">电影 · 在看</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            电影 · 在看{year ? ` · ${year}年` : ''}
+                        </Typography>
                     </Box>
                 </Box>
 

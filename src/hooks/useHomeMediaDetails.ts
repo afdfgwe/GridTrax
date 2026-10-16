@@ -3,11 +3,17 @@ import {getMovie, getTVShow} from '../api/tmdb';
 import {useProgressStore} from '../store/useProgressStore';
 import type {ProgressRecord} from '../types';
 
-type MediaDetails = { poster_path?: string; vote_average: number };
+type MediaDetails = {
+    poster_path?: string;
+    vote_average: number;
+    release_date?: string;
+    first_air_date?: string;
+};
 
 export function useHomeMediaDetails(records: ProgressRecord[]) {
     const requests = useRef(new Map<string, Promise<MediaDetails | undefined>>());
     const [scores, setScores] = useState<Record<string, number>>({});
+    const [years, setYears] = useState<Record<string, string>>({});
     const fillMissingPosters = useProgressStore((state) => state.fillMissingPosters);
 
     useEffect(() => {
@@ -37,6 +43,11 @@ export function useHomeMediaDetails(records: ProgressRecord[]) {
                             ? current
                             : {...current, [key]: detail.vote_average});
                     }
+                    const date = record.type === 'movie' ? detail.release_date : detail.first_air_date;
+                    if (date && /^\d{4}/.test(date)) {
+                        const year = date.slice(0, 4);
+                        setYears((current) => current[key] === year ? current : {...current, [key]: year});
+                    }
                     fillMissingPosters(record.type, record.tmdb_id, detail.poster_path);
                 }));
             }
@@ -48,5 +59,5 @@ export function useHomeMediaDetails(records: ProgressRecord[]) {
         };
     }, [records, fillMissingPosters]);
 
-    return scores;
+    return {scores, years};
 }

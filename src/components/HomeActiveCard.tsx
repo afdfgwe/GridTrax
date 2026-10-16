@@ -23,6 +23,7 @@ interface HomeActiveCardProps {
     posterPath?: string;
     episodeCount?: number;
     score?: number;
+    year?: string;
 }
 
 const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
@@ -33,6 +34,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                                                            posterPath,
                                                            episodeCount,
                                                            score,
+                                                           year,
                                                        }) => {
     const theme = useTheme();
     const navigate = useNavigate();
@@ -193,7 +195,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                     </Box>
                     <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                         <Typography variant="body2" color="text.secondary">
-                            {episodeCount ? `共 ${episodeCount} 集` : '在看'}
+                            {year ? `${year}年 · ` : ''}{episodeCount ? `共 ${episodeCount} 集` : '在看'}
                         </Typography>
                     </Box>
                 </Box>

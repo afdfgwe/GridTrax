@@ -254,7 +254,7 @@ const HomePage: React.FC = () => {
         return Object.values(records).filter((record) => record.global_status);
     }, [records]);
 
-    const scores = useHomeMediaDetails(trackedItems);
+    const {scores, years} = useHomeMediaDetails(trackedItems);
 
     const itemsByStatus = useMemo(() => {
         const groups: Record<WatchStatus, (SeasonRecord | MovieRecord)[]> = {
@@ -296,6 +296,7 @@ const HomePage: React.FC = () => {
             ? (tvRecord?.show_name || tvRecord?.name || `剧集 ID: ${record.tmdb_id}`)
             : (record.name || `电影 ID: ${record.tmdb_id}`);
         const tagText = isTv ? (tvRecord?.name || `第 ${tvRecord?.season_number} 季`) : '电影';
+        const year = years[`${record.type}-${record.tmdb_id}`];
         const key = `${record.type}-${record.tmdb_id}-${isTv ? tvRecord?.season_number : ''}`;
 
         return (
@@ -343,27 +344,29 @@ const HomePage: React.FC = () => {
                             <Typography variant="body2" fontWeight={700} noWrap title={titleText}>
                                 {titleText}
                             </Typography>
-                            {isTv && titleText !== tagText ? (
-                                <Typography
-                                    sx={{
-                                        display: 'inline-block',
-                                        backgroundColor: alpha(primary, 0.15),
-                                        color: primary,
-                                        px: 0.75,
-                                        py: 0.25,
-                                        borderRadius: 1,
-                                        fontSize: '0.65rem',
-                                        fontWeight: 700,
-                                        mt: 0.5
-                                    }}
-                                >
-                                    {tagText}
-                                </Typography>
-                            ) : (
-                                <Typography variant="caption" color="text.secondary" sx={{display: 'block', mt: 0.5}}>
-                                    {tagText}
-                                </Typography>
-                            )}
+                            <Box sx={{display: 'flex', alignItems: 'center', flexWrap: 'wrap', columnGap: 0.75, rowGap: 0.25, mt: 0.5}}>
+                                {isTv && titleText !== tagText ? (
+                                    <Typography
+                                        component="span"
+                                        sx={{
+                                            backgroundColor: alpha(primary, 0.15),
+                                            color: primary,
+                                            px: 0.75,
+                                            py: 0.25,
+                                            borderRadius: 1,
+                                            fontSize: '0.65rem',
+                                            fontWeight: 700,
+                                        }}
+                                    >
+                                        {tagText}
+                                    </Typography>
+                                ) : (
+                                    <Typography component="span" variant="caption" color="text.secondary">
+                                        {tagText}
+                                    </Typography>
+                                )}
+                                {year && <Typography component="span" variant="caption" color="text.secondary">{year}年</Typography>}
+                            </Box>
                         </CardContent>
                     </CardActionArea>
                 </Card>
@@ -442,6 +445,7 @@ const HomePage: React.FC = () => {
                                                 posterPath={record.poster_path}
                                                 episodeCount={record.episode_count}
                                                 score={scores[`tv_season-${record.tmdb_id}`]}
+                                                year={years[`tv_season-${record.tmdb_id}`]}
                                             />
                                         );
                                     } else {
@@ -453,6 +457,7 @@ const HomePage: React.FC = () => {
                                                 name={mvRecord.name}
                                                 posterPath={mvRecord.poster_path}
                                                 score={scores[`movie-${record.tmdb_id}`]}
+                                                year={years[`movie-${record.tmdb_id}`]}
                                             />
                                         );
                                     }
