@@ -1,4 +1,3 @@
-import FilterListIcon from '@mui/icons-material/FilterList';
 import SortIcon from '@mui/icons-material/Sort';
 import {
     Box,
@@ -191,7 +190,7 @@ const SectionMediaFilterButton: React.FC<SectionMediaFilterButtonProps> = ({filt
                     ml: 1,
                 }}
             >
-                <FilterListIcon sx={{fontSize: 16}}/>
+                <SortIcon sx={{fontSize: 16}}/>
                 <Typography variant="caption" fontSize="0.7rem" fontWeight={600}>{FILTER_LABELS[filter]}</Typography>
             </IconButton>
             <Menu
