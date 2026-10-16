@@ -1,4 +1,5 @@
 {
+  // Vite 配置运行在 Node 环境，与浏览器源码的 DOM 类型分离。
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "ES2023",
@@ -10,13 +11,13 @@
       "node"
     ],
     "skipLibCheck": true,
-    /* Bundler mode */
+    /* 按构建工具的方式解析模块，仅检查配置文件而不输出编译文件。 */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
-    /* Linting */
+    /* 与应用源码保持一致的严格类型和未使用声明检查。 */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

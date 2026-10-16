@@ -33,7 +33,7 @@ import {
     type WatchStatus
 } from '../types';
 
-// ─── Sorting helpers ─────────────────────────────────────────
+// 排序工具：中文名称使用自然数字排序，例如“第 2 季”排在“第 10 季”之前。
 
 const zhCollator = new Intl.Collator('zh-Hans-CN', {sensitivity: 'base', numeric: true});
 
@@ -51,6 +51,7 @@ const FILTER_LABELS: Record<MediaFilter, string> = {
     movie: '电影',
 };
 
+// 电视剧优先按整部剧名排序，而不是按单季名称排序。
 const getRecordName = (r: ProgressRecord): string => {
     if (r.type === 'tv_season') {
         return (r as SeasonRecord).show_name || r.name || '';
@@ -58,6 +59,7 @@ const getRecordName = (r: ProgressRecord): string => {
     return r.name || '';
 };
 
+/** 返回排序副本，不改动存储中的数组；同分时优先最近互动的作品。 */
 const sortRecords = (items: ProgressRecord[], mode: SortMode, scores: Record<string, number>): ProgressRecord[] => {
     const sorted = [...items];
     switch (mode) {
@@ -77,18 +79,19 @@ const sortRecords = (items: ProgressRecord[], mode: SortMode, scores: Record<str
     return sorted;
 };
 
-// ─── Per-section localStorage persistence ────────────────────
+// 每个观看状态分别保存排序与类型筛选；偏好设置和观看记录采用不同存储键。
 
 const STORAGE_PREFIX = 'gridtrax-sort-';
 const FILTER_STORAGE_PREFIX = 'gridtrax-media-filter-';
 const ALL_STATUSES: WatchStatus[] = ['Do', 'Wish', 'Collect', 'OnHold', 'Dropped'];
+// 仅用于非“在看”板块的影片网格，与电视剧卡片内部的集数分页无关。
 const FILMS_PER_PAGE = 15;
 
 const getSectionSortMode = (status: WatchStatus): SortMode => {
     try {
         const stored = localStorage.getItem(STORAGE_PREFIX + status);
         if (stored === 'recent' || stored === 'name' || stored === 'rating') return stored;
-    } catch { /* noop */
+    } catch { /* 浏览器限制存储访问时使用默认排序，不阻断页面。 */
     }
     return 'recent';
 };
@@ -96,7 +99,7 @@ const getSectionSortMode = (status: WatchStatus): SortMode => {
 const saveSectionSortMode = (status: WatchStatus, mode: SortMode) => {
     try {
         localStorage.setItem(STORAGE_PREFIX + status, mode);
-    } catch { /* noop */
+    } catch { /* 写入失败只影响下次访问，当前组件状态仍然生效。 */
     }
 };
 
@@ -104,7 +107,7 @@ const getSectionMediaFilter = (status: WatchStatus): MediaFilter => {
     try {
         const stored = localStorage.getItem(FILTER_STORAGE_PREFIX + status);
         if (stored === 'tv_season' || stored === 'movie') return stored;
-    } catch { /* noop */
+    } catch { /* 无法读取偏好时回退为全部类型。 */
     }
     return 'all';
 };
@@ -112,11 +115,11 @@ const getSectionMediaFilter = (status: WatchStatus): MediaFilter => {
 const saveSectionMediaFilter = (status: WatchStatus, filter: MediaFilter) => {
     try {
         localStorage.setItem(FILTER_STORAGE_PREFIX + status, filter);
-    } catch { /* noop */
+    } catch { /* 偏好保存失败不影响本次筛选。 */
     }
 };
 
-// ─── SectionSortButton sub-component ─────────────────────────
+// 菜单只管理自己的锚点，实际排序和筛选值由首页维护。
 
 interface SectionSortButtonProps {
     sortMode: SortMode;
@@ -223,7 +226,7 @@ const SectionMediaFilterButton: React.FC<SectionMediaFilterButtonProps> = ({filt
     );
 };
 
-// ─── HomePage ────────────────────────────────────────────────
+/** 追踪面板的数据流：有效追踪记录 -> 状态分组 -> 排序 -> 类型筛选 -> 分页。 */
 
 const HomePage: React.FC = () => {
     const theme = useTheme();
@@ -231,7 +234,7 @@ const HomePage: React.FC = () => {
     const records = useProgressStore((state) => state.data.records);
     const primary = theme.palette.primary.main;
 
-    // Per-section sort modes
+    // 惰性初始化各板块偏好，避免每次渲染都读取浏览器存储。
     const [sortModes, setSortModes] = useState<Record<WatchStatus, SortMode>>(() => {
         const init = {} as Record<WatchStatus, SortMode>;
         for (const s of ALL_STATUSES) init[s] = getSectionSortMode(s);
@@ -244,6 +247,7 @@ const HomePage: React.FC = () => {
         return init;
     });
 
+    // 页码从 0 开始，各板块独立维护且不持久化；切换筛选或排序时回到第一页。
     const [sectionPages, setSectionPages] = useState<Record<WatchStatus, number>>({
         Do: 0, Wish: 0, Collect: 0, OnHold: 0, Dropped: 0,
     });
@@ -260,6 +264,7 @@ const HomePage: React.FC = () => {
         saveSectionMediaFilter(status, filter);
     }, []);
 
+    // 浏览详情可能仅生成元数据记录，没有明确观看状态的记录不进入追踪面板。
     const trackedItems = useMemo(() => {
         return Object.values(records).filter((record) => record.global_status);
     }, [records]);
@@ -273,7 +278,7 @@ const HomePage: React.FC = () => {
         trackedItems.forEach((item) => {
             if (item.global_status) groups[item.global_status].push(item);
         });
-        // Sort each group with its own mode
+        // 各组使用自己的排序方式；评分来自详情接口，不是历史个人评分字段。
         for (const s of ALL_STATUSES) {
             groups[s] = sortRecords(groups[s], sortModes[s], scores) as (SeasonRecord | MovieRecord)[];
         }
@@ -299,6 +304,7 @@ const HomePage: React.FC = () => {
         }
     };
 
+    // 紧凑卡片中整部剧名作为标题；季名仅用于标签，重复时回退为季号。
     const renderCompactCard = (record: SeasonRecord | MovieRecord) => {
         const isTv = record.type === 'tv_season';
         const tvRecord = isTv ? (record as SeasonRecord) : null;
@@ -312,6 +318,7 @@ const HomePage: React.FC = () => {
         const key = `${record.type}-${record.tmdb_id}-${isTv ? tvRecord?.season_number : ''}`;
 
         return (
+            // MUI 栅格按 12 份分配：手机每行 3 张，中屏 4 张，大屏 5 张。
             <Grid key={key} size={{xs: 4, sm: 3, lg: 2.4}}>
                 <Card
                     sx={{
@@ -389,9 +396,10 @@ const HomePage: React.FC = () => {
         );
     };
 
-    // ─── Section header with sort and type filter ─────────────
+    // 板块标题行共享排序和类型筛选；非“在看”板块在行尾增加影片翻页入口。
     const renderSectionHeader = (status: WatchStatus, count: number) => {
         const totalPages = Math.max(Math.ceil(count / FILMS_PER_PAGE), 1);
+        // 删除记录或减少筛选结果后收敛页码，空列表也保留一个有效页码用于展示。
         const currentPage = Math.min(sectionPages[status], totalPages - 1);
         const pageButtonSx = {
             color: 'text.secondary',
@@ -487,7 +495,7 @@ const HomePage: React.FC = () => {
                     </Box>
                 ) : (
                     <Box>
-                        {/* ── 在看 (Do) Section ─────────────── */}
+                        {/* 在看使用全宽卡片；不做影片分页，电视剧卡片内部单独分页集数。 */}
                         {itemsByStatus.Do.length > 0 && (
                             <Box sx={{mb: 6}}>
                                 {renderSectionHeader('Do', visibleItemsByStatus.Do.length)}
@@ -526,7 +534,7 @@ const HomePage: React.FC = () => {
                             </Box>
                         )}
 
-                        {/* ── Other Statuses ─────────────── */}
+                        {/* 其他状态先排序、筛选，再每页截取 15 条；标题计数仍为筛选总数。 */}
                         {(['Wish', 'Collect', 'OnHold', 'Dropped'] as const).map((status) => {
                             if (itemsByStatus[status].length === 0) return null;
                             const items = visibleItemsByStatus[status];

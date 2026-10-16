@@ -1,4 +1,5 @@
 {
+  // 浏览器应用的类型检查配置；实际打包和文件输出由 Vite 完成。
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",
@@ -9,18 +10,19 @@
       "DOM.Iterable"
     ],
     "module": "ESNext",
+    // 注入 import.meta.env、静态资源导入等 Vite 客户端类型。
     "types": [
       "vite/client"
     ],
     "skipLibCheck": true,
-    /* Bundler mode */
+    /* 按打包工具解析模块，保留模块语法并使用 React 的自动 JSX 转换。 */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true,
+    "noEmit": true, // 此阶段只做类型检查，不生成 JavaScript 文件。
     "jsx": "react-jsx",
-    /* Linting */
+    /* 严格检查未使用的声明、分支遗漏及无效的副作用导入等问题。 */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

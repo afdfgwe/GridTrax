@@ -3,6 +3,7 @@ import {IconButton, InputBase, Paper} from '@mui/material';
 import React, {useCallback, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 
+/** 工具栏搜索入口：本地维护输入，提交后将关键词编码到搜索页地址。 */
 const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({onExpandChange}) => {
     const navigate = useNavigate();
     const [expanded, setExpanded] = useState(false);
@@ -11,12 +12,14 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
 
     const handleExpand = () => {
         setExpanded(true);
+        // 通知公共布局在移动端让出空间，并稍后聚焦已展开的输入框。
         onExpandChange?.(true);
         setTimeout(() => {
             inputRef.current?.focus();
         }, 100);
     };
 
+    // 失焦只收起空输入，有内容时保留输入状态，避免中途输入被隐藏。
     const handleCollapse = () => {
         if (!query) {
             setExpanded(false);
@@ -27,6 +30,7 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
     const handleSearch = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         if (query.trim()) {
+            // 编码关键词中的空格、中文和特殊符号；搜索页负责实际接口请求。
             navigate(`/search?q=${encodeURIComponent(query.trim())}`);
             setExpanded(false);
             onExpandChange?.(false);

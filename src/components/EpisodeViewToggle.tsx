@@ -6,11 +6,13 @@ import type {TMDBEpisode} from '../types';
 import {getEpisodeTitle} from './episodeTitle';
 
 interface EpisodeViewToggleProps {
+    /** 用完整一季检测标题，避免翻页后按钮因当前页没有短标题而消失。 */
     episodes: TMDBEpisode[];
     showTitles: boolean;
     onChange: () => void;
 }
 
+/** 移动端受控视图开关：至少一集具有有效短标题时才提供切换入口。 */
 export default function EpisodeViewToggle({episodes, showTitles, onChange}: EpisodeViewToggleProps) {
     const theme = useTheme();
     const primary = theme.palette.primary.main;

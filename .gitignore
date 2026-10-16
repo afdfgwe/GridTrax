@@ -1,26 +1,26 @@
-# Dependencies
+# 本地安装的依赖目录
 node_modules/
 
-# Build output
+# 构建输出，由构建命令重新生成
 dist/
 
-# Env & Secrets
-# Secrets backend
+# 环境变量与私密配置
+# 以下模式目前被注释，并未启用忽略；本次仅补充说明，不调整现有规则。
 #.env.local
 #.env*.local
 #.secrets/
 
-# Editor
+# 编辑器的本地工作区配置
 .vscode/
 .idea/
 
-# System
+# 操作系统产生的辅助文件
 .DS_Store
 Thumbs.db
 
-# Logs
+# 本地运行日志
 *.log
 
-# Local browser verification artifacts
+# 本地浏览器验证生成的临时产物
 .playwright-cli/
 output/playwright/

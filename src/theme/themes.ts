@@ -1,13 +1,18 @@
+/** 项目主题的最小配置，统一映射到 MUI；颜色均按用途命名而非按具体组件命名。 */
 export interface BaseThemeConfig {
+    /** 持久化用的稳定标识，不应随显示名称变动，否则会影响已保存的主题偏好。 */
     id: string;
     name: string;
     mode?: 'light' | 'dark';
+    /** 主色及其明暗变体；contrastText 是放在主色背景上的前景文字色。 */
     primary: { main: string; light: string; dark: string; contrastText: string };
     secondary: { main: string; light: string; dark: string; contrastText: string };
+    /** default 用于整页背景，paper 用于卡片、菜单和弹窗等表面。 */
     background: { default: string; paper: string };
     text: { primary: string; secondary: string };
 }
 
+// 预设名称是界面展示数据，保留原有命名；数组首项同时作为默认与失效标识的兜底。
 export const PREDEFINED_THEMES: BaseThemeConfig[] = [
     {
         id: 'ocean',
@@ -55,6 +60,7 @@ export const PREDEFINED_THEMES: BaseThemeConfig[] = [
         text: {primary: '#ebdbb2', secondary: '#a89984'},
     },
     {
+        // 明亮主题同时配置浅色背景和深色文字，不只是替换强调色。
         id: 'sunlit-mint',
         name: 'Sunlit Mint',
         mode: 'light',
@@ -65,6 +71,7 @@ export const PREDEFINED_THEMES: BaseThemeConfig[] = [
     },
 ];
 
+/** 旧偏好中的主题标识已被移除或无效时，回退到默认主题以保持页面可用。 */
 export const getThemeConfig = (id: string): BaseThemeConfig => {
     return PREDEFINED_THEMES.find((t) => t.id === id) || PREDEFINED_THEMES[0];
 };

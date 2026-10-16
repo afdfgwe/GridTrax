@@ -12,6 +12,7 @@ interface Props {
     children: React.ReactElement<{ elevation?: number; sx?: SxProps<Theme> }>;
 }
 
+/** 根据是否离开页面顶部，为固定导航栏附加半透明背景、模糊与分隔线。 */
 function ElevationScroll(props: Props) {
     const {children} = props;
     const trigger = useScrollTrigger({
@@ -38,6 +39,7 @@ interface LayoutProps {
     children: React.ReactNode;
 }
 
+/** 全站公共框架：固定工具栏与页面主体，搜索、备份、主题入口跨页面保留。 */
 const Layout: React.FC<LayoutProps> = ({children}) => {
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 
@@ -48,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                         sx={{zIndex: (theme) => theme.zIndex.drawer + 1}}>
                     <Container maxWidth="xl">
                         <Toolbar disableGutters sx={{justifyContent: 'space-between'}}>
-                            {/* Logo Section - Hidden on mobile when search is expanded */}
+                            {/* 移动端展开搜索时隐藏标识，为输入框和右侧工具留出空间。 */}
                             <Box
                                 component={Link}
                                 to="/"
@@ -108,6 +110,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                     </Container>
                 </AppBar>
             </ElevationScroll>
+            {/* 顶部内边距为固定工具栏预留位置，防止正文被覆盖。 */}
             <Box component="main" sx={{flexGrow: 1, pt: {xs: 8, sm: 9}, pb: 4}}>
                 {children}
             </Box>

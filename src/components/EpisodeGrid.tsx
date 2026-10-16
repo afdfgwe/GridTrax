@@ -15,12 +15,15 @@ import EpisodeCell from './EpisodeCell';
 interface EpisodeGridProps {
     tvId: number;
     seasonNumber: number;
+    /** 可为完整一季，也可为首页当前页的集数；所有操作仍按真实集号定位。 */
     episodes: TMDBEpisode[];
     metaPayload?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number };
+    /** 首页已展示整季进度时，隐藏此处基于传入数组计算的局部进度。 */
     hideProgress?: boolean;
     showTitles?: boolean;
 }
 
+/** 复用的集数展示与操作层：读取本地进度，并将单集／批量操作交给存储。 */
 const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                                                      tvId,
                                                      seasonNumber,
@@ -31,6 +34,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                                                  }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    // 标题列表仅在移动端启用，桌面端保持方块与悬停短标题的交互。
     const titleView = isMobile && showTitles;
     const {
         toggleEpisodeWatched,
@@ -40,8 +44,8 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
 
     const [snackbar, setSnackbar] = useState<string | null>(null);
 
-    // Records are created lazily when the user interacts (toggles an episode or sets status).
-    // Do NOT call ensureSeasonRecord here as it would create records for all visible seasons.
+    // 记录随明确操作按需创建，不在渲染时为所有可见季提前建立记录。
+    // 此处不能调用 ensureSeasonRecord，否则仅浏览详情也会生成额外记录。
 
     const handleSingleClick = useCallback(
         (episodeNumber: number) => {
@@ -50,6 +54,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
         [tvId, seasonNumber, toggleEpisodeWatched, metaPayload]
     );
 
+    // “看到这里”依据真实集号批量标记，与显示顺序、当前页范围无关。
     const handleWatchUpTo = useCallback(
         (episodeNumber: number) => {
             watchUpToEpisode(tvId, seasonNumber, episodeNumber, metaPayload);
@@ -58,6 +63,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
         [tvId, seasonNumber, watchUpToEpisode, metaPayload]
     );
 
+    // 统计范围是传入的 episodes，不保证是整季；分页调用方需要隐藏此进度。
     const watchedCount = episodes.filter(
         (ep) => getEpisodeRecord(tvId, seasonNumber, ep.episode_number).watched
     ).length;
@@ -67,7 +73,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
 
     return (
         <Box>
-            {/* Progress bar */}
+            {/* 当前传入集数范围的已看进度。 */}
             {!hideProgress && (
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5}}>
                     <LinearProgress
@@ -90,14 +96,14 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                 </Box>
             )}
 
-            {/* Grid of cells */}
+            {/* 标题模式固定两列，其余模式由方块自然换行。 */}
             <Box
                 sx={{
                     display: titleView ? 'grid' : 'flex',
                     gridTemplateColumns: titleView ? 'repeat(2, minmax(0, 1fr))' : undefined,
                     flexWrap: 'wrap',
                     gap: titleView ? '8px' : '6px',
-                    // Ensure at least 48dp on mobile by setting touch area
+                    // 单元格的触摸尺寸由 EpisodeCell 统一控制。
                 }}
             >
                 {episodes.map((episode) => {
@@ -115,7 +121,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                 })}
             </Box>
 
-            {/* Snackbar for bulk watch */}
+            {/* 批量标记完成后短暂提示，不影响继续操作。 */}
             <Snackbar
                 open={!!snackbar}
                 autoHideDuration={2500}

@@ -1,3 +1,4 @@
+// 本文件还导出供快捷编辑复用的图标映射，因此保留此热更新规则例外。
 /* eslint-disable react-refresh/only-export-components */
 import {ToggleButton, ToggleButtonGroup} from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
@@ -12,7 +13,7 @@ interface GlobalStatusPickerProps {
 
 const STATUSES: WatchStatus[] = ['Wish', 'Do', 'Collect', 'OnHold', 'Dropped'];
 
-// SVG icon components for each status (16×16 viewBox)
+// 各观看状态共用的图标：坐标范围为 24×24，默认以 14×14 像素渲染。
 export const StatusIcons: Record<WatchStatus, React.ReactElement> = {
     Wish: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -41,6 +42,7 @@ export const StatusIcons: Record<WatchStatus, React.ReactElement> = {
     ),
 };
 
+/** 受控观看状态选择器；仅上报选择，由父组件决定如何持久化记录。 */
 const GlobalStatusPicker: React.FC<GlobalStatusPickerProps> = ({
                                                                    status,
                                                                    onStatusChange,
@@ -52,6 +54,7 @@ const GlobalStatusPicker: React.FC<GlobalStatusPickerProps> = ({
         <ToggleButtonGroup
             value={status}
             exclusive
+            // 再次点击当前项产生空值时不清空已有状态，保持互斥单选语义。
             onChange={(_, val) => val && onStatusChange(val as WatchStatus)}
             size="small"
             sx={{

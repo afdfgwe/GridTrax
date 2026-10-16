@@ -17,6 +17,7 @@ import GlobalStatusPicker from '../components/GlobalStatusPicker';
 import {useProgressStore} from '../store/useProgressStore';
 import type {TMDBMovie, WatchStatus} from '../types';
 
+/** 电影详情：展示接口信息，并通过状态选择器维护本地观影记录。 */
 const MovieDetailPage: React.FC = () => {
     const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -31,12 +32,14 @@ const MovieDetailPage: React.FC = () => {
         setMovieStatus,
     } = useProgressStore();
 
+    // 路由编号变化时加载电影，并同步名称、海报等可供首页使用的展示元数据。
     useEffect(() => {
         if (!id) return;
         queueMicrotask(() => setLoading(true));
         getMovie(Number(id))
             .then((m) => {
                 setMovie(m);
+                // 仅确保记录和元数据存在；新记录没有观看状态，不会自动加入追踪列表。
                 ensureMovieRecord(m.id, {name: m.title, poster_path: m.poster_path});
             })
             .catch(() => setError('加载失败，请刷新重试。'))
@@ -45,12 +48,13 @@ const MovieDetailPage: React.FC = () => {
 
     const primary = theme.palette.primary.main;
 
+    // 接口评分与年份等信息来自 movie，观看状态来自浏览器中的 record。
     const record = movie ? getMovieRecord(movie.id) : undefined;
 
     return (
         <React.Fragment>
             <Box sx={{minHeight: '100vh', backgroundColor: theme.palette.background.default}}>
-                {/* Backdrop */}
+                {/* 电影背景图，按屏幕尺寸裁剪展示。 */}
                 <Box sx={{
                     position: 'relative',
                     height: {xs: 220, sm: 300, md: 380},
@@ -101,7 +105,7 @@ const MovieDetailPage: React.FC = () => {
                         </Box>
                     ) : movie ? (
                         <>
-                            {/* Movie Header */}
+                            {/* 电影海报和 TMDB 返回的名称、评分、上映日期等概要。 */}
                             <Box sx={{
                                 display: 'flex',
                                 flexDirection: {xs: 'column', sm: 'row'},
@@ -175,7 +179,7 @@ const MovieDetailPage: React.FC = () => {
                                 </Box>
                             </Box>
 
-                            {/* Watch status */}
+                            {/* 默认显示“想看”不代表已保存；明确选择状态后才进入追踪列表。 */}
                             <Box
                                 sx={{
                                     p: 3,

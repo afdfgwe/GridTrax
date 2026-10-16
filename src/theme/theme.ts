@@ -1,8 +1,9 @@
 import {createTheme, type PaletteMode, type Theme} from '@mui/material/styles';
 import {type BaseThemeConfig} from './themes';
 
-// Base Material You theme configuration
+/** 将项目配色转换为完整 MUI 主题，并集中定义通用字体、圆角和组件样式。 */
 export const createAppTheme = (config: BaseThemeConfig, mode?: PaletteMode): Theme => {
+    // 显式参数优先，其次使用预设模式；旧配置未声明模式时按深色处理。
     const paletteMode = mode ?? config.mode ?? 'dark';
 
     return createTheme({
@@ -11,7 +12,7 @@ export const createAppTheme = (config: BaseThemeConfig, mode?: PaletteMode): The
             primary: config.primary,
             secondary: config.secondary,
             background: config.background,
-            surface: {main: config.background.default}, // Fallback standard surface
+            surface: {main: config.background.default}, // 扩展表面色默认与整页背景保持一致。
             text: config.text,
         },
         typography: {
@@ -23,6 +24,7 @@ export const createAppTheme = (config: BaseThemeConfig, mode?: PaletteMode): The
         shape: {
             borderRadius: 6,
         },
+        // 共享覆盖集中维护；页面自身仅补充局部布局与交互所需的样式。
         components: {
             MuiButton: {
                 styleOverrides: {
@@ -69,7 +71,7 @@ export const createAppTheme = (config: BaseThemeConfig, mode?: PaletteMode): The
     });
 };
 
-// Declare augmentation for MUI theme to include 'surface'
+// 扩展 MUI 类型声明，使创建主题和读取 palette.surface 时均有类型提示。
 declare module '@mui/material/styles' {
     interface Palette {
         surface: Palette['primary'];
@@ -80,8 +82,7 @@ declare module '@mui/material/styles' {
     }
 }
 
-// We don't export a single defaultTheme anymore since it's dependent on the store,
-// but we can export a dummy default if needed for tests.
+// 保留可直接引用的静态深色默认主题；主应用实际按存储中的选择动态创建主题。
 import {PREDEFINED_THEMES} from './themes';
 
 export const defaultTheme = createAppTheme(PREDEFINED_THEMES[0], 'dark');

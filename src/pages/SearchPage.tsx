@@ -5,6 +5,7 @@ import {searchMulti} from '../api/tmdb';
 import MediaCard from '../components/MediaCard';
 import type {TMDBSearchResult} from '../types';
 
+/** 搜索结果页以地址栏 q 参数为查询来源，刷新或分享地址后仍能重新执行查询。 */
 const SearchPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -14,6 +15,7 @@ const SearchPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // 每次请求单独维护加载和错误展示；空关键词只清空结果，不调用接口。
     const doSearch = useCallback((q: string) => {
         if (!q.trim()) {
             setResults([]);
@@ -27,6 +29,7 @@ const SearchPage: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
+    // 将查询参数变化后的状态更新放入微任务，在本轮副作用结束后执行。
     useEffect(() => {
         queueMicrotask(() => {
             if (query) {
@@ -37,6 +40,7 @@ const SearchPage: React.FC = () => {
         });
     }, [query, doSearch]);
 
+    // 混合搜索的电影与电视剧使用不同详情路由，编号本身不能区分作品类型。
     const handleCardClick = useCallback(
         (item: TMDBSearchResult) => {
             if (item.media_type === 'tv') {
@@ -59,7 +63,7 @@ const SearchPage: React.FC = () => {
                     </Box>
                 )}
 
-                {/* Empty state */}
+                {/* 有关键词且请求成功但结果为空时，显示未找到提示。 */}
                 {!loading && results.length === 0 && query && !error && (
                     <Box sx={{textAlign: 'center', py: 8}}>
                         <Typography variant="h6" color="text.secondary">
@@ -68,7 +72,7 @@ const SearchPage: React.FC = () => {
                     </Box>
                 )}
 
-                {/* Landing state */}
+                {/* 没有关键词时的初始状态，不发起默认搜索。 */}
                 {!query && (
                     <Box sx={{textAlign: 'center', py: 8}}>
                         <Typography variant="h6" color="text.secondary">
@@ -77,7 +81,7 @@ const SearchPage: React.FC = () => {
                     </Box>
                 )}
 
-                {/* Results Grid */}
+                {/* 仅在加载结束后展示搜索结果，避免把旧结果当作本次结果。 */}
                 {!loading && results.length > 0 && (
                     <Grid container spacing={2}>
                         {results.map((item) => (

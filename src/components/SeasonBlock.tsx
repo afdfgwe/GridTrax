@@ -30,6 +30,7 @@ interface SeasonBlockProps {
     defaultExpanded?: boolean;
 }
 
+/** 电视剧详情中的单季折叠区；摘要随整剧返回，展开后才按需请求完整集数。 */
 const SeasonBlock: React.FC<SeasonBlockProps> = ({
                                                      tvId,
                                                      showName,
@@ -53,6 +54,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
     const record = getSeasonRecord(tvId, seasonSummary.season_number);
     const primary = theme.palette.primary.main;
 
+    // 已加载的季详情在本组件内复用；收起或卸载后忽略未完成请求的返回结果。
     useEffect(() => {
         if (!expanded || !loading || season) return;
 
@@ -74,6 +76,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
         };
     }, [expanded, tvId, seasonSummary.season_number, season, loading]);
 
+    // 保存操作携带展示元数据；季海报缺失时回退到整部剧海报。
     const metaPayload = {
         name: seasonSummary.name,
         show_name: showName,
@@ -81,9 +84,10 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
         episode_count: seasonSummary.episode_count,
     };
 
-    // NOTE: Do NOT call ensureSeasonRecord here.
-    // Records should only be created when the user explicitly sets a status.
+    // 不因浏览或展开就调用 ensureSeasonRecord 创建记录。
+    // 记录仅在用户主动选择状态或操作某一集时按需创建。
 
+    // 仅统计接口实际返回的集数，避免旧记录中的无效集号影响当前季进度。
     const watchedCount = season && record
         ? season.episodes.filter(
             (ep) => record.episodes[String(ep.episode_number)]?.watched ?? false
@@ -104,6 +108,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
             expanded={expanded}
             onChange={(_, isExpanded) => {
                 setExpanded(isExpanded);
+                // 上次失败且没有缓存详情时，再次展开会清除错误并重试加载。
                 if (isExpanded && !season) {
                     setSeasonError(false);
                     setLoading(true);
@@ -170,18 +175,18 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
             </AccordionSummary>
 
             <AccordionDetails sx={{px: 2, pb: 2}}>
-                {/* Watch status - only render when accordion is open */}
+                {/* 折叠区内的整季观看状态选择器，展示默认值不等于已写入记录。 */}
                 <Box sx={{mb: 2}}>
                     <GlobalStatusPicker
                         status={record?.global_status ?? undefined}
                         onStatusChange={(s: WatchStatus) => {
-                            // This is the primary trigger that creates the record and sets status
+                            // 用户明确选择状态后才创建或更新当前季记录。
                             setSeasonStatus(tvId, seasonSummary.season_number, s, metaPayload);
                         }}
                     />
                 </Box>
 
-                {/* Episodes Loading Skeleton */}
+                {/* 季详情加载中的占位骨架。 */}
                 {loading && (
                     <Box sx={{display: 'flex', flexWrap: 'wrap', gap: '6px', mb: 2}}>
                         {Array.from({length: seasonSummary.episode_count}).map((_, i) => (
@@ -191,7 +196,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                 )}
                 {seasonError && <Alert severity="error" sx={{mb: 2}}>集数加载失败，请收起后重试。</Alert>}
 
-                {/* Episode Grid */}
+                {/* 详情页传入排序后的完整一季，不使用首页每页 18 集的分页限制。 */}
                 {season && (
                     <>
                         <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mb: 1}}>

@@ -13,6 +13,7 @@ import EpisodeViewToggle from './EpisodeViewToggle';
 import HomeQuickEdit from './HomeQuickEdit';
 import PosterScoreBadge from './PosterScoreBadge';
 
+// 首页单季卡片每页最多显示 18 集；翻页只改变显示范围，不改变观看记录。
 const EPISODES_PER_PAGE = 18;
 
 interface HomeActiveCardProps {
@@ -26,6 +27,7 @@ interface HomeActiveCardProps {
     year?: string;
 }
 
+/** 首页“在看”电视剧卡片：一张卡片对应一季，含整季进度与集数分页。 */
 const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                                                            tvId,
                                                            seasonNumber,
@@ -47,6 +49,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const {getSeasonRecord} = useProgressStore();
     const record = getSeasonRecord(tvId, seasonNumber);
 
+    // 卸载后忽略请求结果，防止旧卡片的请求更新状态；这里不取消网络请求本身。
     useEffect(() => {
         let active = true;
 
@@ -56,10 +59,12 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
 
                 setSeason(nextSeason);
 
+                // 请求返回时重新读取进度，避免用请求发出前的旧记录选择初始页。
                 const latestRecord = useProgressStore.getState().getSeasonRecord(tvId, seasonNumber);
                 const firstUnwatchedIndex = nextSeason.episodes.findIndex(
                     (episode) => !latestRecord?.episodes[String(episode.episode_number)]?.watched
                 );
+                // 优先定位第一集未看内容；全部看完则定位最后一集所在页。
                 const initialIndex = firstUnwatchedIndex >= 0
                     ? firstUnwatchedIndex
                     : Math.max(nextSeason.episodes.length - 1, 0);
@@ -84,12 +89,15 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const tagText = name || `第 ${seasonNumber} 季`;
     const poster = posterPath ? getPosterUrl(posterPath, 'w154') : undefined;
     const meta = {name, show_name: showName, poster_path: posterPath, episode_count: episodeCount};
+    // 完整集数优先取季详情；加载前使用存储的总集数作为兜底。
+    // 整季进度独立于当前页，旧备份中的多余记录不能使进度超过 100%。
     const totalEpisodes = season?.episodes.length ?? episodeCount ?? 0;
     const rawWatchedCount = record
         ? Object.values(record.episodes).filter((episode) => episode.watched).length
         : 0;
     const watchedCount = totalEpisodes > 0 ? Math.min(rawWatchedCount, totalEpisodes) : rawWatchedCount;
     const progress = totalEpisodes > 0 ? Math.min((watchedCount / totalEpisodes) * 100, 100) : 0;
+    // 先复制并排序，再截取当前页，不修改接口返回的原始集数数组。
     const orderedEpisodes = season
         ? [...season.episodes].sort((a, b) =>
             episodeOrder === 'asc'
@@ -102,8 +110,10 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const pageStart = currentPage * EPISODES_PER_PAGE;
     const pageEnd = season ? Math.min(pageStart + EPISODES_PER_PAGE, orderedEpisodes.length) : 0;
     const visibleEpisodes = orderedEpisodes.slice(pageStart, pageEnd);
+    // 范围文字取当前页首尾的实际集号，因此倒序时可正确显示“第 25-8 集”。
     const pageFirstEpisode = visibleEpisodes[0]?.episode_number ?? 0;
     const pageLastEpisode = visibleEpisodes[visibleEpisodes.length - 1]?.episode_number ?? 0;
+    // 切换顺序后回第一页，以便直接看到最早或最新的集数。
     const handleToggleEpisodeOrder = () => {
         setEpisodeOrder((order) => (order === 'asc' ? 'desc' : 'asc'));
         setEpisodePage(0);
@@ -125,7 +135,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
             }}
         >
             <Box sx={{display: 'flex', p: 2}}>
-                {/* Poster */}
+                {/* 海报与信息区域进入整部剧的详情页，评分由父页面提供。 */}
                 <Box
                     sx={{
                         cursor: 'pointer',
@@ -166,7 +176,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                     {poster && <PosterScoreBadge score={score}/>}
                 </Box>
 
-                {/* Info */}
+                {/* 剧名、季标签和整部剧的首播年份。 */}
                 <Box sx={{
                     flex: 1,
                     display: 'flex',
@@ -200,7 +210,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                     </Box>
                 </Box>
 
-                {/* Quick Edit Button */}
+                {/* 快捷编辑只操作当前季的观看状态和记录。 */}
                 <Box sx={{display: 'flex', alignItems: 'flex-start', pt: 0.5}}>
                     <HomeQuickEdit
                         recordKey={`tv_${tvId}_s${seasonNumber}`}
@@ -287,6 +297,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                     />
                 </Box>
 
+                {/* 子组件只接收当前页集数；隐藏其局部进度，使用上方整季进度。 */}
                 {season && (
                     <EpisodeGrid
                         tvId={tvId}

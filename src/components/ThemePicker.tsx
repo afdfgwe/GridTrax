@@ -5,6 +5,7 @@ import React, {useState} from 'react';
 import {useThemeStore} from '../store/useThemeStore';
 import {PREDEFINED_THEMES} from '../theme/themes';
 
+/** 工具栏主题菜单：锚点是临时界面状态，主题标识交由存储持久化。 */
 const ThemePicker: React.FC = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const {themeId, setThemeId} = useThemeStore();
@@ -38,6 +39,7 @@ const ThemePicker: React.FC = () => {
                         选择主题
                     </Typography>
                 </Box>
+                {/* 色板同时预览主色和辅助色，勾选标识对应当前保存的主题。 */}
                 {PREDEFINED_THEMES.map((t) => (
                     <MenuItem
                         key={t.id}

@@ -18,6 +18,7 @@ import SeasonBlock from '../components/SeasonBlock';
 import {useProgressStore} from '../store/useProgressStore';
 import type {TMDBTVShow} from '../types';
 
+/** 电视剧详情：整剧信息来自 TMDB，本地观看记录由各 SeasonBlock 独立读取。 */
 const TvDetailPage: React.FC = () => {
     const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -26,6 +27,7 @@ const TvDetailPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [expandedOverview, setExpandedOverview] = useState(false);
 
+    // 按路由编号加载整剧详情；路由切换或卸载后忽略旧请求的结果。
     useEffect(() => {
         if (!id) return;
         let isMounted = true;
@@ -36,6 +38,7 @@ const TvDetailPage: React.FC = () => {
             .then(data => {
                 if (isMounted) {
                     setShow(data);
+                    // 为已有季记录补齐缺失的海报，不改变观看状态或最近互动时间。
                     useProgressStore.getState().fillMissingPosters('tv_season', data.id, data.poster_path);
                 }
             })
@@ -56,13 +59,13 @@ const TvDetailPage: React.FC = () => {
 
     const backdropUrl = show?.backdrop_path ? getBackdropUrl(show.backdrop_path) : '';
 
-    // Filter out specials (season 0) but keep them if the show only has specials
+    // 只展示季号大于 0 的常规季；特别篇（第 0 季）不在此页列出。
     const regularSeasons = show?.seasons.filter((s) => s.season_number > 0) ?? [];
 
     return (
         <React.Fragment>
             <Box sx={{minHeight: '100vh', backgroundColor: theme.palette.background.default}}>
-                {/* Backdrop Hero */}
+                {/* 整剧背景图；缺失时使用主题背景，不影响下方详情展示。 */}
                 <Box
                     sx={{
                         position: 'relative',
@@ -94,7 +97,7 @@ const TvDetailPage: React.FC = () => {
                             background: `linear-gradient(to bottom, transparent, ${theme.palette.background.default})`,
                         }}
                     />
-                    {/* Back button */}
+                    {/* 返回浏览器历史中的上一页。 */}
                     <IconButton
                         onClick={() => navigate(-1)}
                         sx={{
@@ -125,7 +128,7 @@ const TvDetailPage: React.FC = () => {
                         </Box>
                     ) : show ? (
                         <>
-                            {/* Show Header */}
+                            {/* 整剧概要，与下方每季的本地观看进度分开呈现。 */}
                             <Box sx={{
                                 display: 'flex',
                                 flexDirection: {xs: 'column', sm: 'row'},
@@ -133,7 +136,7 @@ const TvDetailPage: React.FC = () => {
                                 mb: 4,
                                 alignItems: {xs: 'center', sm: 'flex-start'}
                             }}>
-                                {/* Poster */}
+                                {/* 整部剧的海报，季海报由季摘要单独提供。 */}
                                 <Box
                                     component="img"
                                     src={getPosterUrl(show.poster_path, 'w342')}
@@ -151,7 +154,7 @@ const TvDetailPage: React.FC = () => {
                                         zIndex: 2,
                                     }}
                                 />
-                                {/* Info */}
+                                {/* 剧名、首播日期、评分、类型和简介均取自整剧详情接口。 */}
                                 <Box sx={{flex: 1, pt: {xs: 0, sm: 1}}}>
                                     <Typography variant="h4" fontWeight={800} gutterBottom sx={{lineHeight: 1.2}}>
                                         {show.name}
@@ -226,7 +229,7 @@ const TvDetailPage: React.FC = () => {
                                 </Box>
                             </Box>
 
-                            {/* Season Blocks */}
+                            {/* 每季独立管理展开和加载状态，默认展开第一项。 */}
                             <Typography variant="h6" fontWeight={700} sx={{mb: 2, color: primary}}>
                                 全部季数
                             </Typography>

@@ -22,14 +22,17 @@ import {useProgressStore} from '../store/useProgressStore';
 import type {ProgressData} from '../types';
 import {createBackup, parseBackup} from '../utils/dataBackup';
 
+/** JSON 备份入口：导出当前快照，导入须先校验再确认整体替换，不做记录合并。 */
 export default function DataBackupPanel() {
     const [open, setOpen] = useState(false);
     const [reading, setReading] = useState(false);
+    // 待确认数据与正式存储隔离，读取文件或取消确认都不会改动现有记录。
     const [pending, setPending] = useState<ProgressData | null>(null);
     const [status, setStatus] = useState<{ severity: 'success' | 'error'; message: string } | null>(null);
     const fileInput = useRef<HTMLInputElement>(null);
     const recordCount = useProgressStore((state) => Object.keys(state.data.records).length);
 
+    // 在点击时读取最新存储快照；备份工具仅导出允许的观影字段，不包含 API 凭据。
     const exportJson = () => {
         try {
             const payload = createBackup(useProgressStore.getState().data);
@@ -40,6 +43,7 @@ export default function DataBackupPanel() {
             document.body.appendChild(anchor);
             anchor.click();
             anchor.remove();
+            // 给浏览器留出启动下载的时间，然后释放临时对象地址。
             window.setTimeout(() => URL.revokeObjectURL(url), 1000);
             setStatus({severity: 'success', message: '已生成 JSON 备份。'});
         } catch {
@@ -49,11 +53,13 @@ export default function DataBackupPanel() {
 
     const importJson = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
+        // 清空文件控件，使用户下一次仍能选择同一个文件触发导入。
         event.target.value = '';
         if (!file) return;
         setStatus(null);
         setReading(true);
         try {
+            // 解析和兼容性校验失败会抛错，只有完整合法的数据才能进入确认步骤。
             setPending(parseBackup(await file.text()));
         } catch {
             setStatus({severity: 'error', message: '导入失败：文件不是有效或受支持的 GridTrax JSON 备份，现有记录未更改。'});
@@ -65,7 +71,8 @@ export default function DataBackupPanel() {
     const confirmImport = () => {
         if (!pending) return;
         try {
-            // Persist first: quota errors must not replace the current in-memory records.
+            // 先持久化再替换内存；存储配额等错误不能覆盖用户当前的内存记录。
+            // 外层格式与 Zustand persist 一致，其中 version 是存储版本而非备份版本。
             localStorage.setItem('gridtrax-progress', JSON.stringify({state: {data: pending}, version: 0}));
             useProgressStore.setState({data: pending});
             setPending(null);
@@ -124,6 +131,7 @@ export default function DataBackupPanel() {
                     </Stack>
                 </DialogContent>
             </Dialog>
+            {/* 二次确认单独呈现覆盖风险，关闭或取消时只丢弃待导入快照。 */}
             <Dialog open={!!pending} onClose={() => setPending(null)} fullWidth maxWidth="xs"
                     aria-labelledby="backup-confirm-title">
                 <DialogTitle id="backup-confirm-title">覆盖本地记录？</DialogTitle>

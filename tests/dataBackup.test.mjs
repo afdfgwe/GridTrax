@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createBackup, parseBackup} from '../src/utils/dataBackup.ts';
 
+// 备份兼容性测试：包含第 0 季、未设置状态的电影，以及界面已不再编辑的历史字段。
 const progress = {
     user_id: 'local_user', last_sync: 123,
     records: {
@@ -15,6 +16,7 @@ const progress = {
     },
 };
 
+// 导出再导入应完整保留观影字段，同时不得原地修改传入的状态快照。
 test('roundtrips all viewing fields without changing original data', () => {
     const before = structuredClone(progress);
     const backup = createBackup(progress);
@@ -23,6 +25,7 @@ test('roundtrips all viewing fields without changing original data', () => {
     assert.deepEqual(progress, before);
 });
 
+// 兼容旧版结构，但过滤凭据和已删除集成字段，避免把历史密钥再次带入备份。
 test('imports raw, v2 and v3 backups but strips credentials and legacy integration fields', () => {
     const legacy = structuredClone(progress);
     legacy.tmdb_api_key = 'old-secret';
@@ -42,6 +45,7 @@ test('imports raw, v2 and v3 backups but strips credentials and legacy integrati
     assert.ok(!JSON.stringify(createBackup(legacy)).includes('old-secret'));
 });
 
+// 畸形结构、未知版本和字段类型错误均应整体拒绝，而不是部分覆盖用户数据。
 test('rejects malformed data and unsupported versions', () => {
     for (const input of [null, [], {}, {...progress, records: []}, {
         ...progress,
@@ -76,6 +80,7 @@ test('rejects malformed data and unsupported versions', () => {
     }
 });
 
+// 空记录是有效备份；旧接口返回的空海报应规范化为缺省字段而不是导入失败。
 test('accepts an empty backup and missing/null posters from legacy TMDB data', () => {
     const empty = {...progress, records: {}};
     assert.deepEqual(parseBackup(JSON.stringify(empty)), empty);

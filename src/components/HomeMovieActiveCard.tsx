@@ -14,6 +14,7 @@ interface HomeMovieActiveCardProps {
     year?: string;
 }
 
+/** 首页“在看”电影卡片；电影没有分集进度，仅保留元数据和状态快捷编辑。 */
 const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
                                                                      movieId,
                                                                      name,
@@ -45,7 +46,7 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
             }}
         >
             <Box sx={{display: 'flex', p: 2}}>
-                {/* Poster */}
+                {/* 点击海报进入电影详情；评分徽标不单独拦截点击。 */}
                 <Box
                     sx={{
                         cursor: 'pointer',
@@ -82,7 +83,7 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
                     {poster && <PosterScoreBadge score={score}/>}
                 </Box>
 
-                {/* Info */}
+                {/* 电影名称和上映年份，信息区域同样支持进入详情。 */}
                 <Box
                     sx={{
                         flex: 1,
@@ -103,7 +104,7 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
                     </Box>
                 </Box>
 
-                {/* Quick Edit */}
+                {/* 快捷编辑与详情导航独立，避免编辑时同时跳转。 */}
                 <Box sx={{display: 'flex', alignItems: 'flex-start', pt: 0.5}}>
                     <HomeQuickEdit
                         recordKey={`movie_${movieId}`}

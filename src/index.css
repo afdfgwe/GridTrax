@@ -1,11 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap");
 
+/* 统一盒模型，保证声明的尺寸包含内边距和边框。 */
 *,
 *::before,
 *::after {
     box-sizing: border-box;
 }
 
+/* 应用加载前的基础字体和深色兜底；运行后的页面色彩由 MUI 主题接管。 */
 html,
 body {
     margin: 0;
@@ -21,7 +23,7 @@ body {
     min-height: 100vh;
 }
 
-/* Custom scrollbar */
+/* 自定义支持这些伪元素的浏览器滚动条，不改变内容区域的滚动行为。 */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

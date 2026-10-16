@@ -17,7 +17,7 @@ import {STATUS_LABELS, type WatchStatus} from '../types';
 import {StatusIcons} from './GlobalStatusPicker';
 
 interface HomeQuickEditProps {
-    recordKey: string; // e.g. 'tv_season' or 'movie'
+    recordKey: string; // 保留调用方兼容属性；实际删除键在组件内按类型、作品编号和季号生成。
     type: 'tv_season' | 'movie';
     tmdbId: number;
     seasonNumber?: number;
@@ -32,6 +32,7 @@ interface HomeQuickEditProps {
 
 const STATUSES: WatchStatus[] = ['Wish', 'Do', 'Collect', 'OnHold', 'Dropped'];
 
+/** 首页卡片的轻量编辑弹窗：切换观看状态或删除当前电影／当前季记录。 */
 const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
                                                          type,
                                                          tmdbId,
@@ -49,6 +50,7 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
         removeRecord,
     } = useProgressStore();
 
+    // 电视剧按季取记录，电影按作品取记录，二者使用各自的存储动作。
     const record = type === 'tv_season' && seasonNumber !== undefined
         ? getSeasonRecord(tmdbId, seasonNumber)
         : type === 'movie'
@@ -59,6 +61,7 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
     const primary = theme.palette.primary.main;
 
     const handleStatusChange = (_: React.MouseEvent, val: string | null) => {
+        // 单选按钮再次点击当前项会返回空值，此处不将其解释为清除观看状态。
         if (!val) return;
         const status = val as WatchStatus;
         if (type === 'tv_season' && seasonNumber !== undefined) {
@@ -70,6 +73,7 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
 
     const titleText = meta?.show_name || meta?.name || (type === 'tv_season' ? `剧集 #${tmdbId}` : `电影 #${tmdbId}`);
     const tagText = type === 'tv_season' ? (meta?.name || `第 ${seasonNumber} 季`) : null;
+    // 必须与进度存储的键格式一致；删除一季不会连带删除同一部剧的其他季。
     const currentRecordKey = type === 'tv_season' ? `tmdb_tv_${tmdbId}_s${seasonNumber}` : `tmdb_movie_${tmdbId}`;
 
     const handleDelete = () => {
@@ -84,6 +88,7 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
             <IconButton
                 size="small"
                 onClick={(e) => {
+                    // 阻止事件冒泡到卡片的详情跳转入口。
                     e.stopPropagation();
                     setOpen(true);
                 }}

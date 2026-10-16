@@ -5,6 +5,7 @@ import React, {useCallback, useRef, useState} from 'react';
 import type {TMDBEpisode} from '../types';
 import {getEpisodeTitle} from './episodeTitle';
 
+/** 单集单元格：短按切换已看，长按或右键打开“看到这里”菜单。 */
 interface EpisodeCellProps {
     episode: TMDBEpisode;
     watched: boolean;
@@ -13,6 +14,7 @@ interface EpisodeCellProps {
     onWatchUpTo: (episodeNumber: number) => void;
 }
 
+// 超过半秒视为长按，后续抬起不再重复触发单集切换。
 const LONG_PRESS_DURATION = 500;
 
 const EpisodeCell: React.FC<EpisodeCellProps> = ({
@@ -28,12 +30,14 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const isMenuOpen = Boolean(anchorEl);
 
+    // 手势过程使用引用保存中间状态，跨事件读取且不为每次指针移动触发渲染。
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const didLongPress = useRef(false);
     const didContextMenu = useRef(false);
-    // Track touch start position to distinguish tap vs scroll
+    // 记录触摸起点，以位移区分点击和页面滚动。
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
+    // 菜单关闭既可能来自鼠标项也可能来自组件回调，仅按需访问事件方法。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMenuClose = (e?: any) => {
         if (e && e.stopPropagation) {
@@ -71,7 +75,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
 
     const handleMouseUp = useCallback(
         (e: React.MouseEvent) => {
-            if (e.button !== 0) return; // Only trigger single click for left mouse button
+            if (e.button !== 0) return; // 只有鼠标左键抬起才可能触发单集切换。
 
             if (longPressTimer.current) {
                 clearTimeout(longPressTimer.current);
@@ -112,7 +116,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
 
     const handleTouchEnd = useCallback(
         (e: React.TouchEvent) => {
-            // Suppress synthetic clicks, but leave native scrolling alone.
+            // 事件可取消时阻止触摸后的合成鼠标点击，避免同一次操作重复触发。
             if (e.cancelable) e.preventDefault();
 
             if (longPressTimer.current) {
@@ -121,14 +125,14 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
             }
             setPressed(false);
 
-            // Check if touch moved significantly (scroll gesture) — cancel single-click
+            // 位移超过 10 像素视为滚动手势，不把抬起动作当作单击。
             if (touchStartPos.current) {
                 const touch = e.changedTouches[0];
                 const dx = Math.abs(touch.clientX - touchStartPos.current.x);
                 const dy = Math.abs(touch.clientY - touchStartPos.current.y);
                 touchStartPos.current = null;
                 if (dx > 10 || dy > 10) {
-                    // User was scrolling, do not trigger action
+                    // 用户正在滑动页面，保留观看状态不变。
                     return;
                 }
             }
@@ -144,7 +148,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
 
     const handleTouchMove = useCallback(
         (e: React.TouchEvent) => {
-            // If the finger moved, cancel the long press timer
+            // 明显移动时取消长按计时，防止滚动过程中误弹出菜单。
             if (longPressTimer.current && touchStartPos.current) {
                 const touch = e.touches[0];
                 const dx = Math.abs(touch.clientX - touchStartPos.current.x);
@@ -159,6 +163,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
         []
     );
 
+    // 用应用菜单替代浏览器右键菜单，并阻止后续抬起事件切换观看状态。
     const handleContextMenu = useCallback(
         (e: React.MouseEvent) => {
             e.preventDefault();
@@ -175,7 +180,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
 
     return (
         <>
-            {/* Tooltip only shown on pointer:fine (desktop) devices */}
+            {/* 鼠标悬停显示集号和短标题；触摸端通过标题模式或长按菜单阅读。 */}
             <Tooltip
                 title={
                     <Box>
@@ -194,7 +199,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                 }
                 placement="top"
                 arrow
-                // Disable Tooltip on touch devices to avoid interference
+                // 禁用焦点和触摸触发提示，避免与移动端长按菜单相互干扰。
                 disableFocusListener
                 disableTouchListener
             >
@@ -253,7 +258,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                         gap: showTitle ? 0.5 : 0,
                         textAlign: showTitle ? 'left' : 'center',
                         '&:focus-visible': {outline: `2px solid ${primary}`, outlineOffset: 2},
-                        // Ripple overlay
+                        // 伪元素只提供短暂的按压反馈，不新增会改变布局的节点。
                         '&::after': {
                             content: '""',
                             position: 'absolute',
@@ -262,14 +267,13 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                             background: alpha('#fff', ripple ? 0.25 : 0),
                             transition: 'background 350ms ease',
                         },
-                        // Touch target ensure >= 44dp on mobile
+                        // 粗指针设备的方块固定为 44 像素，标题模式保持 88 像素高度。
                         '@media (pointer: coarse)': {
                             width: showTitle ? '100%' : 44,
                             height: showTitle ? 88 : 44,
                             minWidth: showTitle ? 0 : 44,
                         },
-                        // Allow pan-y scrolling but prevent default tap delay;
-                        // touchAction: 'none' would block scroll — use manipulation instead
+                        // 允许浏览器处理滚动等常规触摸操作，避免禁用触摸导致页面无法滑动。
                         touchAction: 'manipulation',
                         WebkitTapHighlightColor: 'transparent',
                         userSelect: 'none',

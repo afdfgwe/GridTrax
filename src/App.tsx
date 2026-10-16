@@ -7,6 +7,7 @@ import {useThemeStore} from './store/useThemeStore';
 import {createAppTheme} from './theme/theme';
 import {getThemeConfig} from './theme/themes';
 
+// 页面按路由延迟加载，首次访问时再下载对应模块，等待期间显示统一加载状态。
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const SearchPage = React.lazy(() => import('./pages/SearchPage'));
 const TvDetailPage = React.lazy(() => import('./pages/TvDetailPage'));
@@ -18,9 +19,11 @@ const LoadingFallback = () => (
     </Box>
 );
 
+/** 组合全局主题、浏览器路由和公共布局；具体业务状态由各页面读取。 */
 const App: React.FC = () => {
     const themeId = useThemeStore((state) => state.themeId);
 
+    // 只在主题标识变化时重新创建 MUI 主题，避免普通页面更新重复构建主题对象。
     const theme = useMemo(() => {
         return createAppTheme(getThemeConfig(themeId));
     }, [themeId]);
@@ -32,6 +35,7 @@ const App: React.FC = () => {
                 <ScrollToTop/>
                 <Layout>
                     <Suspense fallback={<LoadingFallback/>}>
+                        {/* 首页为追踪面板；详情路由中的 id 均为 TMDB 作品编号。 */}
                         <Routes>
                             <Route path="/" element={<HomePage/>}/>
                             <Route path="/search" element={<SearchPage/>}/>
