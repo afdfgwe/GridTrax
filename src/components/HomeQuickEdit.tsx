@@ -5,9 +5,7 @@ import {
     Dialog,
     DialogContent,
     DialogTitle,
-    Divider,
     IconButton,
-    Rating,
     ToggleButton,
     ToggleButtonGroup,
     Typography,
@@ -43,15 +41,12 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
 }) => {
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
-    const [hoverRating, setHoverRating] = React.useState<number | null>(null);
 
     const {
         getSeasonRecord,
         getMovieRecord,
         setSeasonStatus,
-        setSeasonRating,
         setMovieStatus,
-        setMovieRating,
         removeRecord,
     } = useProgressStore();
 
@@ -62,8 +57,6 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
             : undefined;
 
     const currentStatus = record?.global_status;
-    const currentRating = record?.rating ?? 0;
-    const displayScore = hoverRating ?? (currentRating > 0 ? currentRating : null);
     const primary = theme.palette.primary.main;
 
     const handleStatusChange = (_: React.MouseEvent, val: string | null) => {
@@ -73,15 +66,6 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
             setSeasonStatus(tmdbId, seasonNumber, status, meta);
         } else if (type === 'movie') {
             setMovieStatus(tmdbId, status, { name: meta?.name, poster_path: meta?.poster_path });
-        }
-    };
-
-    const handleRatingChange = (_: React.SyntheticEvent, val: number | null) => {
-        const r = val ?? 0;
-        if (type === 'tv_season' && seasonNumber !== undefined) {
-            setSeasonRating(tmdbId, seasonNumber, r);
-        } else if (type === 'movie') {
-            setMovieRating(tmdbId, r);
         }
     };
 
@@ -168,7 +152,6 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
                         sx={{
                             flexWrap: 'wrap',
                             gap: 0.5,
-                            mb: 2,
                             '& .MuiToggleButtonGroup-grouped': {
                                 border: 'none !important',
                                 mx: 0,
@@ -201,37 +184,6 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
                         ))}
                     </ToggleButtonGroup>
 
-                    <Divider sx={{ mb: 2 }} />
-
-                    <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                        评分
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Rating
-                            max={10}
-                            value={currentRating}
-                            onChange={handleRatingChange}
-                            onChangeActive={(_, val) => setHoverRating(val > 0 ? val : null)}
-                            size="small"
-                            sx={{
-                                '& .MuiRating-iconFilled': { color: primary },
-                                '& .MuiRating-iconHover': { color: alpha(primary, 0.7) },
-                            }}
-                        />
-                        {displayScore && (
-                            <Typography
-                                variant="caption"
-                                sx={{
-                                    color: hoverRating ? 'text.primary' : primary,
-                                    fontWeight: 700,
-                                    minWidth: 36,
-                                    transition: 'color 150ms ease',
-                                }}
-                            >
-                                {displayScore}/10
-                            </Typography>
-                        )}
-                    </Box>
                 </DialogContent>
             </Dialog>
         </>

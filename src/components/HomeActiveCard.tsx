@@ -37,17 +37,13 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const [episodePage, setEpisodePage] = useState(0);
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
     const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
-    const [loadingSeason, setLoadingSeason] = useState(false);
+    const [loadingSeason, setLoadingSeason] = useState(true);
 
     const { getSeasonRecord } = useProgressStore();
     const record = getSeasonRecord(tvId, seasonNumber);
 
     useEffect(() => {
         let active = true;
-
-        setSeason(null);
-        setEpisodePage(0);
-        setLoadingSeason(true);
 
         getTVSeason(tvId, seasonNumber)
             .then((nextSeason) => {
@@ -168,11 +164,6 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                         <Typography variant="body2" color="text.secondary">
                             {episodeCount ? `共 ${episodeCount} 集` : '在看'}
                         </Typography>
-                        {record?.rating ? (
-                            <Typography variant="body2" sx={{ color: primary, fontWeight: 700 }}>
-                                ★ {record.rating}/10
-                            </Typography>
-                        ) : null}
                     </Box>
                 </Box>
 

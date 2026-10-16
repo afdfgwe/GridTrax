@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import { useThemeStore } from './store/useThemeStore';
 import { createAppTheme } from './theme/theme';
+import { getThemeConfig } from './theme/themes';
 
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const SearchPage = React.lazy(() => import('./pages/SearchPage'));
@@ -17,11 +18,11 @@ const LoadingFallback = () => (
 );
 
 const App: React.FC = () => {
-  const { getActiveThemeConfig, themeId } = useThemeStore();
+  const themeId = useThemeStore((state) => state.themeId);
 
   const theme = useMemo(() => {
-    return createAppTheme(getActiveThemeConfig());
-  }, [themeId, getActiveThemeConfig]); // Rebuild theme when themeId changes
+    return createAppTheme(getThemeConfig(themeId));
+  }, [themeId]);
 
   return (
     <ThemeProvider theme={theme}>

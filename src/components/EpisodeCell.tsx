@@ -11,7 +11,6 @@ interface EpisodeCellProps {
     showTitle?: boolean;
     onSingleClick: (episodeNumber: number) => void;
     onWatchUpTo: (episodeNumber: number) => void;
-    onCommentRequest: (episode: TMDBEpisode) => void;
 }
 
 const LONG_PRESS_DURATION = 500;
@@ -22,7 +21,6 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
     showTitle = false,
     onSingleClick,
     onWatchUpTo,
-    onCommentRequest,
 }) => {
     const theme = useTheme();
     const [pressed, setPressed] = useState(false);
@@ -350,12 +348,6 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                     onWatchUpTo(episode.episode_number);
                 }}>
                     看到这里
-                </MenuItem>
-                <MenuItem onClick={(e) => {
-                    handleMenuClose(e);
-                    onCommentRequest(episode);
-                }}>
-                    添加吐槽
                 </MenuItem>
             </Menu>
         </>

@@ -3,7 +3,6 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPosterUrl } from '../api/tmdb';
-import { useProgressStore } from '../store/useProgressStore';
 import HomeQuickEdit from './HomeQuickEdit';
 
 interface HomeMovieActiveCardProps {
@@ -19,8 +18,6 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
 }) => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const { getMovieRecord } = useProgressStore();
-    const record = getMovieRecord(movieId);
 
     const primary = theme.palette.primary.main;
     const titleText = name || `电影 ID: ${movieId}`;
@@ -76,11 +73,6 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="body2" color="text.secondary">电影 · 在看</Typography>
-                        {record?.rating ? (
-                            <Typography variant="body2" sx={{ color: primary, fontWeight: 700 }}>
-                                ★ {record.rating}/10
-                            </Typography>
-                        ) : null}
                     </Box>
                 </Box>
 

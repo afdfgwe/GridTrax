@@ -1,16 +1,12 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import StarIcon from '@mui/icons-material/Star';
 import {
     Alert,
     Box,
-    Button,
     Chip,
-    Collapse,
     Container,
     IconButton,
     Skeleton,
-    TextField,
     Typography,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -27,15 +23,12 @@ const MovieDetailPage: React.FC = () => {
     const [movie, setMovie] = useState<TMDBMovie | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showComment, setShowComment] = useState(false);
     const theme = useTheme();
 
     const {
         ensureMovieRecord,
         getMovieRecord,
         setMovieStatus,
-        setMovieRating,
-        setMovieComment,
     } = useProgressStore();
 
     useEffect(() => {
@@ -164,7 +157,7 @@ const MovieDetailPage: React.FC = () => {
                                 </Box>
                             </Box>
 
-                            {/* Status & Rating */}
+                            {/* Watch status */}
                             <Box
                                 sx={{
                                     p: 3,
@@ -175,42 +168,16 @@ const MovieDetailPage: React.FC = () => {
                                 }}
                             >
                                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                                    观看状态 & 评分
+                                    观看状态
                                 </Typography>
                                 {record && (
                                     <GlobalStatusPicker
                                         status={record.global_status || 'Wish'}
-                                        rating={record.rating}
                                         onStatusChange={(s: WatchStatus) => setMovieStatus(movie.id, s, { name: movie.title, poster_path: movie.poster_path })}
-                                        onRatingChange={(r) => setMovieRating(movie.id, r)}
                                     />
                                 )}
                             </Box>
 
-                            {/* Comment */}
-                            <Box>
-                                <Button
-                                    size="small"
-                                    startIcon={<ChatBubbleOutlineIcon />}
-                                    onClick={() => setShowComment(!showComment)}
-                                    sx={{ color: 'text.secondary', textTransform: 'none' }}
-                                >
-                                    {showComment ? '收起' : '发表'} 观后感
-                                    {record?.global_comment && ' (已有评论)'}
-                                </Button>
-                                <Collapse in={showComment}>
-                                    <TextField
-                                        multiline
-                                        minRows={3}
-                                        maxRows={8}
-                                        fullWidth
-                                        placeholder="写下对这部电影的感想…"
-                                        value={record?.global_comment ?? ''}
-                                        onChange={(e) => movie && setMovieComment(movie.id, e.target.value)}
-                                        sx={{ mt: 1 }}
-                                    />
-                                </Collapse>
-                            </Box>
                         </>
                     ) : null}
                 </Container>

@@ -16,15 +16,10 @@ interface ProgressState {
     ensureSeasonRecord: (tvId: number, seasonNumber: number, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
     toggleEpisodeWatched: (tvId: number, seasonNumber: number, episodeNumber: number, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
     watchUpToEpisode: (tvId: number, seasonNumber: number, episodeNumber: number, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
-    setEpisodeComment: (tvId: number, seasonNumber: number, episodeNumber: number, comment: string) => void;
     setSeasonStatus: (tvId: number, seasonNumber: number, status: WatchStatus, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
-    setSeasonRating: (tvId: number, seasonNumber: number, rating: number) => void;
-    setSeasonComment: (tvId: number, seasonNumber: number, comment: string) => void;
     // Movie actions
     ensureMovieRecord: (movieId: number, meta?: { name?: string; poster_path?: string }) => void;
     setMovieStatus: (movieId: number, status: WatchStatus, meta?: { name?: string; poster_path?: string }) => void;
-    setMovieRating: (movieId: number, rating: number) => void;
-    setMovieComment: (movieId: number, comment: string) => void;
     // Getters
     getSeasonRecord: (tvId: number, seasonNumber: number) => SeasonRecord | undefined;
     getMovieRecord: (movieId: number) => MovieRecord | undefined;
@@ -172,28 +167,6 @@ export const useProgressStore = create<ProgressState>()(
                 });
             },
 
-            setEpisodeComment: (tvId, seasonNumber, episodeNumber, comment) => {
-                const key = seasonKey(tvId, seasonNumber);
-                get().ensureSeasonRecord(tvId, seasonNumber);
-                set((state) => {
-                    const record = state.data.records[key] as SeasonRecord;
-                    const epKey = String(episodeNumber);
-                    const current = record.episodes[epKey] ?? defaultEpisodeRecord();
-                    return {
-                        data: {
-                            ...state.data,
-                            records: {
-                                ...state.data.records,
-                                [key]: {
-                                    ...record,
-                                    episodes: { ...record.episodes, [epKey]: { ...current, comment } },
-                                },
-                            },
-                        },
-                    };
-                });
-            },
-
             setSeasonStatus: (tvId, seasonNumber, status, meta) => {
                 const key = seasonKey(tvId, seasonNumber);
                 get().ensureSeasonRecord(tvId, seasonNumber, meta);
@@ -214,34 +187,6 @@ export const useProgressStore = create<ProgressState>()(
                                     episode_count: meta.episode_count ?? (state.data.records[key] as SeasonRecord)?.episode_count,
                                 } : {}),
                             },
-                        },
-                    },
-                }));
-            },
-
-            setSeasonRating: (tvId, seasonNumber, rating) => {
-                const key = seasonKey(tvId, seasonNumber);
-                get().ensureSeasonRecord(tvId, seasonNumber);
-                set((state) => ({
-                    data: {
-                        ...state.data,
-                        records: {
-                            ...state.data.records,
-                            [key]: { ...(state.data.records[key] as SeasonRecord), rating, last_interacted: Date.now() },
-                        },
-                    },
-                }));
-            },
-
-            setSeasonComment: (tvId, seasonNumber, comment) => {
-                const key = seasonKey(tvId, seasonNumber);
-                get().ensureSeasonRecord(tvId, seasonNumber);
-                set((state) => ({
-                    data: {
-                        ...state.data,
-                        records: {
-                            ...state.data.records,
-                            [key]: { ...(state.data.records[key] as SeasonRecord), global_comment: comment },
                         },
                     },
                 }));
@@ -287,34 +232,6 @@ export const useProgressStore = create<ProgressState>()(
                         records: {
                             ...state.data.records,
                             [key]: { ...(state.data.records[key] as MovieRecord), global_status: status, last_interacted: Date.now() },
-                        },
-                    },
-                }));
-            },
-
-            setMovieRating: (movieId, rating) => {
-                const key = movieKey(movieId);
-                get().ensureMovieRecord(movieId);
-                set((state) => ({
-                    data: {
-                        ...state.data,
-                        records: {
-                            ...state.data.records,
-                            [key]: { ...(state.data.records[key] as MovieRecord), rating, last_interacted: Date.now() },
-                        },
-                    },
-                }));
-            },
-
-            setMovieComment: (movieId, comment) => {
-                const key = movieKey(movieId);
-                get().ensureMovieRecord(movieId);
-                set((state) => ({
-                    data: {
-                        ...state.data,
-                        records: {
-                            ...state.data.records,
-                            [key]: { ...(state.data.records[key] as MovieRecord), global_comment: comment },
                         },
                     },
                 }));

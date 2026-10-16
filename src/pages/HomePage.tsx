@@ -17,7 +17,6 @@ const zhCollator = new Intl.Collator('zh-Hans-CN', { sensitivity: 'base', numeri
 const SORT_LABELS: Record<SortMode, string> = {
     recent: '最近互动',
     name: '名称',
-    rating: '评分',
 };
 
 const getRecordName = (r: ProgressRecord): string => {
@@ -27,11 +26,6 @@ const getRecordName = (r: ProgressRecord): string => {
     return r.name || '';
 };
 
-/**
- * Sort records by the given mode.
- * For "rating": user rating descending; unrated items fall back to
- *               recent-interaction order and are placed AFTER all rated items.
- */
 const sortRecords = (items: ProgressRecord[], mode: SortMode): ProgressRecord[] => {
     const sorted = [...items];
     switch (mode) {
@@ -41,13 +35,6 @@ const sortRecords = (items: ProgressRecord[], mode: SortMode): ProgressRecord[] 
         case 'name':
             sorted.sort((a, b) => zhCollator.compare(getRecordName(a), getRecordName(b)));
             break;
-        case 'rating': {
-            const rated = sorted.filter((r) => r.rating > 0);
-            const unrated = sorted.filter((r) => !r.rating);
-            rated.sort((a, b) => b.rating - a.rating);
-            unrated.sort((a, b) => (b.last_interacted ?? 0) - (a.last_interacted ?? 0));
-            return [...rated, ...unrated];
-        }
     }
     return sorted;
 };
@@ -60,7 +47,7 @@ const ALL_STATUSES: WatchStatus[] = ['Do', 'Wish', 'Collect', 'OnHold', 'Dropped
 const getSectionSortMode = (status: WatchStatus): SortMode => {
     try {
         const stored = localStorage.getItem(STORAGE_PREFIX + status);
-        if (stored && (stored === 'recent' || stored === 'name' || stored === 'rating')) return stored;
+        if (stored === 'recent' || stored === 'name') return stored;
     } catch { /* noop */ }
     return 'recent';
 };
@@ -105,7 +92,7 @@ const SectionSortButton: React.FC<SectionSortButtonProps> = ({ sortMode, onSortC
                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 130 } } }}
             >
-                {(['recent', 'name', 'rating'] as SortMode[]).map((mode) => (
+                {(['recent', 'name'] as SortMode[]).map((mode) => (
                     <MenuItem
                         key={mode}
                         selected={sortMode === mode}
@@ -233,11 +220,6 @@ const HomePage: React.FC = () => {
                             ) : (
                                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                                     {tagText}
-                                </Typography>
-                            )}
-                            {record.rating > 0 && (
-                                <Typography variant="caption" sx={{ color: primary, fontWeight: 700, display: 'block', mt: 0.5 }}>
-                                    ★ {record.rating}/10
                                 </Typography>
                             )}
                         </CardContent>

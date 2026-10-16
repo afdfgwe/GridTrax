@@ -1,14 +1,8 @@
 import {
     Alert,
     Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
     LinearProgress,
     Snackbar,
-    TextField,
     Typography,
     useMediaQuery,
 } from '@mui/material';
@@ -34,12 +28,10 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
     const {
         toggleEpisodeWatched,
         watchUpToEpisode,
-        setEpisodeComment,
         getEpisodeRecord,
     } = useProgressStore();
 
     const [snackbar, setSnackbar] = useState<string | null>(null);
-    const [commentDialog, setCommentDialog] = useState<{ episode: TMDBEpisode; text: string } | null>(null);
 
     // Records are created lazily when the user interacts (toggles an episode or sets status).
     // Do NOT call ensureSeasonRecord here as it would create records for all visible seasons.
@@ -58,17 +50,6 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
         },
         [tvId, seasonNumber, watchUpToEpisode, metaPayload]
     );
-
-    const handleCommentRequest = useCallback((episode: TMDBEpisode) => {
-        const existing = getEpisodeRecord(tvId, seasonNumber, episode.episode_number);
-        setCommentDialog({ episode, text: existing.comment });
-    }, [tvId, seasonNumber, getEpisodeRecord]);
-
-    const handleCommentSave = useCallback(() => {
-        if (!commentDialog) return;
-        setEpisodeComment(tvId, seasonNumber, commentDialog.episode.episode_number, commentDialog.text);
-        setCommentDialog(null);
-    }, [commentDialog, tvId, seasonNumber, setEpisodeComment]);
 
     const watchedCount = episodes.filter(
         (ep) => getEpisodeRecord(tvId, seasonNumber, ep.episode_number).watched
@@ -122,7 +103,6 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
                             showTitle={titleView}
                             onSingleClick={handleSingleClick}
                             onWatchUpTo={handleWatchUpTo}
-                            onCommentRequest={handleCommentRequest}
                         />
                     );
                 })}
@@ -145,46 +125,6 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({ tvId, seasonNumber, episodes,
                 </Alert>
             </Snackbar>
 
-            {/* Comment Dialog */}
-            <Dialog
-                open={!!commentDialog}
-                onClose={() => setCommentDialog(null)}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{ sx: { borderRadius: 2, backgroundColor: 'background.paper' } }}
-            >
-                <DialogTitle>
-                    第 {commentDialog?.episode.episode_number} 集吐槽
-                    {commentDialog?.episode.name && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            {commentDialog.episode.name}
-                        </Typography>
-                    )}
-                </DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        multiline
-                        minRows={3}
-                        maxRows={8}
-                        fullWidth
-                        placeholder="写下你对这集的想法…"
-                        value={commentDialog?.text ?? ''}
-                        onChange={(e) =>
-                            setCommentDialog((prev) => (prev ? { ...prev, text: e.target.value } : null))
-                        }
-                        sx={{ mt: 1 }}
-                    />
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={() => setCommentDialog(null)} color="inherit">
-                        取消
-                    </Button>
-                    <Button onClick={handleCommentSave} variant="contained" sx={{ borderRadius: 2 }}>
-                        保存吐槽
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Box>
     );
 };

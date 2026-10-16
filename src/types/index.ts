@@ -95,7 +95,7 @@ export interface SeasonRecord {
   rating: number; // 0-10
   global_comment: string;
   episodes: Record<string, EpisodeRecord>;
-  /** Unix ms timestamp of last user interaction (status/episode/rating change) */
+  /** Unix ms timestamp of last user interaction (status/episode change) */
   last_interacted?: number;
 }
 
@@ -145,4 +145,4 @@ export const STATUS_COLORS: Record<WatchStatus, string> = {
 };
 
 /** Sorting modes for home page */
-export type SortMode = 'recent' | 'name' | 'rating';
+export type SortMode = 'recent' | 'name';

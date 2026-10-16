@@ -1,17 +1,14 @@
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
+    Alert,
     Box,
-    Button,
     Chip,
-    Collapse,
     IconButton,
     Skeleton,
-    TextField,
     Tooltip,
     Typography,
 } from '@mui/material';
@@ -36,29 +33,37 @@ interface SeasonBlockProps {
 const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPath, seasonSummary, defaultExpanded = false }) => {
     const theme = useTheme();
     const [season, setSeason] = useState<TMDBSeason | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(defaultExpanded);
+    const [seasonError, setSeasonError] = useState(false);
     const [expanded, setExpanded] = useState(defaultExpanded);
-    const [showComment, setShowComment] = useState(false);
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
     const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
 
     const {
         getSeasonRecord,
         setSeasonStatus,
-        setSeasonRating,
-        setSeasonComment,
     } = useProgressStore();
 
     const record = getSeasonRecord(tvId, seasonSummary.season_number);
     const primary = theme.palette.primary.main;
 
     useEffect(() => {
-        if (expanded && !season && !loading) {
-            setLoading(true);
-            getTVSeason(tvId, seasonSummary.season_number)
-                .then(setSeason)
-                .finally(() => setLoading(false));
-        }
+        if (!expanded || !loading || season) return;
+
+        let active = true;
+        getTVSeason(tvId, seasonSummary.season_number)
+            .then((nextSeason) => {
+                if (!active) return;
+                setSeason(nextSeason);
+                setLoading(false);
+            })
+            .catch(() => {
+                if (!active) return;
+                setSeasonError(true);
+                setLoading(false);
+            });
+
+        return () => { active = false; };
     }, [expanded, tvId, seasonSummary.season_number, season, loading]);
 
     const metaPayload = {
@@ -89,7 +94,13 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPat
     return (
         <Accordion
             expanded={expanded}
-            onChange={(_, isExpanded) => setExpanded(isExpanded)}
+            onChange={(_, isExpanded) => {
+                setExpanded(isExpanded);
+                if (isExpanded && !season) {
+                    setSeasonError(false);
+                    setLoading(true);
+                }
+            }}
             sx={{
                 backgroundColor: alpha(primary, 0.05),
                 border: `1px solid ${alpha(primary, 0.15)}`,
@@ -136,16 +147,14 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPat
             </AccordionSummary>
 
             <AccordionDetails sx={{ px: 2, pb: 2 }}>
-                {/* Status & Rating - only render when accordion is open */}
+                {/* Watch status - only render when accordion is open */}
                 <Box sx={{ mb: 2 }}>
                     <GlobalStatusPicker
                         status={record?.global_status ?? undefined}
-                        rating={record?.rating ?? 0}
                         onStatusChange={(s: WatchStatus) => {
                             // This is the primary trigger that creates the record and sets status
                             setSeasonStatus(tvId, seasonSummary.season_number, s, metaPayload);
                         }}
-                        onRatingChange={(r) => setSeasonRating(tvId, seasonSummary.season_number, r)}
                     />
                 </Box>
 
@@ -157,6 +166,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPat
                         ))}
                     </Box>
                 )}
+                {seasonError && <Alert severity="error" sx={{ mb: 2 }}>集数加载失败，请收起后重试。</Alert>}
 
                 {/* Episode Grid */}
                 {season && (
@@ -193,34 +203,6 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({ tvId, showName, showPosterPat
                     </>
                 )}
 
-                {/* Overall Comment */}
-                <Box sx={{ mt: 2 }}>
-                    <Button
-                        size="small"
-                        startIcon={<ChatBubbleOutlineIcon />}
-                        onClick={() => setShowComment(!showComment)}
-                        sx={{ color: 'text.secondary', textTransform: 'none' }}
-                    >
-                        {showComment ? '收起' : '发表'} 整季吐槽
-                        {record?.global_comment && ' (已有吐槽)'}
-                    </Button>
-                    <Collapse in={showComment}>
-                        <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <TextField
-                                multiline
-                                minRows={2}
-                                maxRows={6}
-                                fullWidth
-                                placeholder="写下对这一季的整体感受…"
-                                value={record?.global_comment ?? ''}
-                                onChange={(e) =>
-                                    setSeasonComment(tvId, seasonSummary.season_number, e.target.value)
-                                }
-                                size="small"
-                            />
-                        </Box>
-                    </Collapse>
-                </Box>
             </AccordionDetails>
         </Accordion>
     );
