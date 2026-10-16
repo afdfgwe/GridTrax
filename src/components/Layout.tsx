@@ -1,6 +1,5 @@
 import MovieIcon from '@mui/icons-material/Movie';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { AppBar, Box, Container, IconButton, Menu, Toolbar, Typography, useScrollTrigger } from '@mui/material';
+import { AppBar, Box, Container, Toolbar, Typography, useScrollTrigger } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
@@ -40,52 +39,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-    const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState<null | HTMLElement>(null);
-    const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-
-    const handleMobileMenuClose = () => {
-        setMobileMoreAnchorEl(null);
-    };
-
-    const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setMobileMoreAnchorEl(event.currentTarget);
-    };
-
-    const mobileMenuId = 'primary-search-account-menu-mobile';
-    const renderMobileMenu = (
-        <Menu
-            anchorEl={mobileMoreAnchorEl}
-            anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-            }}
-            id={mobileMenuId}
-            keepMounted
-            transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-            }}
-            open={isMobileMenuOpen}
-            onClose={handleMobileMenuClose}
-            PaperProps={{
-                sx: { 
-                    borderRadius: 3, 
-                    mt: 1.5,
-                    minWidth: 180,
-                    p: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1
-                }
-            }}
-        >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
-                <DataBackupPanel />
-                <ThemePicker />
-            </Box>
-        </Menu>
-    );
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default' }}>
@@ -102,7 +56,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     alignItems: 'center',
                                     textDecoration: 'none',
                                     color: 'inherit',
-                                    gap: 1.5
+                                    gap: { xs: 1, sm: 1.5 },
+                                    flexShrink: 0
                                 }}
                             >
                                 <Box
@@ -124,7 +79,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     noWrap
                                     sx={{
                                         fontWeight: 800,
-                                        letterSpacing: '-0.5px',
+                                        letterSpacing: 0,
                                         background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                                         WebkitBackgroundClip: 'text',
                                         WebkitTextFillColor: 'transparent',
@@ -134,35 +89,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 </Typography>
                             </Box>
 
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: { xs: isSearchExpanded ? 1 : 0, sm: 0 }, justifyContent: { xs: isSearchExpanded ? 'center' : 'flex-end', sm: 'flex-end' } }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, minWidth: 0, flexGrow: { xs: isSearchExpanded ? 1 : 0, sm: 0 }, justifyContent: 'flex-end' }}>
                                 <SearchBar onExpandChange={setIsSearchExpanded} />
-                                
-                                {/* Desktop Menu */}
-                                <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
                                     <DataBackupPanel />
                                     <ThemePicker />
-                                </Box>
-
-                                {/* Mobile Menu Icon - Hidden when search expanded */}
-                                <Box sx={{ display: { xs: isSearchExpanded ? 'none' : 'flex', sm: 'none' } }}>
-                                    <IconButton
-                                        size="large"
-                                        aria-label="show more"
-                                        aria-controls={mobileMenuId}
-                                        aria-haspopup="true"
-                                        onClick={handleMobileMenuOpen}
-                                        color="inherit"
-                                        sx={{ color: 'text.secondary' }}
-                                    >
-                                        <MoreVertIcon />
-                                    </IconButton>
                                 </Box>
                             </Box>
                         </Toolbar>
                     </Container>
                 </AppBar>
             </ElevationScroll>
-            {renderMobileMenu}
             <Box component="main" sx={{ flexGrow: 1, pt: { xs: 8, sm: 9 }, pb: 4 }}>
                 {children}
             </Box>

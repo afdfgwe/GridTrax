@@ -1,6 +1,6 @@
 import CheckIcon from '@mui/icons-material/Check';
 import PaletteIcon from '@mui/icons-material/Palette';
-import { Box, IconButton, Menu, MenuItem, Typography } from '@mui/material';
+import { Box, IconButton, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import { useThemeStore } from '../store/useThemeStore';
 import { PREDEFINED_THEMES } from '../theme/themes';
@@ -19,9 +19,11 @@ const ThemePicker: React.FC = () => {
 
     return (
         <Box>
-            <IconButton onClick={handleClick} sx={{ color: 'text.secondary', ml: 1 }}>
-                <PaletteIcon />
-            </IconButton>
+            <Tooltip title="切换主题" arrow>
+                <IconButton aria-label="切换主题" aria-haspopup="menu" aria-expanded={Boolean(anchorEl)} onClick={handleClick} sx={{ color: 'text.secondary' }}>
+                    <PaletteIcon />
+                </IconButton>
+            </Tooltip>
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}

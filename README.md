@@ -10,7 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-6.x-646CFF.svg?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.x-646CFF.svg?logo=vite&logoColor=white)](https://vitejs.dev/)
 
 </div>
 
@@ -30,9 +30,11 @@
 
 ## ✨ 核心特性
 
-- **Base46 动态主题**：内置多种精调的高级色彩主题（如 Ocean, Dracula, TokyoNight 等），随心切换。
+- **明暗主题**：内置 Ocean、Dracula、TokyoNight 等暗色主题，以及 Sunlit Mint 明亮主题，可手动切换。
 - **海量数据源支持**：集成 [TMDB API](https://www.themoviedb.org/)，提供极其丰富的全球影视/动漫元数据。
 - **集数网格**：为每一季的每一个单集生成独立网格，长按/点击即可轻松打卡。
+- **集数分页与排序**：正在追踪列表每页显示 18 集，支持上一页、下一页和正序/倒序排列。
+- **手机标题列表**：接口返回有效单集短标题时，可在集数网格和标题列表之间切换。
 - **数据备份**：仅保留 JSON 导入导出，导入前校验文件并确认覆盖，不包含账号信息或 API Token。
 - **响应式设计**：流畅支持桌面端和移动端浏览的操作体验。
 
@@ -43,135 +45,79 @@
 | 类别       | 技术 / 框架 |
 | ---------- | :--- |
 | **框架**   | [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) |
-| **构建**   | [Vite](https://vitejs.dev/) |
+| **构建**   | [Vite 7](https://vitejs.dev/) |
 | **UI 组件** | [Material UI (MUI)](https://mui.com/) v7 |
 | **状态管理**| [Zustand](https://zustand-demo.pmnd.rs/) (带 `persist` 持久化) |
 | **网络请求**| `Axios` (TMDB) |
-| **色彩提取**| `colorthief` (智能提取海报主色调) |
 
 ---
 
-## 🚀 部署与使用教程
+## Cloudflare Pages 部署
 
-这是一个纯前端 SPA 项目，构建产物为静态文件。可部署在任何静态托管服务（Vercel, Cloudflare Pages）、Docker 或 Node.js 环境中。
+本项目是纯前端 SPA，当前仓库仅保留 Cloudflare Pages 部署配置。构建命令为 `npm run build`，静态产物输出到 `dist/`，无需额外后端服务。
 
-### 🔑 准备工作：获取 TMDB API Key
+### 1. 连接仓库并配置构建
 
-1. 注册并登录 [TMDB](https://www.themoviedb.org/)。
-2. 进入 Account Settings → API，申请一个 API Key (v4 auth - API Read Access Token)。
-3. 在项目根目录创建 `.env.local` 文件：
-   ```env
-   VITE_TMDB_BEARER=您的BearerToken
-   ```
+在 [Cloudflare 控制台](https://dash.cloudflare.com/) 中创建 Pages 项目并连接自己的 Git 仓库，设置以下构建参数：
 
-Token 填写 API Read Access Token，不要添加 `Bearer ` 前缀。网页中不再提供 Token 设置，也不再读取旧的浏览器 Token 配置。本地修改 `.env.local` 后需重启开发服务；Cloudflare Pages 则在构建环境变量中填写，不需要提交 `.env.local`。
+| 配置项 | 值 |
+| --- | --- |
+| 构建命令 | `npm run build` |
+| 构建输出目录 | `dist` |
+| 项目根目录 | 仓库根目录 |
+| Node.js | 22.12.0 或更高版本 |
 
-> `VITE_` 变量会被嵌入浏览器可下载的前端代码，并非服务端秘密。请勿把 `.env.local` 或真实 Token 提交到公开仓库。
+根目录的 `wrangler.jsonc` 已声明 `pages_build_output_dir` 为 `dist`，请保留该文件。
 
----
+### 2. 配置 TMDB Token
 
-### 方式一：Cloudflare Pages 免费零代码部署
+准备好 TMDB 的 **API Read Access Token**，在 Pages 对应部署环境的构建环境变量中添加：
 
-[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/aronnaxlin/GridTrax)
-
-#### 1. 连接 GitHub 仓库
-1. 登录 [Cloudflare 控制台](https://dash.cloudflare.com/)。
-2. 在左侧菜单中前往 **Workers & Pages**。
-3. 点击 **Create application** -> **Pages** -> **Connect to Git**。
-4. 选中您的 `GridTrax` Fork 仓库并点击继续。
-
-#### 2. 配置构建参数
-在“Set up builds and deployments”页面填写如下参数：
-- **Framework preset**: `Vite` (若列表中没有，请选择 `None`)
-- **Build command**: `npm run build`
-- **Build output directory**: `dist`
-
-#### 3. 部署并设置环境变量
-1. 展开下方的 **Environment variables (advanced)**。
-2. 添加变量：变量名为 `VITE_TMDB_BEARER`，值为您的 TMDB v4 Token。
-3. 点击 **Save and Deploy**。如果修改环境变量，需重新构建部署才能生效；需要预览部署时，也应为对应环境配置变量。
-
----
-
-### 方式二：Docker 部署 (适合服务器/NAS 用户)
-
-项目已针对 Docker 进行优化，支持一键部署到云服务器、群晖 NAS 等。镜像中**不包含**任何私密 Token，所有配置均在运行时动态注入。
-
-#### 1. 使用 Docker Compose (最简单)
-
-下载或创建 `docker-compose.yml` 并运行：
-
-```yaml
-services:
-  gridtrax:
-    image: aronnaxlin/gridtrax:latest
-    container_name: gridtrax
-    ports:
-      - "721:721"
-    environment:
-      # 方式 A：直接指定环境变量 (推荐)
-      - VITE_TMDB_BEARER=您的_TMDB_V4_TOKEN
-    volumes:
-      # 方式 B：通过挂载读取本地 .env.local 文件
-      - ./.env.local:/app/.env.local:ro
-    restart: always
+```env
+VITE_TMDB_BEARER=your_tmdb_read_access_token
 ```
 
-直接启动：
-```bash
-docker compose up -d
-```
+- 填写完整的 Read Access Token，不是 API Key；不要添加 `Bearer ` 前缀。
+- 线上部署不需要提交 `.env.local`，直接使用 Pages 中配置的变量。
+- 网页中没有 Token 设置入口，也不会读取旧版保存在浏览器中的 Token。
+- 需要预览部署时，也应为对应环境配置该变量。
 
-运行容器前必须通过环境变量或挂载配置提供 Token，网页中不再提供填写入口。
+### 3. 构建与更新
 
-#### 2. 手动构建镜像或推送到 Docker Hub
+保存配置并部署。之后更新代码或修改 `VITE_TMDB_BEARER` 时，需要重新构建部署；仅修改环境变量不会改变已经生成的前端文件。
 
-```bash
-# 构建镜像
-docker build -t <your-username>/gridtrax:latest .
-
-# 手动运行
-docker run -d --name gridtrax -p 721:721 -e VITE_TMDB_BEARER=您的_TMDB_V4_TOKEN --restart unless-stopped <your-username>/gridtrax:latest
-```
-
-> [!NOTE]
-> **关于安全性**：项目构建时，Token 会被置为安全占位符。容器启动时 `entrypoint.sh` 脚本则会自动将占位符替换为运行时环境变量中的真实值，因此您可以把镜像放心地推入 Docker Hub 等公共镜像仓库使用。
+> `VITE_` 变量会被嵌入浏览器可下载的前端代码，并非服务端秘密。请勿把 `.env.local` 或真实 Token 提交到公开仓库。如果文件已被 Git 跟踪，仅添加忽略规则不会让它退出版本管理。
 
 ---
 
-### 方式三：一键脚本部署 (Linux 环境)
+## 本地开发与预览
+
+本地开发用于修改和验证页面，不是额外的线上部署方式。使用 Node.js 22.12.0 或更高版本，在项目根目录安装依赖：
 
 ```bash
-chmod +x deploy.sh
-
-./deploy.sh                  # HTTP 模式部署
-./deploy.sh --ssl            # HTTPS 模式部署 (需要本机已配置前置条件)
-./deploy.sh --port 8080      # 自定义端口
-./deploy.sh --ssl --port 443 # HTTPS + 自定义端口
+npm ci
 ```
 
----
+在根目录创建仅供本机使用的 `.env.local`：
 
-### 方式四：NPM 直接本地启动部署
+```env
+VITE_TMDB_BEARER=your_tmdb_read_access_token
+```
 
-无需 Docker，直接使用 Node.js（≥ 18）环境：
+启动开发服务，访问终端输出的本地地址：
 
 ```bash
-# 克隆并安装依赖
-git clone https://github.com/yourusername/GridTrax.git
-cd GridTrax
-npm install
-
-# 配置 .env.local (见上方准备工作)
-
-# 开发模式运行
 npm run dev
-
-# 构建并启动静态服务 (端口运行于 721)
-npm run serve
 ```
 
-> ⚠️ 生成的 `dist/` 目录也可以直接托付给 Nginx / Apache / Caddy 等传统 Web 服务器静态代理。使用 Nginx 时请务必配置路由回退：`try_files $uri $uri/ /index.html;` 以兼容前端 SPA 动态路由。
+修改 `.env.local` 后需重启开发服务。检查生产构建并在本地预览：
+
+```bash
+npm run build
+npm run preview
+```
+
+`preview` 当前配置端口为 `721`，实际地址以终端输出为准。它只用于本地检查构建产物，线上仍由 Cloudflare Pages 托管。
 
 ---
 

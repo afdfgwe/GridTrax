@@ -44,6 +44,7 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
                 display: 'flex',
                 alignItems: 'center',
                 width: expanded ? { xs: '100%', sm: 300, md: 400 } : 48,
+                minWidth: 0,
                 transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s',
                 backgroundColor: expanded ? 'background.paper' : 'transparent',
                 borderRadius: 8,
@@ -65,6 +66,7 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
                 sx={{
                     ml: 1,
                     flex: 1,
+                    minWidth: 0,
                     opacity: expanded ? 1 : 0,
                     transition: 'opacity 0.2s',
                     pointerEvents: expanded ? 'auto' : 'none',
