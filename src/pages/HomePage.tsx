@@ -300,7 +300,7 @@ const HomePage: React.FC = () => {
         const key = `${record.type}-${record.tmdb_id}-${isTv ? tvRecord?.season_number : ''}`;
 
         return (
-            <Grid key={key} size={{xs: 6, sm: 4, md: 3, lg: 2.4}}>
+            <Grid key={key} size={{xs: 4, sm: 4, md: 3, lg: 2.4}}>
                 <Card
                     sx={{
                         height: '100%',
@@ -340,7 +340,7 @@ const HomePage: React.FC = () => {
                             {record.poster_path &&
                                 <PosterScoreBadge score={scores[`${record.type}-${record.tmdb_id}`]}/>}
                         </Box>
-                        <CardContent sx={{flex: 1, p: 1.5, pb: '12px !important'}}>
+                        <CardContent sx={{flex: 1, p: {xs: 1, sm: 1.5}, pb: '12px !important'}}>
                             <Typography variant="body2" fontWeight={700} noWrap title={titleText}>
                                 {titleText}
                             </Typography>
@@ -476,7 +476,7 @@ const HomePage: React.FC = () => {
                                     {items.length === 0 && (
                                         <Typography variant="body2" color="text.secondary">没有符合条件的影片</Typography>
                                     )}
-                                    <Grid container spacing={2}>
+                                    <Grid container spacing={{xs: 1, sm: 2}}>
                                         {items.map(renderCompactCard)}
                                     </Grid>
                                 </Box>
