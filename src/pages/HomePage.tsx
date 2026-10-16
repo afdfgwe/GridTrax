@@ -368,7 +368,7 @@ const HomePage: React.FC = () => {
                                         {tagText}
                                     </Typography>
                                 )}
-                                {year && <Typography component="span" variant="caption" color="text.secondary" sx={{flexShrink: 0, whiteSpace: 'nowrap', fontSize: {xs: '0.65rem', sm: '0.75rem'}}}>{year}年</Typography>}
+                                {year && <Typography component="span" variant="caption" color="text.secondary" sx={{flexShrink: 0, whiteSpace: 'nowrap', fontSize: '0.75rem'}}>{year}年</Typography>}
                             </Box>
                         </CardContent>
                     </CardActionArea>
