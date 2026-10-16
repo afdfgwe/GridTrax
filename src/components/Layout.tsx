@@ -5,9 +5,8 @@ import { alpha, useTheme } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import BangumiSyncPanel from './BangumiSyncPanel';
+import DataBackupPanel from './DataBackupPanel';
 import SearchBar from './SearchBar';
-import SyncPanel from './SyncPanel';
 import ThemePicker from './ThemePicker';
 
 interface Props {
@@ -82,8 +81,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }}
         >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
-                <SyncPanel />
-                <BangumiSyncPanel />
+                <DataBackupPanel />
                 <ThemePicker />
             </Box>
         </Menu>
@@ -141,8 +139,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 
                                 {/* Desktop Menu */}
                                 <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1 }}>
-                                    <SyncPanel />
-                                    <BangumiSyncPanel />
+                                    <DataBackupPanel />
                                     <ThemePicker />
                                 </Box>
 

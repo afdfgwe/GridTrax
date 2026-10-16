@@ -91,10 +91,6 @@ export interface SeasonRecord {
   show_name?: string;
   poster_path?: string;
   episode_count?: number;
-  bangumi_subject_id?: number;
-  bangumi_episode_ids?: Record<string, number>; // sort_number → bangumi_episode_id
-  /** true = already searched Bangumi; false/undefined = new, not yet scanned */
-  bangumi_scanned?: boolean;
   global_status?: WatchStatus;
   rating: number; // 0-10
   global_comment: string;
@@ -120,27 +116,15 @@ export type ProgressRecord = SeasonRecord | MovieRecord;
 export interface ProgressData {
   user_id: string;
   last_sync: number;
-  tmdb_api_key?: string;
   records: Record<string, ProgressRecord>;
 }
 
-export interface SyncPayload {
+export interface BackupPayload {
   metadata: {
     version: number;
     exported_at: string;
   };
   progressData: ProgressData;
-  bangumi?: {
-    token: string;
-    username: string;
-    userId: number | null;
-    nickname: string;
-    lastSyncAt: number | null;
-    autoSyncEnabled: boolean;
-  };
-  settings?: {
-    tmdbApiKey: string;
-  };
 }
 
 // UI helper
