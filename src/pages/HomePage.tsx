@@ -344,14 +344,17 @@ const HomePage: React.FC = () => {
                             <Typography variant="body2" fontWeight={700} noWrap title={titleText}>
                                 {titleText}
                             </Typography>
-                            <Box sx={{display: 'flex', alignItems: 'center', flexWrap: 'wrap', columnGap: 0.75, rowGap: 0.25, mt: 0.5}}>
+                            <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 0.75}, minWidth: 0, mt: 0.5}}>
                                 {isTv && titleText !== tagText ? (
                                     <Typography
                                         component="span"
+                                        noWrap
+                                        title={tagText}
                                         sx={{
+                                            minWidth: 0,
                                             backgroundColor: alpha(primary, 0.15),
                                             color: primary,
-                                            px: 0.75,
+                                            px: {xs: 0.375, sm: 0.75},
                                             py: 0.25,
                                             borderRadius: 1,
                                             fontSize: '0.65rem',
@@ -361,11 +364,11 @@ const HomePage: React.FC = () => {
                                         {tagText}
                                     </Typography>
                                 ) : (
-                                    <Typography component="span" variant="caption" color="text.secondary">
+                                    <Typography component="span" variant="caption" color="text.secondary" noWrap title={tagText} sx={{minWidth: 0, fontSize: {xs: '0.65rem', sm: '0.75rem'}}}>
                                         {tagText}
                                     </Typography>
                                 )}
-                                {year && <Typography component="span" variant="caption" color="text.secondary">{year}年</Typography>}
+                                {year && <Typography component="span" variant="caption" color="text.secondary" sx={{flexShrink: 0, whiteSpace: 'nowrap', fontSize: {xs: '0.65rem', sm: '0.75rem'}}}>{year}年</Typography>}
                             </Box>
                         </CardContent>
                     </CardActionArea>
