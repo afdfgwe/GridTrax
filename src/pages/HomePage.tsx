@@ -1,3 +1,4 @@
+import FilterListIcon from '@mui/icons-material/FilterList';
 import SortIcon from '@mui/icons-material/Sort';
 import {
     Box,
@@ -37,6 +38,15 @@ const zhCollator = new Intl.Collator('zh-Hans-CN', {sensitivity: 'base', numeric
 const SORT_LABELS: Record<SortMode, string> = {
     recent: '最近互动',
     name: '名称',
+    rating: '评分',
+};
+
+type MediaFilter = 'all' | ProgressRecord['type'];
+
+const FILTER_LABELS: Record<MediaFilter, string> = {
+    all: '全部',
+    tv_season: '电视剧',
+    movie: '电影',
 };
 
 const getRecordName = (r: ProgressRecord): string => {
@@ -46,7 +56,7 @@ const getRecordName = (r: ProgressRecord): string => {
     return r.name || '';
 };
 
-const sortRecords = (items: ProgressRecord[], mode: SortMode): ProgressRecord[] => {
+const sortRecords = (items: ProgressRecord[], mode: SortMode, scores: Record<string, number>): ProgressRecord[] => {
     const sorted = [...items];
     switch (mode) {
         case 'recent':
@@ -55,6 +65,12 @@ const sortRecords = (items: ProgressRecord[], mode: SortMode): ProgressRecord[] 
         case 'name':
             sorted.sort((a, b) => zhCollator.compare(getRecordName(a), getRecordName(b)));
             break;
+        case 'rating':
+            sorted.sort((a, b) =>
+                (scores[`${b.type}-${b.tmdb_id}`] ?? 0) - (scores[`${a.type}-${a.tmdb_id}`] ?? 0)
+                || (b.last_interacted ?? 0) - (a.last_interacted ?? 0)
+            );
+            break;
     }
     return sorted;
 };
@@ -62,12 +78,13 @@ const sortRecords = (items: ProgressRecord[], mode: SortMode): ProgressRecord[] 
 // ─── Per-section localStorage persistence ────────────────────
 
 const STORAGE_PREFIX = 'gridtrax-sort-';
+const FILTER_STORAGE_PREFIX = 'gridtrax-media-filter-';
 const ALL_STATUSES: WatchStatus[] = ['Do', 'Wish', 'Collect', 'OnHold', 'Dropped'];
 
 const getSectionSortMode = (status: WatchStatus): SortMode => {
     try {
         const stored = localStorage.getItem(STORAGE_PREFIX + status);
-        if (stored === 'recent' || stored === 'name') return stored;
+        if (stored === 'recent' || stored === 'name' || stored === 'rating') return stored;
     } catch { /* noop */
     }
     return 'recent';
@@ -76,6 +93,22 @@ const getSectionSortMode = (status: WatchStatus): SortMode => {
 const saveSectionSortMode = (status: WatchStatus, mode: SortMode) => {
     try {
         localStorage.setItem(STORAGE_PREFIX + status, mode);
+    } catch { /* noop */
+    }
+};
+
+const getSectionMediaFilter = (status: WatchStatus): MediaFilter => {
+    try {
+        const stored = localStorage.getItem(FILTER_STORAGE_PREFIX + status);
+        if (stored === 'tv_season' || stored === 'movie') return stored;
+    } catch { /* noop */
+    }
+    return 'all';
+};
+
+const saveSectionMediaFilter = (status: WatchStatus, filter: MediaFilter) => {
+    try {
+        localStorage.setItem(FILTER_STORAGE_PREFIX + status, filter);
     } catch { /* noop */
     }
 };
@@ -116,7 +149,7 @@ const SectionSortButton: React.FC<SectionSortButtonProps> = ({sortMode, onSortCh
                 transformOrigin={{vertical: 'top', horizontal: 'right'}}
                 slotProps={{paper: {sx: {borderRadius: 2, minWidth: 130}}}}
             >
-                {(['recent', 'name'] as SortMode[]).map((mode) => (
+                {(['recent', 'name', 'rating'] as SortMode[]).map((mode) => (
                     <MenuItem
                         key={mode}
                         selected={sortMode === mode}
@@ -127,6 +160,59 @@ const SectionSortButton: React.FC<SectionSortButtonProps> = ({sortMode, onSortCh
                         sx={{fontSize: '0.85rem', fontWeight: sortMode === mode ? 700 : 400}}
                     >
                         {SORT_LABELS[mode]}
+                    </MenuItem>
+                ))}
+            </Menu>
+        </>
+    );
+};
+
+interface SectionMediaFilterButtonProps {
+    filter: MediaFilter;
+    onFilterChange: (filter: MediaFilter) => void;
+    primary: string;
+}
+
+const SectionMediaFilterButton: React.FC<SectionMediaFilterButtonProps> = ({filter, onFilterChange, primary}) => {
+    const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+    return (
+        <>
+            <IconButton
+                size="small"
+                aria-label={`影片类型：${FILTER_LABELS[filter]}`}
+                onClick={(e) => setAnchor(e.currentTarget)}
+                sx={{
+                    color: 'text.secondary',
+                    border: `1px solid ${alpha(primary, 0.15)}`,
+                    borderRadius: 1.5,
+                    px: 1,
+                    py: 0.25,
+                    gap: 0.4,
+                    ml: 1,
+                }}
+            >
+                <FilterListIcon sx={{fontSize: 16}}/>
+                <Typography variant="caption" fontSize="0.7rem" fontWeight={600}>{FILTER_LABELS[filter]}</Typography>
+            </IconButton>
+            <Menu
+                anchorEl={anchor}
+                open={Boolean(anchor)}
+                onClose={() => setAnchor(null)}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+                transformOrigin={{vertical: 'top', horizontal: 'right'}}
+                slotProps={{paper: {sx: {borderRadius: 2, minWidth: 130}}}}
+            >
+                {(['all', 'tv_season', 'movie'] as MediaFilter[]).map((option) => (
+                    <MenuItem
+                        key={option}
+                        selected={filter === option}
+                        onClick={() => {
+                            onFilterChange(option);
+                            setAnchor(null);
+                        }}
+                        sx={{fontSize: '0.85rem', fontWeight: filter === option ? 700 : 400}}
+                    >
+                        {FILTER_LABELS[option]}
                     </MenuItem>
                 ))}
             </Menu>
@@ -149,9 +235,20 @@ const HomePage: React.FC = () => {
         return init;
     });
 
+    const [mediaFilters, setMediaFilters] = useState<Record<WatchStatus, MediaFilter>>(() => {
+        const init = {} as Record<WatchStatus, MediaFilter>;
+        for (const s of ALL_STATUSES) init[s] = getSectionMediaFilter(s);
+        return init;
+    });
+
     const handleSortChange = useCallback((status: WatchStatus, mode: SortMode) => {
         setSortModes((prev) => ({...prev, [status]: mode}));
         saveSectionSortMode(status, mode);
+    }, []);
+
+    const handleMediaFilterChange = useCallback((status: WatchStatus, filter: MediaFilter) => {
+        setMediaFilters((prev) => ({...prev, [status]: filter}));
+        saveSectionMediaFilter(status, filter);
     }, []);
 
     const trackedItems = useMemo(() => {
@@ -169,10 +266,21 @@ const HomePage: React.FC = () => {
         });
         // Sort each group with its own mode
         for (const s of ALL_STATUSES) {
-            groups[s] = sortRecords(groups[s], sortModes[s]) as (SeasonRecord | MovieRecord)[];
+            groups[s] = sortRecords(groups[s], sortModes[s], scores) as (SeasonRecord | MovieRecord)[];
         }
         return groups;
-    }, [trackedItems, sortModes]);
+    }, [trackedItems, sortModes, scores]);
+
+    const visibleItemsByStatus = useMemo(() => {
+        const groups = {} as typeof itemsByStatus;
+        for (const status of ALL_STATUSES) {
+            const filter = mediaFilters[status];
+            groups[status] = filter === 'all'
+                ? itemsByStatus[status]
+                : itemsByStatus[status].filter((item) => item.type === filter);
+        }
+        return groups;
+    }, [itemsByStatus, mediaFilters]);
 
     const handleCardClick = (record: SeasonRecord | MovieRecord) => {
         if (record.type === 'tv_season') {
@@ -264,9 +372,9 @@ const HomePage: React.FC = () => {
         );
     };
 
-    // ─── Section header with inline sort button ──────────────
+    // ─── Section header with sort and type filter ─────────────
     const renderSectionHeader = (status: WatchStatus, count: number) => (
-        <Box sx={{display: 'flex', alignItems: 'center', mb: 2}}>
+        <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', rowGap: 1, mb: 2}}>
             <Typography
                 variant="subtitle1"
                 fontWeight={700}
@@ -288,6 +396,11 @@ const HomePage: React.FC = () => {
             <SectionSortButton
                 sortMode={sortModes[status]}
                 onSortChange={(mode) => handleSortChange(status, mode)}
+                primary={primary}
+            />
+            <SectionMediaFilterButton
+                filter={mediaFilters[status]}
+                onFilterChange={(filter) => handleMediaFilterChange(status, filter)}
                 primary={primary}
             />
         </Box>
@@ -314,8 +427,11 @@ const HomePage: React.FC = () => {
                         {/* ── 在看 (Do) Section ─────────────── */}
                         {itemsByStatus.Do.length > 0 && (
                             <Box sx={{mb: 6}}>
-                                {renderSectionHeader('Do', itemsByStatus.Do.length)}
-                                {itemsByStatus.Do.map((record) => {
+                                {renderSectionHeader('Do', visibleItemsByStatus.Do.length)}
+                                {visibleItemsByStatus.Do.length === 0 && (
+                                    <Typography variant="body2" color="text.secondary">没有符合条件的影片</Typography>
+                                )}
+                                {visibleItemsByStatus.Do.map((record) => {
                                     if (record.type === 'tv_season') {
                                         return (
                                             <HomeActiveCard
@@ -347,12 +463,15 @@ const HomePage: React.FC = () => {
 
                         {/* ── Other Statuses ─────────────── */}
                         {(['Wish', 'Collect', 'OnHold', 'Dropped'] as const).map((status) => {
-                            const items = itemsByStatus[status];
-                            if (items.length === 0) return null;
+                            if (itemsByStatus[status].length === 0) return null;
+                            const items = visibleItemsByStatus[status];
 
                             return (
                                 <Box key={status} sx={{mb: 5}}>
                                     {renderSectionHeader(status, items.length)}
+                                    {items.length === 0 && (
+                                        <Typography variant="body2" color="text.secondary">没有符合条件的影片</Typography>
+                                    )}
                                     <Grid container spacing={2}>
                                         {items.map(renderCompactCard)}
                                     </Grid>

@@ -145,4 +145,4 @@ export const STATUS_COLORS: Record<WatchStatus, string> = {
 };
 
 /** Sorting modes for home page */
-export type SortMode = 'recent' | 'name';
+export type SortMode = 'recent' | 'name' | 'rating';
