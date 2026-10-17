@@ -356,6 +356,30 @@ const HomePage: React.FC = () => {
                                     <Typography variant="caption" color="primary">No Poster</Typography>
                                 </Box>
                             )}
+                            {/* 年份固定在海报左上角，深色半透明底保证不同海报和主题下可读。 */}
+                            {year && (
+                                <Typography
+                                    component="span"
+                                    variant="caption"
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 4,
+                                        left: 4,
+                                        px: 0.5,
+                                        py: 0.25,
+                                        borderRadius: 0.75,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.72)',
+                                        color: '#fff',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        lineHeight: 1.25,
+                                        whiteSpace: 'nowrap',
+                                        pointerEvents: 'none',
+                                    }}
+                                >
+                                    {year}年
+                                </Typography>
+                            )}
                             {record.poster_path &&
                                 <PosterScoreBadge score={scores[`${record.type}-${record.tmdb_id}`]}/>}
                         </Box>
@@ -387,7 +411,6 @@ const HomePage: React.FC = () => {
                                         {tagText}
                                     </Typography>
                                 )}
-                                {year && <Typography component="span" variant="caption" color="text.secondary" sx={{flexShrink: 0, whiteSpace: 'nowrap', fontSize: '0.75rem'}}>{year}年</Typography>}
                             </Box>
                         </CardContent>
                     </CardActionArea>
