@@ -46,10 +46,14 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
             </Box>
 
             {months.map(month => (
-                <Box key={month.key} sx={{mb: 3}}>
+                <Box key={month.key} sx={{pb: 3}}>
                     <Box sx={{
                         display: 'flex', alignItems: 'baseline', gap: 1, py: 1.25, mb: 1,
-                        borderTop: '1px solid', borderColor: 'divider'
+                        // 吸顶范围限定在本月内，下个月进入时自然替换；偏移与 MUI 默认工具栏高度一致。
+                        position: 'sticky', top: {xs: 56, sm: 64}, zIndex: 1,
+                        [`${theme.breakpoints.down('sm')} and (orientation: landscape)`]: {top: 48},
+                        backgroundColor: 'background.default',
+                        borderTop: '1px solid', borderBottom: '1px solid', borderColor: 'divider'
                     }}>
                         <Typography component="h3" variant="body2" fontWeight={700}>{month.label}</Typography>
                         <Typography variant="caption" color="text.secondary">{month.count} 部</Typography>
