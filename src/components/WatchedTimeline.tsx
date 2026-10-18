@@ -1,0 +1,206 @@
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import MovieOutlinedIcon from '@mui/icons-material/MovieOutlined';
+import TvOutlinedIcon from '@mui/icons-material/TvOutlined';
+import {Box, ButtonBase, Typography} from '@mui/material';
+import {alpha, useTheme} from '@mui/material/styles';
+import {useMemo} from 'react';
+import {Link as RouterLink} from 'react-router-dom';
+import {getPosterUrl} from '../api/tmdb';
+import type {ProgressRecord} from '../types';
+import {groupWatchedTimeline} from '../utils/watchedTimeline';
+
+interface WatchedTimelineProps {
+    records: ProgressRecord[];
+    scores: Record<string, number>;
+    years: Record<string, string>;
+}
+
+/** 看过板块采用独立时间线，不继承旧网格的排序、类型筛选或分页偏好。 */
+export default function WatchedTimeline({records, scores, years}: WatchedTimelineProps) {
+    const theme = useTheme();
+    const primary = theme.palette.primary.main;
+    const months = useMemo(() => groupWatchedTimeline(records), [records]);
+    const count = months.reduce((total, month) => total + month.count, 0);
+
+    return (
+        <Box component="section" aria-labelledby="watched-timeline-heading" sx={{mb: 5}}>
+            <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
+                <Typography id="watched-timeline-heading" component="h2" variant="subtitle1" fontWeight={700}
+                            sx={{
+                                display: 'flex', alignItems: 'center', '&::before': {
+                                    content: '""',
+                                    width: 4,
+                                    height: 16,
+                                    backgroundColor: primary,
+                                    mr: 1,
+                                    borderRadius: 1,
+                                }
+                            }}>
+                    看过 ({count})
+                </Typography>
+                <Typography variant="caption" color="text.secondary">最近操作时间</Typography>
+            </Box>
+
+            {months.map(month => (
+                <Box key={month.key} sx={{mb: 3}}>
+                    <Box sx={{
+                        display: 'flex', alignItems: 'baseline', gap: 1, py: 1.25, mb: 1,
+                        borderTop: '1px solid', borderColor: 'divider'
+                    }}>
+                        <Typography component="h3" variant="body2" fontWeight={700}>{month.label}</Typography>
+                        <Typography variant="caption" color="text.secondary">{month.count} 部</Typography>
+                    </Box>
+
+                    {month.days.map(day => (
+                        <Box key={day.key} sx={{
+                            display: 'grid',
+                            gridTemplateColumns: {xs: '40px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'},
+                            columnGap: {xs: 1.5, sm: 2}
+                        }}>
+                            <Box sx={{textAlign: 'center', pt: 0.75}}>
+                                <Typography sx={{
+                                    fontSize: {xs: '1.25rem', sm: '1.5rem'}, fontWeight: 700,
+                                    lineHeight: 1.2, fontVariantNumeric: 'tabular-nums'
+                                }}>{day.day}</Typography>
+                                <Typography variant="caption" color="text.secondary"
+                                            sx={{fontSize: '0.7rem'}}>{day.weekday}</Typography>
+                            </Box>
+                            <Box component="ol" sx={{
+                                listStyle: 'none', m: 0, pl: {xs: 1.5, sm: 2.5}, pb: 1,
+                                borderLeft: '1px solid', borderColor: alpha(primary, 0.25)
+                            }}>
+                                {day.entries.map(({record, timestamp}, index) => {
+                                    const isTv = record.type === 'tv_season';
+                                    const title = isTv
+                                        ? record.show_name || record.name || `剧集 ID: ${record.tmdb_id}`
+                                        : record.name || `电影 ID: ${record.tmdb_id}`;
+                                    const tag = isTv
+                                        ? record.name && record.name !== title ? record.name : `第 ${record.season_number} 季`
+                                        : '电影';
+                                    const key = `${record.type}-${record.tmdb_id}`;
+                                    const score = scores[key];
+                                    const hasScore = Number.isFinite(score) && score > 0;
+                                    const date = timestamp === null ? null : new Date(timestamp);
+                                    const PlaceholderIcon = isTv ? TvOutlinedIcon : MovieOutlinedIcon;
+
+                                    return (
+                                        <Box component="li" key={`${key}-${isTv ? record.season_number : ''}`} sx={{
+                                            position: 'relative',
+                                            ...(index === 0 ? {
+                                                '&::before': {
+                                                    content: '""',
+                                                    position: 'absolute',
+                                                    top: 17,
+                                                    left: {xs: -17, sm: -25},
+                                                    width: 7,
+                                                    height: 7,
+                                                    borderRadius: '50%',
+                                                    backgroundColor: primary,
+                                                    boxShadow: `0 0 0 3px ${theme.palette.background.default}`,
+                                                }
+                                            } : {})
+                                        }}>
+                                            <ButtonBase component={RouterLink}
+                                                        to={`/${isTv ? 'tv' : 'movie'}/${record.tmdb_id}`}
+                                                        aria-label={`${title} · ${tag}`}
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            textAlign: 'left',
+                                                            width: '100%',
+                                                            minWidth: 0,
+                                                            gap: {xs: 1.25, sm: 2},
+                                                            py: 1,
+                                                            px: 0.5,
+                                                            borderRadius: 1,
+                                                            color: 'text.primary',
+                                                            '&:hover': {backgroundColor: alpha(primary, 0.06)},
+                                                            '&.Mui-focusVisible': {
+                                                                outline: '2px solid',
+                                                                outlineColor: primary,
+                                                                outlineOffset: 2
+                                                            }
+                                                        }}>
+                                                {/* 固定尺寸海报保持长列表稳定；屏幕外的图片由浏览器按需加载。 */}
+                                                <Box sx={{
+                                                    width: {xs: 48, sm: 64},
+                                                    aspectRatio: '2/3',
+                                                    flexShrink: 0,
+                                                    borderRadius: 1,
+                                                    overflow: 'hidden',
+                                                    backgroundColor: alpha(primary, 0.08),
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}>
+                                                    {record.poster_path ? (
+                                                        <Box component="img"
+                                                             src={getPosterUrl(record.poster_path, 'w154')} alt=""
+                                                             loading="lazy" decoding="async"
+                                                             sx={{width: '100%', height: '100%', objectFit: 'cover'}}/>
+                                                    ) : <PlaceholderIcon sx={{color: 'text.secondary', fontSize: 24}}/>}
+                                                </Box>
+                                                <Box sx={{flex: 1, minWidth: 0}}>
+                                                    <Typography variant="body2" fontWeight={700} title={title}
+                                                                sx={{
+                                                                    display: '-webkit-box',
+                                                                    WebkitLineClamp: 2,
+                                                                    WebkitBoxOrient: 'vertical',
+                                                                    overflow: 'hidden',
+                                                                    overflowWrap: 'anywhere'
+                                                                }}>{title}</Typography>
+                                                    <Box sx={{
+                                                        display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        alignItems: 'baseline',
+                                                        gap: 0.75,
+                                                        mt: 0.5
+                                                    }}>
+                                                        <Typography variant="caption"
+                                                                    color={isTv ? 'primary' : 'text.secondary'}
+                                                                    sx={{overflowWrap: 'anywhere'}}>{tag}</Typography>
+                                                        {years[key] && <Typography variant="caption"
+                                                                                   color="text.secondary">{years[key]}年</Typography>}
+                                                        {hasScore && <Typography variant="caption"
+                                                                                 aria-label={`TMDB 评分 ${score.toFixed(1)}`}
+                                                                                 sx={{
+                                                                                     fontWeight: 700,
+                                                                                     color: theme.palette.mode === 'light' ? '#9b6500' : '#FFE082'
+                                                                                 }}>
+                                                            {score.toFixed(1)}
+                                                        </Typography>}
+                                                    </Box>
+                                                    {date && <Typography component="time" dateTime={date.toISOString()}
+                                                                         title={date.toLocaleString('zh-CN')}
+                                                                         variant="caption" color="text.secondary"
+                                                                         sx={{
+                                                                             display: 'block',
+                                                                             mt: 0.5,
+                                                                             fontSize: '0.7rem',
+                                                                             fontVariantNumeric: 'tabular-nums'
+                                                                         }}>
+                                                        {date.toLocaleTimeString('zh-CN', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                            hour12: false
+                                                        })}
+                                                    </Typography>}
+                                                </Box>
+                                                <ChevronRightIcon sx={{
+                                                    display: {xs: 'none', sm: 'block'},
+                                                    flexShrink: 0,
+                                                    fontSize: 18,
+                                                    color: 'text.secondary'
+                                                }}/>
+                                            </ButtonBase>
+                                        </Box>
+                                    );
+                                })}
+                            </Box>
+                        </Box>
+                    ))}
+                </Box>
+            ))}
+        </Box>
+    );
+}

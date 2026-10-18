@@ -22,6 +22,7 @@ import {getPosterUrl} from '../api/tmdb';
 import HomeActiveCard from '../components/HomeActiveCard';
 import HomeMovieActiveCard from '../components/HomeMovieActiveCard';
 import PosterScoreBadge from '../components/PosterScoreBadge';
+import WatchedTimeline from '../components/WatchedTimeline';
 import {useHomeMediaDetails} from '../hooks/useHomeMediaDetails';
 import {useProgressStore} from '../store/useProgressStore';
 import {
@@ -79,12 +80,13 @@ const sortRecords = (items: ProgressRecord[], mode: SortMode, scores: Record<str
     return sorted;
 };
 
-// 每个观看状态分别保存排序与类型筛选；偏好设置和观看记录采用不同存储键。
+// 看过使用独立时间线，其他观看状态分别保存排序与类型筛选。
 
 const STORAGE_PREFIX = 'gridtrax-sort-';
 const FILTER_STORAGE_PREFIX = 'gridtrax-media-filter-';
-const ALL_STATUSES: WatchStatus[] = ['Do', 'Wish', 'Collect', 'OnHold', 'Dropped'];
-// 仅用于非“在看”板块的影片网格，与电视剧卡片内部的集数分页无关。
+type FilterableStatus = Exclude<WatchStatus, 'Collect'>;
+const FILTERABLE_STATUSES: FilterableStatus[] = ['Do', 'Wish', 'OnHold', 'Dropped'];
+// 仅用于想看、搁置和抛弃的影片网格；在看和看过不做影片分页。
 const FILMS_PER_PAGE = 15;
 
 const getSectionSortMode = (status: WatchStatus): SortMode => {
@@ -226,7 +228,7 @@ const SectionMediaFilterButton: React.FC<SectionMediaFilterButtonProps> = ({filt
     );
 };
 
-/** 追踪面板的数据流：有效追踪记录 -> 状态分组 -> 排序 -> 类型筛选 -> 分页。 */
+/** 追踪记录按状态分流：看过使用时间线，其余板块沿用筛选与网格/在看卡片。 */
 
 const HomePage: React.FC = () => {
     const theme = useTheme();
@@ -235,30 +237,30 @@ const HomePage: React.FC = () => {
     const primary = theme.palette.primary.main;
 
     // 惰性初始化各板块偏好，避免每次渲染都读取浏览器存储。
-    const [sortModes, setSortModes] = useState<Record<WatchStatus, SortMode>>(() => {
-        const init = {} as Record<WatchStatus, SortMode>;
-        for (const s of ALL_STATUSES) init[s] = getSectionSortMode(s);
+    const [sortModes, setSortModes] = useState<Record<FilterableStatus, SortMode>>(() => {
+        const init = {} as Record<FilterableStatus, SortMode>;
+        for (const s of FILTERABLE_STATUSES) init[s] = getSectionSortMode(s);
         return init;
     });
 
-    const [mediaFilters, setMediaFilters] = useState<Record<WatchStatus, MediaFilter>>(() => {
-        const init = {} as Record<WatchStatus, MediaFilter>;
-        for (const s of ALL_STATUSES) init[s] = getSectionMediaFilter(s);
+    const [mediaFilters, setMediaFilters] = useState<Record<FilterableStatus, MediaFilter>>(() => {
+        const init = {} as Record<FilterableStatus, MediaFilter>;
+        for (const s of FILTERABLE_STATUSES) init[s] = getSectionMediaFilter(s);
         return init;
     });
 
     // 页码从 0 开始，各板块独立维护且不持久化；切换筛选或排序时回到第一页。
-    const [sectionPages, setSectionPages] = useState<Record<WatchStatus, number>>({
-        Do: 0, Wish: 0, Collect: 0, OnHold: 0, Dropped: 0,
+    const [sectionPages, setSectionPages] = useState<Record<FilterableStatus, number>>({
+        Do: 0, Wish: 0, OnHold: 0, Dropped: 0,
     });
 
-    const handleSortChange = useCallback((status: WatchStatus, mode: SortMode) => {
+    const handleSortChange = useCallback((status: FilterableStatus, mode: SortMode) => {
         setSortModes((prev) => ({...prev, [status]: mode}));
         setSectionPages((prev) => ({...prev, [status]: 0}));
         saveSectionSortMode(status, mode);
     }, []);
 
-    const handleMediaFilterChange = useCallback((status: WatchStatus, filter: MediaFilter) => {
+    const handleMediaFilterChange = useCallback((status: FilterableStatus, filter: MediaFilter) => {
         setMediaFilters((prev) => ({...prev, [status]: filter}));
         setSectionPages((prev) => ({...prev, [status]: 0}));
         saveSectionMediaFilter(status, filter);
@@ -279,15 +281,15 @@ const HomePage: React.FC = () => {
             if (item.global_status) groups[item.global_status].push(item);
         });
         // 各组使用自己的排序方式；评分来自详情接口，不是历史个人评分字段。
-        for (const s of ALL_STATUSES) {
+        for (const s of FILTERABLE_STATUSES) {
             groups[s] = sortRecords(groups[s], sortModes[s], scores) as (SeasonRecord | MovieRecord)[];
         }
         return groups;
     }, [trackedItems, sortModes, scores]);
 
     const visibleItemsByStatus = useMemo(() => {
-        const groups = {} as typeof itemsByStatus;
-        for (const status of ALL_STATUSES) {
+        const groups = {...itemsByStatus};
+        for (const status of FILTERABLE_STATUSES) {
             const filter = mediaFilters[status];
             groups[status] = filter === 'all'
                 ? itemsByStatus[status]
@@ -387,7 +389,13 @@ const HomePage: React.FC = () => {
                             <Typography variant="body2" fontWeight={700} noWrap title={titleText}>
                                 {titleText}
                             </Typography>
-                            <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 0.75}, minWidth: 0, mt: 0.5}}>
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: {xs: 0.5, sm: 0.75},
+                                minWidth: 0,
+                                mt: 0.5
+                            }}>
                                 {isTv ? (
                                     <Typography
                                         component="span"
@@ -407,7 +415,8 @@ const HomePage: React.FC = () => {
                                         {tagText}
                                     </Typography>
                                 ) : (
-                                    <Typography component="span" variant="caption" color="text.secondary" noWrap title={tagText} sx={{minWidth: 0, fontSize: '0.75rem'}}>
+                                    <Typography component="span" variant="caption" color="text.secondary" noWrap
+                                                title={tagText} sx={{minWidth: 0, fontSize: '0.75rem'}}>
                                         {tagText}
                                     </Typography>
                                 )}
@@ -419,8 +428,8 @@ const HomePage: React.FC = () => {
         );
     };
 
-    // 板块标题行共享排序和类型筛选；非“在看”板块在行尾增加影片翻页入口。
-    const renderSectionHeader = (status: WatchStatus, count: number) => {
+    // 时间线以外的板块共享筛选标题；网格在行尾增加影片翻页入口。
+    const renderSectionHeader = (status: FilterableStatus, count: number) => {
         const totalPages = Math.max(Math.ceil(count / FILMS_PER_PAGE), 1);
         // 删除记录或减少筛选结果后收敛页码，空列表也保留一个有效页码用于展示。
         const currentPage = Math.min(sectionPages[status], totalPages - 1);
@@ -432,40 +441,41 @@ const HomePage: React.FC = () => {
         };
 
         return (
-        <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', rowGap: 1, mb: 2}}>
-            <Typography
-                variant="subtitle1"
-                fontWeight={700}
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: {xs: status === 'Do' ? 'auto' : '100%', sm: 'auto'},
-                    flexShrink: 0,
-                    '&::before': {
-                        content: '""',
-                        width: 4,
-                        height: 16,
-                        backgroundColor: primary,
-                        mr: 1,
-                        borderRadius: 1
-                    },
-                }}
-            >
-                {STATUS_LABELS[status]} ({count})
-            </Typography>
-            <SectionSortButton
-                sortMode={sortModes[status]}
-                onSortChange={(mode) => handleSortChange(status, mode)}
-                primary={primary}
-            />
-            <SectionMediaFilterButton
-                filter={mediaFilters[status]}
-                onFilterChange={(filter) => handleMediaFilterChange(status, filter)}
-                primary={primary}
-            />
-            {status !== 'Do' && (
-                <Box component="nav" aria-label={`${STATUS_LABELS[status]}分页`} sx={{display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto', flexShrink: 0}}>
-                    <Tooltip title="上一页">
+            <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', rowGap: 1, mb: 2}}>
+                <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: {xs: status === 'Do' ? 'auto' : '100%', sm: 'auto'},
+                        flexShrink: 0,
+                        '&::before': {
+                            content: '""',
+                            width: 4,
+                            height: 16,
+                            backgroundColor: primary,
+                            mr: 1,
+                            borderRadius: 1
+                        },
+                    }}
+                >
+                    {STATUS_LABELS[status]} ({count})
+                </Typography>
+                <SectionSortButton
+                    sortMode={sortModes[status]}
+                    onSortChange={(mode) => handleSortChange(status, mode)}
+                    primary={primary}
+                />
+                <SectionMediaFilterButton
+                    filter={mediaFilters[status]}
+                    onFilterChange={(filter) => handleMediaFilterChange(status, filter)}
+                    primary={primary}
+                />
+                {status !== 'Do' && (
+                    <Box component="nav" aria-label={`${STATUS_LABELS[status]}分页`}
+                         sx={{display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto', flexShrink: 0}}>
+                        <Tooltip title="上一页">
                         <span>
                             <IconButton
                                 size="small"
@@ -477,11 +487,17 @@ const HomePage: React.FC = () => {
                                 <ChevronLeftIcon sx={{fontSize: 16}}/>
                             </IconButton>
                         </span>
-                    </Tooltip>
-                    <Typography variant="caption" aria-live="polite" sx={{color: 'text.secondary', minWidth: 32, textAlign: 'center', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums'}}>
-                        {currentPage + 1}/{totalPages}
-                    </Typography>
-                    <Tooltip title="下一页">
+                        </Tooltip>
+                        <Typography variant="caption" aria-live="polite" sx={{
+                            color: 'text.secondary',
+                            minWidth: 32,
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            fontVariantNumeric: 'tabular-nums'
+                        }}>
+                            {currentPage + 1}/{totalPages}
+                        </Typography>
+                        <Tooltip title="下一页">
                         <span>
                             <IconButton
                                 size="small"
@@ -493,10 +509,10 @@ const HomePage: React.FC = () => {
                                 <ChevronRightIcon sx={{fontSize: 16}}/>
                             </IconButton>
                         </span>
-                    </Tooltip>
-                </Box>
-            )}
-        </Box>
+                        </Tooltip>
+                    </Box>
+                )}
+            </Box>
         );
     };
 
@@ -557,9 +573,13 @@ const HomePage: React.FC = () => {
                             </Box>
                         )}
 
-                        {/* 其他状态先排序、筛选，再每页截取 15 条；标题计数仍为筛选总数。 */}
+                        {/* 看过直接展示完整时间线；其他状态先筛选，再每页截取 15 条。 */}
                         {(['Wish', 'Collect', 'OnHold', 'Dropped'] as const).map((status) => {
                             if (itemsByStatus[status].length === 0) return null;
+                            if (status === 'Collect') return (
+                                <WatchedTimeline key={status} records={itemsByStatus.Collect} scores={scores}
+                                                 years={years}/>
+                            );
                             const items = visibleItemsByStatus[status];
                             const totalPages = Math.max(Math.ceil(items.length / FILMS_PER_PAGE), 1);
                             const currentPage = Math.min(sectionPages[status], totalPages - 1);
