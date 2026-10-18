@@ -4,6 +4,7 @@ import {alpha, useTheme} from '@mui/material/styles';
 import type {SxProps, Theme} from '@mui/material/styles';
 import React, {useState} from 'react';
 import {Link} from 'react-router-dom';
+import BackToTopButton from './BackToTopButton';
 import DataBackupPanel from './DataBackupPanel';
 import SearchBar from './SearchBar';
 import ThemePicker from './ThemePicker';
@@ -114,6 +115,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
             <Box component="main" sx={{flexGrow: 1, pt: {xs: 8, sm: 9}, pb: 4}}>
                 {children}
             </Box>
+            <BackToTopButton/>
         </Box>
     );
 };
