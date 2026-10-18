@@ -24,8 +24,20 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
     const count = months.reduce((total, month) => total + month.count, 0);
 
     return (
-        <Box component="section" aria-labelledby="watched-timeline-heading" sx={{mb: 5}}>
-            <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
+        <Box component="section" aria-labelledby="watched-timeline-heading" sx={{
+            mb: 5,
+            // 两层吸顶共享偏移；导航栏高度与 MUI 默认工具栏的横竖屏规则保持一致。
+            '--watched-toolbar-offset': {xs: '56px', sm: '64px'},
+            '--watched-heading-height': '44px',
+            [`${theme.breakpoints.down('sm')} and (orientation: landscape)`]: {
+                '--watched-toolbar-offset': '48px'
+            }
+        }}>
+            <Box sx={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2,
+                position: 'sticky', top: 'var(--watched-toolbar-offset)', zIndex: 2,
+                height: 'var(--watched-heading-height)', backgroundColor: 'background.default'
+            }}>
                 <Typography id="watched-timeline-heading" component="h2" variant="subtitle1" fontWeight={700}
                             sx={{
                                 display: 'flex', alignItems: 'center', '&::before': {
@@ -49,9 +61,9 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                 <Box key={month.key} sx={{pb: 3}}>
                     <Box sx={{
                         display: 'flex', alignItems: 'baseline', gap: 1, py: 1.25, mb: 1,
-                        // 吸顶范围限定在本月内，下个月进入时自然替换；偏移与 MUI 默认工具栏高度一致。
-                        position: 'sticky', top: {xs: 56, sm: 64}, zIndex: 1,
-                        [`${theme.breakpoints.down('sm')} and (orientation: landscape)`]: {top: 48},
+                        // 月份只在本月范围内吸顶，并始终位于看过标题栏下方。
+                        position: 'sticky',
+                        top: 'calc(var(--watched-toolbar-offset) + var(--watched-heading-height))', zIndex: 1,
                         backgroundColor: 'background.default',
                         borderTop: '1px solid', borderBottom: '1px solid', borderColor: 'divider'
                     }}>
