@@ -23,8 +23,8 @@ export default function WatchedViewToggle({view, onChange}: WatchedViewTogglePro
                 if (next) onChange(next);
             }}
             sx={{
-                height: 26, flexShrink: 0, '& .MuiToggleButton-root': {
-                    width: 30, p: 0.5, color: 'text.secondary', borderColor: alpha(primary, 0.15),
+                height: 24, flexShrink: 0, '& .MuiToggleButton-root': {
+                    width: 26, p: 0.25, color: 'text.secondary', borderColor: alpha(primary, 0.15),
                     '&.Mui-selected': {
                         color: primary, backgroundColor: alpha(primary, 0.12),
                         '&:hover': {backgroundColor: alpha(primary, 0.18)}
@@ -33,10 +33,10 @@ export default function WatchedViewToggle({view, onChange}: WatchedViewTogglePro
             }}
         >
             <Tooltip title="网格视图" disableTouchListener>
-                <ToggleButton value="grid" aria-label="网格视图"><GridViewIcon sx={{fontSize: 16}}/></ToggleButton>
+                <ToggleButton value="grid" aria-label="网格视图"><GridViewIcon sx={{fontSize: 14}}/></ToggleButton>
             </Tooltip>
             <Tooltip title="时间线视图" disableTouchListener>
-                <ToggleButton value="timeline" aria-label="时间线视图"><TimelineIcon sx={{fontSize: 16}}/></ToggleButton>
+                <ToggleButton value="timeline" aria-label="时间线视图"><TimelineIcon sx={{fontSize: 14}}/></ToggleButton>
             </Tooltip>
         </ToggleButtonGroup>
     );

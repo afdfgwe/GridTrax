@@ -81,7 +81,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                 columnGap: {md: 2, lg: 3},
                                 borderLeft: '1px solid', borderColor: alpha(primary, 0.25)
                             }}>
-                                {day.entries.map(({record, timestamp}, index) => {
+                                {day.entries.map(({record}, index) => {
                                     const isTv = record.type === 'tv_season';
                                     const title = isTv
                                         ? record.show_name || record.name || `剧集 ID: ${record.tmdb_id}`
@@ -92,7 +92,6 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                     const key = `${record.type}-${record.tmdb_id}`;
                                     const score = scores[key];
                                     const hasScore = Number.isFinite(score) && score > 0;
-                                    const date = timestamp === null ? null : new Date(timestamp);
                                     const PlaceholderIcon = isTv ? TvOutlinedIcon : MovieOutlinedIcon;
 
                                     return (
@@ -173,8 +172,6 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                                         <Typography variant="caption"
                                                                     color={isTv ? 'primary' : 'text.secondary'}
                                                                     sx={{overflowWrap: 'anywhere'}}>{tag}</Typography>
-                                                        {years[key] && <Typography variant="caption"
-                                                                                   color="text.secondary">{years[key]}年</Typography>}
                                                         {hasScore && <Typography variant="caption"
                                                                                  aria-label={`TMDB 评分 ${score.toFixed(1)}`}
                                                                                  sx={{
@@ -184,20 +181,14 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                                             {score.toFixed(1)}
                                                         </Typography>}
                                                     </Box>
-                                                    {date && <Typography component="time" dateTime={date.toISOString()}
-                                                                         title={date.toLocaleString('zh-CN')}
-                                                                         variant="caption" color="text.secondary"
+                                                    {years[key] && <Typography variant="caption" color="text.secondary"
                                                                          sx={{
                                                                              display: 'block',
                                                                              mt: 0.5,
                                                                              fontSize: '0.7rem',
                                                                              fontVariantNumeric: 'tabular-nums'
                                                                          }}>
-                                                        {date.toLocaleTimeString('zh-CN', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                            hour12: false
-                                                        })}
+                                                        {years[key]}年
                                                     </Typography>}
                                                 </Box>
                                                 <ChevronRightIcon sx={{
