@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "check": "npm run lint && npm run test && npm run build",
     "preview": "vite preview --port 721",
     "serve": "npm run build && npx -y serve dist -l 721 -s",
     "start": "npx -y serve dist -l 721 -s"

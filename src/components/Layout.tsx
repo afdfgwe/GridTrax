@@ -8,6 +8,7 @@ import BackToTopButton from './BackToTopButton';
 import DataBackupPanel from './DataBackupPanel';
 import SearchBar from './SearchBar';
 import ThemePicker from './ThemePicker';
+import StorageWarning from './StorageWarning';
 
 interface Props {
     children: React.ReactElement<{ elevation?: number; sx?: SxProps<Theme> }>;
@@ -113,6 +114,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
             </ElevationScroll>
             {/* 顶部内边距为固定工具栏预留位置，防止正文被覆盖。 */}
             <Box component="main" sx={{flexGrow: 1, pt: {xs: 8, sm: 9}, pb: 4}}>
+                <StorageWarning/>
                 {children}
             </Box>
             <BackToTopButton/>

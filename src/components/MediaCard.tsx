@@ -50,6 +50,7 @@ const MediaCard: React.FC<MediaCardProps> = ({item, onClick}) => {
             <Box sx={{position: 'relative'}}>
                 <CardMedia
                     component="img"
+                    loading="lazy"
                     image={getPosterUrl(item.poster_path, 'w342')}
                     alt={title}
                     sx={{

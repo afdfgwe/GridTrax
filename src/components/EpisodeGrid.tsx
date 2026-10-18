@@ -9,7 +9,7 @@ import {
 import {alpha, useTheme} from '@mui/material/styles';
 import React, {useCallback, useState} from 'react';
 import {useProgressStore} from '../store/useProgressStore';
-import type {TMDBEpisode} from '../types';
+import type {SeasonRecord, TMDBEpisode} from '../types';
 import EpisodeCell from './EpisodeCell';
 
 interface EpisodeGridProps {
@@ -36,11 +36,9 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     // 标题列表仅在移动端启用，桌面端保持方块与悬停短标题的交互。
     const titleView = isMobile && showTitles;
-    const {
-        toggleEpisodeWatched,
-        watchUpToEpisode,
-        getEpisodeRecord,
-    } = useProgressStore();
+    const toggleEpisodeWatched = useProgressStore((state) => state.toggleEpisodeWatched);
+    const watchUpToEpisode = useProgressStore((state) => state.watchUpToEpisode);
+    const record = useProgressStore((state) => state.data.records[`tmdb_tv_${tvId}_s${seasonNumber}`] as SeasonRecord | undefined);
 
     const [snackbar, setSnackbar] = useState<string | null>(null);
 
@@ -65,7 +63,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
 
     // 统计范围是传入的 episodes，不保证是整季；分页调用方需要隐藏此进度。
     const watchedCount = episodes.filter(
-        (ep) => getEpisodeRecord(tvId, seasonNumber, ep.episode_number).watched
+        (ep) => record?.episodes[String(ep.episode_number)]?.watched
     ).length;
     const progress = episodes.length > 0 ? (watchedCount / episodes.length) * 100 : 0;
 
@@ -107,12 +105,12 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                 }}
             >
                 {episodes.map((episode) => {
-                    const rec = getEpisodeRecord(tvId, seasonNumber, episode.episode_number);
+                    const rec = record?.episodes[String(episode.episode_number)];
                     return (
                         <EpisodeCell
                             key={episode.episode_number}
                             episode={episode}
-                            watched={rec.watched}
+                            watched={rec?.watched ?? false}
                             showTitle={titleView}
                             onSingleClick={handleSingleClick}
                             onWatchUpTo={handleWatchUpTo}

@@ -6,6 +6,7 @@ import {
     AccordionSummary,
     Alert,
     Box,
+    Button,
     Chip,
     IconButton,
     Skeleton,
@@ -16,7 +17,7 @@ import {alpha, useTheme} from '@mui/material/styles';
 import React, {useEffect, useState} from 'react';
 import {getTVSeason} from '../api/tmdb';
 import {useProgressStore} from '../store/useProgressStore';
-import type {TMDBSeason, TMDBSeasonSummary, WatchStatus} from '../types';
+import type {SeasonRecord, TMDBSeason, TMDBSeasonSummary, WatchStatus} from '../types';
 import {STATUS_LABELS} from '../types';
 import EpisodeGrid from './EpisodeGrid';
 import EpisodeViewToggle from './EpisodeViewToggle';
@@ -46,12 +47,8 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
     const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
 
-    const {
-        getSeasonRecord,
-        setSeasonStatus,
-    } = useProgressStore();
-
-    const record = getSeasonRecord(tvId, seasonSummary.season_number);
+    const setSeasonStatus = useProgressStore((state) => state.setSeasonStatus);
+    const record = useProgressStore((state) => state.data.records[`tmdb_tv_${tvId}_s${seasonSummary.season_number}`] as SeasonRecord | undefined);
     const primary = theme.palette.primary.main;
 
     // 已加载的季详情在本组件内复用；收起或卸载后忽略未完成请求的返回结果。
@@ -194,7 +191,11 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                         ))}
                     </Box>
                 )}
-                {seasonError && <Alert severity="error" sx={{mb: 2}}>集数加载失败，请收起后重试。</Alert>}
+                {seasonError &&
+                    <Alert severity="error" sx={{mb: 2}} action={<Button color="inherit" size="small" onClick={() => {
+                        setSeasonError(false);
+                        setLoading(true);
+                    }}>重试</Button>}>集数加载失败，请检查网络后重试。</Alert>}
 
                 {/* 详情页传入排序后的完整一季，不使用首页每页 18 集的分页限制。 */}
                 {season && (

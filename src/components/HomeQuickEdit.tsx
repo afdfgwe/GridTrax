@@ -17,7 +17,6 @@ import {STATUS_LABELS, type WatchStatus} from '../types';
 import {StatusIcons} from './GlobalStatusPicker';
 
 interface HomeQuickEditProps {
-    recordKey: string; // 保留调用方兼容属性；实际删除键在组件内按类型、作品编号和季号生成。
     type: 'tv_season' | 'movie';
     tmdbId: number;
     seasonNumber?: number;
@@ -42,20 +41,13 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
 
-    const {
-        getSeasonRecord,
-        getMovieRecord,
-        setSeasonStatus,
-        setMovieStatus,
-        removeRecord,
-    } = useProgressStore();
+    const setSeasonStatus = useProgressStore((state) => state.setSeasonStatus);
+    const setMovieStatus = useProgressStore((state) => state.setMovieStatus);
+    const removeRecord = useProgressStore((state) => state.removeRecord);
 
     // 电视剧按季取记录，电影按作品取记录，二者使用各自的存储动作。
-    const record = type === 'tv_season' && seasonNumber !== undefined
-        ? getSeasonRecord(tmdbId, seasonNumber)
-        : type === 'movie'
-            ? getMovieRecord(tmdbId)
-            : undefined;
+    const record = useProgressStore((state) => state.data.records[type === 'tv_season'
+        ? `tmdb_tv_${tmdbId}_s${seasonNumber}` : `tmdb_movie_${tmdbId}`]);
 
     const currentStatus = record?.global_status;
     const primary = theme.palette.primary.main;

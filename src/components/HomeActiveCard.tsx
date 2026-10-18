@@ -1,13 +1,14 @@
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
-import {Box, Card, IconButton, LinearProgress, Tooltip, Typography} from '@mui/material';
+import {Alert, Box, Button, Card, IconButton, LinearProgress, Tooltip, Typography} from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {getPosterUrl, getTVSeason} from '../api/tmdb';
 import {useProgressStore} from '../store/useProgressStore';
-import type {TMDBSeason} from '../types';
+import type {SeasonRecord, TMDBSeason} from '../types';
+import {requestErrorMessage} from '../utils/requestError';
 import EpisodeGrid from './EpisodeGrid';
 import EpisodeViewToggle from './EpisodeViewToggle';
 import HomeQuickEdit from './HomeQuickEdit';
@@ -45,9 +46,10 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
     const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
     const [loadingSeason, setLoadingSeason] = useState(true);
+    const [seasonError, setSeasonError] = useState<string>();
+    const [attempt, setAttempt] = useState(0);
 
-    const {getSeasonRecord} = useProgressStore();
-    const record = getSeasonRecord(tvId, seasonNumber);
+    const record = useProgressStore((state) => state.data.records[`tmdb_tv_${tvId}_s${seasonNumber}`] as SeasonRecord | undefined);
 
     // 卸载后忽略请求结果，防止旧卡片的请求更新状态；这里不取消网络请求本身。
     useEffect(() => {
@@ -71,6 +73,9 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
 
                 setEpisodePage(Math.floor(initialIndex / EPISODES_PER_PAGE));
             })
+            .catch((error: unknown) => {
+                if (active) setSeasonError(requestErrorMessage(error));
+            })
             .finally(() => {
                 if (active) setLoadingSeason(false);
             });
@@ -78,7 +83,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
         return () => {
             active = false;
         };
-    }, [tvId, seasonNumber]);
+    }, [tvId, seasonNumber, attempt]);
 
     const handleCardClick = () => {
         navigate(`/tv/${tvId}`);
@@ -213,7 +218,6 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                 {/* 快捷编辑只操作当前季的观看状态和记录。 */}
                 <Box sx={{display: 'flex', alignItems: 'flex-start', pt: 0.5}}>
                     <HomeQuickEdit
-                        recordKey={`tv_${tvId}_s${seasonNumber}`}
                         type="tv_season"
                         tmdbId={tvId}
                         seasonNumber={seasonNumber}
@@ -223,6 +227,12 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
             </Box>
 
             <Box sx={{px: {xs: 2, sm: 3}, pb: 2}}>
+                {seasonError &&
+                    <Alert severity="error" sx={{mb: 1}} action={<Button size="small" color="inherit" onClick={() => {
+                        setSeasonError(undefined);
+                        setLoadingSeason(true);
+                        setAttempt((value) => value + 1);
+                    }}>重试</Button>}>{seasonError}</Alert>}
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5}}>
                     <LinearProgress
                         variant="determinate"
@@ -248,6 +258,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                         <span>
                             <IconButton
                                 size="small"
+                                aria-label="上一页集数"
                                 disabled={loadingSeason || currentPage <= 0}
                                 onClick={() => setEpisodePage((page) => Math.max(page - 1, 0))}
                                 sx={{border: `1px solid ${alpha(primary, 0.2)}`, borderRadius: 1.5}}
@@ -260,12 +271,13 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                         variant="caption"
                         sx={{color: 'text.secondary', minWidth: 112, textAlign: 'center', fontWeight: 600}}
                     >
-                        {season ? `第 ${pageFirstEpisode}-${pageLastEpisode} 集` : '正在加载集数…'}
+                        {season ? `第 ${pageFirstEpisode}-${pageLastEpisode} 集` : seasonError ? '集数加载失败' : '正在加载集数…'}
                     </Typography>
                     <Tooltip title="下一页">
                         <span>
                             <IconButton
                                 size="small"
+                                aria-label="下一页集数"
                                 disabled={loadingSeason || currentPage >= totalPages - 1}
                                 onClick={() => setEpisodePage((page) => Math.min(page + 1, totalPages - 1))}
                                 sx={{border: `1px solid ${alpha(primary, 0.2)}`, borderRadius: 1.5}}
@@ -275,20 +287,22 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
                         </span>
                     </Tooltip>
                     <Tooltip title={episodeOrder === 'asc' ? '倒序排列' : '正序排列'}>
-                        <IconButton
-                            size="small"
-                            disabled={loadingSeason}
-                            aria-label={episodeOrder === 'asc' ? '倒序排列集数' : '正序排列集数'}
-                            onClick={handleToggleEpisodeOrder}
-                            sx={{
-                                border: `1px solid ${alpha(primary, episodeOrder === 'desc' ? 0.45 : 0.2)}`,
-                                borderRadius: 1.5,
-                                color: episodeOrder === 'desc' ? primary : 'text.secondary',
-                                backgroundColor: episodeOrder === 'desc' ? alpha(primary, 0.08) : 'transparent',
-                            }}
-                        >
-                            <SwapVertIcon fontSize="small"/>
-                        </IconButton>
+                        <span>
+                            <IconButton
+                                size="small"
+                                disabled={loadingSeason}
+                                aria-label={episodeOrder === 'asc' ? '倒序排列集数' : '正序排列集数'}
+                                onClick={handleToggleEpisodeOrder}
+                                sx={{
+                                    border: `1px solid ${alpha(primary, episodeOrder === 'desc' ? 0.45 : 0.2)}`,
+                                    borderRadius: 1.5,
+                                    color: episodeOrder === 'desc' ? primary : 'text.secondary',
+                                    backgroundColor: episodeOrder === 'desc' ? alpha(primary, 0.08) : 'transparent',
+                                }}
+                            >
+                                <SwapVertIcon fontSize="small"/>
+                            </IconButton>
+                        </span>
                     </Tooltip>
                     <EpisodeViewToggle
                         episodes={orderedEpisodes}

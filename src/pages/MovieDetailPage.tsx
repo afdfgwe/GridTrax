@@ -3,6 +3,7 @@ import StarIcon from '@mui/icons-material/Star';
 import {
     Alert,
     Box,
+    Button,
     Chip,
     Container,
     IconButton,
@@ -10,46 +11,35 @@ import {
     Typography,
 } from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getMovie, getPosterUrl} from '../api/tmdb';
 import GlobalStatusPicker from '../components/GlobalStatusPicker';
 import {useProgressStore} from '../store/useProgressStore';
-import type {TMDBMovie, WatchStatus} from '../types';
+import type {MovieRecord, WatchStatus} from '../types';
+import {useAsyncResource} from '../hooks/useAsyncResource';
 
 /** 电影详情：展示接口信息，并通过状态选择器维护本地观影记录。 */
 const MovieDetailPage: React.FC = () => {
     const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [movie, setMovie] = useState<TMDBMovie | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const load = useCallback(() => getMovie(Number(id)), [id]);
+    const {data: movie, loading, error, retry} = useAsyncResource(`movie:${id}`, load);
     const theme = useTheme();
 
-    const {
-        ensureMovieRecord,
-        getMovieRecord,
-        setMovieStatus,
-    } = useProgressStore();
+    const ensureMovieRecord = useProgressStore((state) => state.ensureMovieRecord);
+    const setMovieStatus = useProgressStore((state) => state.setMovieStatus);
+    const record = useProgressStore((state) => state.data.records[`tmdb_movie_${id}`] as MovieRecord | undefined);
 
     // 路由编号变化时加载电影，并同步名称、海报等可供首页使用的展示元数据。
     useEffect(() => {
-        if (!id) return;
-        queueMicrotask(() => setLoading(true));
-        getMovie(Number(id))
-            .then((m) => {
-                setMovie(m);
-                // 仅确保记录和元数据存在；新记录没有观看状态，不会自动加入追踪列表。
-                ensureMovieRecord(m.id, {name: m.title, poster_path: m.poster_path});
-            })
-            .catch(() => setError('加载失败，请刷新重试。'))
-            .finally(() => setLoading(false));
-    }, [id, ensureMovieRecord]);
+        // 仅确保记录和元数据存在；新记录没有观看状态，不会自动加入追踪列表。
+        if (movie) ensureMovieRecord(movie.id, {name: movie.title, poster_path: movie.poster_path});
+    }, [movie, ensureMovieRecord]);
 
     const primary = theme.palette.primary.main;
 
     // 接口评分与年份等信息来自 movie，观看状态来自浏览器中的 record。
-    const record = movie ? getMovieRecord(movie.id) : undefined;
 
     return (
         <React.Fragment>
@@ -69,9 +59,9 @@ const MovieDetailPage: React.FC = () => {
                             alt=""
                             sx={{width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.4)'}}
                         />
-                    ) : (
+                    ) : loading ? (
                         <Skeleton variant="rectangular" width="100%" height="100%" animation="wave"/>
-                    )}
+                    ) : null}
                     <Box
                         sx={{
                             position: 'absolute', bottom: 0, left: 0, right: 0, height: '80%',
@@ -91,7 +81,8 @@ const MovieDetailPage: React.FC = () => {
                 </Box>
 
                 <Container maxWidth="lg" sx={{pt: 6, pb: 8, overflow: 'visible'}}>
-                    {error && <Alert severity="error" sx={{mb: 3}}>{error}</Alert>}
+                    {error && <Alert severity="error" sx={{mb: 3}} action={<Button color="inherit" size="small"
+                                                                                   onClick={retry}>重试</Button>}>{error}</Alert>}
 
                     {loading ? (
                         <Box sx={{display: 'flex', gap: 3}}>

@@ -11,48 +11,26 @@ import {
     Typography,
 } from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getPosterUrl, getTVShow} from '../api/tmdb';
 import SeasonBlock from '../components/SeasonBlock';
 import {useProgressStore} from '../store/useProgressStore';
-import type {TMDBTVShow} from '../types';
+import {useAsyncResource} from '../hooks/useAsyncResource';
 
 /** 电视剧详情：整剧信息来自 TMDB，本地观看记录由各 SeasonBlock 独立读取。 */
 const TvDetailPage: React.FC = () => {
     const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [show, setShow] = useState<TMDBTVShow | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const load = useCallback(() => getTVShow(Number(id)), [id]);
+    const {data: show, loading, error, retry} = useAsyncResource(`tv:${id}`, load);
     const [expandedOverview, setExpandedOverview] = useState(false);
 
     // 按路由编号加载整剧详情；路由切换或卸载后忽略旧请求的结果。
     useEffect(() => {
-        if (!id) return;
-        let isMounted = true;
-        queueMicrotask(() => {
-            if (isMounted) setLoading(true);
-        });
-        getTVShow(Number(id))
-            .then(data => {
-                if (isMounted) {
-                    setShow(data);
-                    // 为已有季记录补齐缺失的海报，不改变观看状态或最近互动时间。
-                    useProgressStore.getState().fillMissingPosters('tv_season', data.id, data.poster_path);
-                }
-            })
-            .catch(() => {
-                if (isMounted) setError('加载失败，请刷新重试。');
-            })
-            .finally(() => {
-                if (isMounted) setLoading(false);
-            });
-
-        return () => {
-            isMounted = false;
-        };
-    }, [id]);
+        // 仅补齐已有记录的海报，不改变观看状态或最近互动时间。
+        if (show) useProgressStore.getState().fillMissingPosters('tv_season', show.id, show.poster_path);
+    }, [show]);
 
     const theme = useTheme();
     const primary = theme.palette.primary.main;
@@ -114,7 +92,8 @@ const TvDetailPage: React.FC = () => {
                 </Box>
 
                 <Container maxWidth="lg" sx={{pt: 6, pb: 8, position: 'relative'}}>
-                    {error && <Alert severity="error" sx={{mb: 3}}>{error}</Alert>}
+                    {error && <Alert severity="error" sx={{mb: 3}} action={<Button color="inherit" size="small"
+                                                                                   onClick={retry}>重试</Button>}>{error}</Alert>}
 
                     {loading ? (
                         <Box sx={{display: 'flex', gap: 3}}>

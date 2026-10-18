@@ -4,7 +4,8 @@
  * JSON 导入是整体替换的特例，由备份面板校验并确认后直接恢复状态快照。
  */
 import {create} from 'zustand';
-import {persist} from 'zustand/middleware';
+import {createJSONStorage, persist} from 'zustand/middleware';
+import {progressStorage, PROGRESS_STORAGE_KEY} from '../utils/progressStorage.ts';
 import type {
     EpisodeRecord,
     MovieRecord,
@@ -290,7 +291,11 @@ export const useProgressStore = create<ProgressState>()(
         }),
         {
             // 备份导入面板也使用该键，修改时必须同步调整导入写入位置。
-            name: 'gridtrax-progress',
+            name: PROGRESS_STORAGE_KEY,
+            storage: createJSONStorage(() => ({
+                ...progressStorage,
+                removeItem: (name: string) => window.localStorage.removeItem(name)
+            })),
         }
     )
 );

@@ -1,44 +1,26 @@
-import {Alert, Box, CircularProgress, Container, Grid, Typography} from '@mui/material';
-import React, {useCallback, useEffect, useState} from 'react';
+import {Alert, Box, Button, CircularProgress, Container, Grid, IconButton, Tooltip, Typography} from '@mui/material';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import React, {useCallback} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {searchMulti} from '../api/tmdb';
 import MediaCard from '../components/MediaCard';
 import type {TMDBSearchResult} from '../types';
+import {useAsyncResource} from '../hooks/useAsyncResource';
 
 /** 搜索结果页以地址栏 q 参数为查询来源，刷新或分享地址后仍能重新执行查询。 */
 const SearchPage: React.FC = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const query = searchParams.get('q') || '';
-
-    const [results, setResults] = useState<TMDBSearchResult[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    // 每次请求单独维护加载和错误展示；空关键词只清空结果，不调用接口。
-    const doSearch = useCallback((q: string) => {
-        if (!q.trim()) {
-            setResults([]);
-            return;
-        }
-        setLoading(true);
-        setError(null);
-        searchMulti(q)
-            .then(setResults)
-            .catch(() => setError('搜索失败，请检查网络连接或刷新重试。'))
-            .finally(() => setLoading(false));
-    }, []);
-
-    // 将查询参数变化后的状态更新放入微任务，在本轮副作用结束后执行。
-    useEffect(() => {
-        queueMicrotask(() => {
-            if (query) {
-                doSearch(query);
-            } else {
-                setResults([]);
-            }
-        });
-    }, [query, doSearch]);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const query = (searchParams.get('q') || '').trim();
+    const requestedPage = Number(searchParams.get('page') || 1);
+    const page = Number.isInteger(requestedPage) ? Math.max(1, Math.min(requestedPage, 500)) : 1;
+    const load = useCallback((signal: AbortSignal) => query
+        ? searchMulti(query, page, signal)
+        : Promise.resolve({results: [], total_pages: 0, page: 1}), [query, page]);
+    const {data, error, loading, retry} = useAsyncResource(`${query}:${page}`, load);
+    const results = data?.results ?? [];
+    const changePage = (next: number) => setSearchParams({q: query, page: String(next)});
 
     // 混合搜索的电影与电视剧使用不同详情路由，编号本身不能区分作品类型。
     const handleCardClick = useCallback(
@@ -55,7 +37,25 @@ const SearchPage: React.FC = () => {
     return (
         <Box sx={{minHeight: '100vh'}}>
             <Container maxWidth="lg" sx={{py: 4}}>
-                {error && <Alert severity="error" sx={{mb: 3}}>{error}</Alert>}
+                {error && <Alert severity="error" sx={{mb: 3}} action={<Button color="inherit" size="small"
+                                                                               onClick={retry}>重试</Button>}>{error}</Alert>}
+
+                {query && (
+                    <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
+                        <Typography variant="h6" sx={{minWidth: 0, overflowWrap: 'anywhere'}}>搜索：{query}</Typography>
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0}}>
+                            <Tooltip title="上一页"><span><IconButton size="small" aria-label="搜索上一页"
+                                                                   disabled={loading || page <= 1}
+                                                                   onClick={() => changePage(page - 1)}><ChevronLeftIcon
+                                fontSize="small"/></IconButton></span></Tooltip>
+                            <Typography variant="caption">{page} / {data?.total_pages || page}</Typography>
+                            <Tooltip title="下一页"><span><IconButton size="small" aria-label="搜索下一页"
+                                                                   disabled={loading || !data || page >= data.total_pages}
+                                                                   onClick={() => changePage(page + 1)}><ChevronRightIcon
+                                fontSize="small"/></IconButton></span></Tooltip>
+                        </Box>
+                    </Box>
+                )}
 
                 {loading && (
                     <Box sx={{display: 'flex', justifyContent: 'center', py: 8}}>

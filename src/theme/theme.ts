@@ -81,8 +81,3 @@ declare module '@mui/material/styles' {
         surface?: PaletteOptions['primary'];
     }
 }
-
-// 保留可直接引用的静态深色默认主题；主应用实际按存储中的选择动态创建主题。
-import {PREDEFINED_THEMES} from './themes';
-
-export const defaultTheme = createAppTheme(PREDEFINED_THEMES[0], 'dark');

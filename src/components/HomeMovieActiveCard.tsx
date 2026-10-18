@@ -107,7 +107,6 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
                 {/* 快捷编辑与详情导航独立，避免编辑时同时跳转。 */}
                 <Box sx={{display: 'flex', alignItems: 'flex-start', pt: 0.5}}>
                     <HomeQuickEdit
-                        recordKey={`movie_${movieId}`}
                         type="movie"
                         tmdbId={movieId}
                         meta={meta}

@@ -2,7 +2,9 @@ import SortIcon from '@mui/icons-material/Sort';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
+    Alert,
     Box,
+    Button,
     Card,
     CardActionArea,
     CardContent,
@@ -16,8 +18,9 @@ import {
     Typography
 } from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
-import React, {useCallback, useMemo, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
+import {navigationMemory} from '../utils/navigationMemory';
 import {getPosterUrl} from '../api/tmdb';
 import HomeActiveCard from '../components/HomeActiveCard';
 import HomeMovieActiveCard from '../components/HomeMovieActiveCard';
@@ -243,6 +246,7 @@ const SectionMediaFilterButton: React.FC<SectionMediaFilterButtonProps> = ({filt
 const HomePage: React.FC = () => {
     const theme = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
     const records = useProgressStore((state) => state.data.records);
     const primary = theme.palette.primary.main;
 
@@ -259,10 +263,14 @@ const HomePage: React.FC = () => {
         return init;
     });
 
-    // 页码从 0 开始，各板块独立维护且不持久化；切换筛选或排序时回到第一页。
-    const [sectionPages, setSectionPages] = useState<Record<WatchStatus, number>>({
+    // 每条历史记录独立记住网格页码，详情返回时恢复；不写入观看数据或永久偏好。
+    const [sectionPages, setSectionPages] = useState<Record<WatchStatus, number>>(() => ({
         Do: 0, Wish: 0, Collect: 0, OnHold: 0, Dropped: 0,
-    });
+        ...navigationMemory.get(location.key)?.pages,
+    }));
+    useEffect(() => {
+        navigationMemory.set(location.key, {pages: sectionPages});
+    }, [location.key, sectionPages]);
 
     const [watchedView, setWatchedView] = useState<WatchedView>(getWatchedView);
     const handleWatchedViewChange = (view: WatchedView) => {
@@ -291,7 +299,7 @@ const HomePage: React.FC = () => {
         return Object.values(records).filter((record) => record.global_status);
     }, [records]);
 
-    const {scores, years} = useHomeMediaDetails(trackedItems);
+    const {scores, years, failedCount, retry} = useHomeMediaDetails(trackedItems);
 
     const itemsByStatus = useMemo(() => {
         const groups: Record<WatchStatus, (SeasonRecord | MovieRecord)[]> = {
@@ -546,6 +554,8 @@ const HomePage: React.FC = () => {
     return (
         <Box sx={{minHeight: '100vh'}}>
             <Container maxWidth="lg" sx={{pt: 2, pb: 6}}>
+                {failedCount > 0 && <Alert severity="warning" sx={{mb: 2}} action={<Button size="small" color="inherit"
+                                                                                           onClick={retry}>重试</Button>}>部分影片资料加载失败，海报、年份或评分可能暂不完整；观看记录不受影响。</Alert>}
                 <Typography variant="h5" fontWeight={700} sx={{mb: 3}}>
                     正在追踪
                 </Typography>
