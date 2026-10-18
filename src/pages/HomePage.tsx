@@ -23,6 +23,7 @@ import HomeActiveCard from '../components/HomeActiveCard';
 import HomeMovieActiveCard from '../components/HomeMovieActiveCard';
 import PosterScoreBadge from '../components/PosterScoreBadge';
 import WatchedTimeline from '../components/WatchedTimeline';
+import WatchedViewToggle from '../components/WatchedViewToggle';
 import {useHomeMediaDetails} from '../hooks/useHomeMediaDetails';
 import {useProgressStore} from '../store/useProgressStore';
 import {
@@ -80,14 +81,23 @@ const sortRecords = (items: ProgressRecord[], mode: SortMode, scores: Record<str
     return sorted;
 };
 
-// 看过使用独立时间线，其他观看状态分别保存排序与类型筛选。
+// 各板块独立保存排序和类型筛选；看过时间线不使用网格的筛选偏好。
 
 const STORAGE_PREFIX = 'gridtrax-sort-';
 const FILTER_STORAGE_PREFIX = 'gridtrax-media-filter-';
-type FilterableStatus = Exclude<WatchStatus, 'Collect'>;
-const FILTERABLE_STATUSES: FilterableStatus[] = ['Do', 'Wish', 'OnHold', 'Dropped'];
-// 仅用于想看、搁置和抛弃的影片网格；在看和看过不做影片分页。
+const ALL_STATUSES: WatchStatus[] = ['Do', 'Wish', 'Collect', 'OnHold', 'Dropped'];
+const WATCHED_VIEW_STORAGE_KEY = 'gridtrax-watched-view';
+type WatchedView = 'grid' | 'timeline';
+// 仅用于影片网格；在看卡片和看过时间线不做影片分页。
 const FILMS_PER_PAGE = 15;
+
+const getWatchedView = (): WatchedView => {
+    try {
+        if (localStorage.getItem(WATCHED_VIEW_STORAGE_KEY) === 'grid') return 'grid';
+    } catch { /* 无法读取偏好时沿用时间线，仍可在当前页面切换。 */
+    }
+    return 'timeline';
+};
 
 const getSectionSortMode = (status: WatchStatus): SortMode => {
     try {
@@ -228,7 +238,7 @@ const SectionMediaFilterButton: React.FC<SectionMediaFilterButtonProps> = ({filt
     );
 };
 
-/** 追踪记录按状态分流：看过使用时间线，其余板块沿用筛选与网格/在看卡片。 */
+/** 看过可切换网格与时间线；时间线使用全部记录，网格沿用筛选和分页。 */
 
 const HomePage: React.FC = () => {
     const theme = useTheme();
@@ -237,30 +247,40 @@ const HomePage: React.FC = () => {
     const primary = theme.palette.primary.main;
 
     // 惰性初始化各板块偏好，避免每次渲染都读取浏览器存储。
-    const [sortModes, setSortModes] = useState<Record<FilterableStatus, SortMode>>(() => {
-        const init = {} as Record<FilterableStatus, SortMode>;
-        for (const s of FILTERABLE_STATUSES) init[s] = getSectionSortMode(s);
+    const [sortModes, setSortModes] = useState<Record<WatchStatus, SortMode>>(() => {
+        const init = {} as Record<WatchStatus, SortMode>;
+        for (const s of ALL_STATUSES) init[s] = getSectionSortMode(s);
         return init;
     });
 
-    const [mediaFilters, setMediaFilters] = useState<Record<FilterableStatus, MediaFilter>>(() => {
-        const init = {} as Record<FilterableStatus, MediaFilter>;
-        for (const s of FILTERABLE_STATUSES) init[s] = getSectionMediaFilter(s);
+    const [mediaFilters, setMediaFilters] = useState<Record<WatchStatus, MediaFilter>>(() => {
+        const init = {} as Record<WatchStatus, MediaFilter>;
+        for (const s of ALL_STATUSES) init[s] = getSectionMediaFilter(s);
         return init;
     });
 
     // 页码从 0 开始，各板块独立维护且不持久化；切换筛选或排序时回到第一页。
-    const [sectionPages, setSectionPages] = useState<Record<FilterableStatus, number>>({
-        Do: 0, Wish: 0, OnHold: 0, Dropped: 0,
+    const [sectionPages, setSectionPages] = useState<Record<WatchStatus, number>>({
+        Do: 0, Wish: 0, Collect: 0, OnHold: 0, Dropped: 0,
     });
 
-    const handleSortChange = useCallback((status: FilterableStatus, mode: SortMode) => {
+    const [watchedView, setWatchedView] = useState<WatchedView>(getWatchedView);
+    const handleWatchedViewChange = (view: WatchedView) => {
+        setWatchedView(view);
+        try {
+            localStorage.setItem(WATCHED_VIEW_STORAGE_KEY, view);
+        } catch { /* 写入失败不影响当前切换，也不修改观看记录。 */
+        }
+    };
+    const watchedViewToggle = <WatchedViewToggle view={watchedView} onChange={handleWatchedViewChange}/>;
+
+    const handleSortChange = useCallback((status: WatchStatus, mode: SortMode) => {
         setSortModes((prev) => ({...prev, [status]: mode}));
         setSectionPages((prev) => ({...prev, [status]: 0}));
         saveSectionSortMode(status, mode);
     }, []);
 
-    const handleMediaFilterChange = useCallback((status: FilterableStatus, filter: MediaFilter) => {
+    const handleMediaFilterChange = useCallback((status: WatchStatus, filter: MediaFilter) => {
         setMediaFilters((prev) => ({...prev, [status]: filter}));
         setSectionPages((prev) => ({...prev, [status]: 0}));
         saveSectionMediaFilter(status, filter);
@@ -281,7 +301,7 @@ const HomePage: React.FC = () => {
             if (item.global_status) groups[item.global_status].push(item);
         });
         // 各组使用自己的排序方式；评分来自详情接口，不是历史个人评分字段。
-        for (const s of FILTERABLE_STATUSES) {
+        for (const s of ALL_STATUSES) {
             groups[s] = sortRecords(groups[s], sortModes[s], scores) as (SeasonRecord | MovieRecord)[];
         }
         return groups;
@@ -289,7 +309,7 @@ const HomePage: React.FC = () => {
 
     const visibleItemsByStatus = useMemo(() => {
         const groups = {...itemsByStatus};
-        for (const status of FILTERABLE_STATUSES) {
+        for (const status of ALL_STATUSES) {
             const filter = mediaFilters[status];
             groups[status] = filter === 'all'
                 ? itemsByStatus[status]
@@ -429,7 +449,7 @@ const HomePage: React.FC = () => {
     };
 
     // 时间线以外的板块共享筛选标题；网格在行尾增加影片翻页入口。
-    const renderSectionHeader = (status: FilterableStatus, count: number) => {
+    const renderSectionHeader = (status: WatchStatus, count: number) => {
         const totalPages = Math.max(Math.ceil(count / FILMS_PER_PAGE), 1);
         // 删除记录或减少筛选结果后收敛页码，空列表也保留一个有效页码用于展示。
         const currentPage = Math.min(sectionPages[status], totalPages - 1);
@@ -448,7 +468,7 @@ const HomePage: React.FC = () => {
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        width: {xs: status === 'Do' ? 'auto' : '100%', sm: 'auto'},
+                        width: {xs: status === 'Do' || status === 'Collect' ? 'auto' : '100%', sm: 'auto'},
                         flexShrink: 0,
                         '&::before': {
                             content: '""',
@@ -462,6 +482,13 @@ const HomePage: React.FC = () => {
                 >
                     {STATUS_LABELS[status]} ({count})
                 </Typography>
+                {status === 'Collect' && (
+                    <>
+                        <Box sx={{ml: {xs: 'auto', sm: 1}, mr: {sm: 1}}}>{watchedViewToggle}</Box>
+                        {/* 窄屏将网格工具放到下一行，标题和切换入口始终并排。 */}
+                        <Box sx={{display: {xs: 'block', sm: 'none'}, flexBasis: '100%'}}/>
+                    </>
+                )}
                 <SectionSortButton
                     sortMode={sortModes[status]}
                     onSortChange={(mode) => handleSortChange(status, mode)}
@@ -573,12 +600,12 @@ const HomePage: React.FC = () => {
                             </Box>
                         )}
 
-                        {/* 看过直接展示完整时间线；其他状态先筛选，再每页截取 15 条。 */}
+                        {/* 看过时间线展示全部记录；切回网格后恢复原筛选和页码。 */}
                         {(['Wish', 'Collect', 'OnHold', 'Dropped'] as const).map((status) => {
                             if (itemsByStatus[status].length === 0) return null;
-                            if (status === 'Collect') return (
+                            if (status === 'Collect' && watchedView === 'timeline') return (
                                 <WatchedTimeline key={status} records={itemsByStatus.Collect} scores={scores}
-                                                 years={years}/>
+                                                 years={years} headerActions={watchedViewToggle}/>
                             );
                             const items = visibleItemsByStatus[status];
                             const totalPages = Math.max(Math.ceil(items.length / FILMS_PER_PAGE), 1);

@@ -3,7 +3,7 @@ import MovieOutlinedIcon from '@mui/icons-material/MovieOutlined';
 import TvOutlinedIcon from '@mui/icons-material/TvOutlined';
 import {Box, ButtonBase, Typography} from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
-import {useMemo} from 'react';
+import {useMemo, type ReactNode} from 'react';
 import {Link as RouterLink} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import type {ProgressRecord} from '../types';
@@ -13,10 +13,11 @@ interface WatchedTimelineProps {
     records: ProgressRecord[];
     scores: Record<string, number>;
     years: Record<string, string>;
+    headerActions?: ReactNode;
 }
 
 /** 看过板块采用独立时间线，不继承旧网格的排序、类型筛选或分页偏好。 */
-export default function WatchedTimeline({records, scores, years}: WatchedTimelineProps) {
+export default function WatchedTimeline({records, scores, years, headerActions}: WatchedTimelineProps) {
     const theme = useTheme();
     const primary = theme.palette.primary.main;
     const months = useMemo(() => groupWatchedTimeline(records), [records]);
@@ -38,7 +39,10 @@ export default function WatchedTimeline({records, scores, years}: WatchedTimelin
                             }}>
                     看过 ({count})
                 </Typography>
-                <Typography variant="caption" color="text.secondary">最近操作时间</Typography>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0}}>
+                    <Typography variant="caption" color="text.secondary">最近操作时间</Typography>
+                    {headerActions}
+                </Box>
             </Box>
 
             {months.map(month => (
@@ -67,6 +71,14 @@ export default function WatchedTimeline({records, scores, years}: WatchedTimelin
                             </Box>
                             <Box component="ol" sx={{
                                 listStyle: 'none', m: 0, pl: {xs: 1.5, sm: 2.5}, pb: 1,
+                                // 同一天的记录按时间顺序横向排列，窄屏保留单列阅读方式。
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                    xs: 'minmax(0, 1fr)',
+                                    md: 'repeat(2, minmax(0, 1fr))',
+                                    lg: 'repeat(3, minmax(0, 1fr))'
+                                },
+                                columnGap: {md: 2, lg: 3},
                                 borderLeft: '1px solid', borderColor: alpha(primary, 0.25)
                             }}>
                                 {day.entries.map(({record, timestamp}, index) => {
@@ -86,6 +98,7 @@ export default function WatchedTimeline({records, scores, years}: WatchedTimelin
                                     return (
                                         <Box component="li" key={`${key}-${isTv ? record.season_number : ''}`} sx={{
                                             position: 'relative',
+                                            minWidth: 0,
                                             ...(index === 0 ? {
                                                 '&::before': {
                                                     content: '""',
@@ -108,6 +121,7 @@ export default function WatchedTimeline({records, scores, years}: WatchedTimelin
                                                             alignItems: 'center',
                                                             textAlign: 'left',
                                                             width: '100%',
+                                                            height: '100%',
                                                             minWidth: 0,
                                                             gap: {xs: 1.25, sm: 2},
                                                             py: 1,
