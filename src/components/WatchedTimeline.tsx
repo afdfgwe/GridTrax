@@ -29,6 +29,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
             // 两层吸顶共享偏移；导航栏高度与 MUI 默认工具栏的横竖屏规则保持一致。
             '--watched-toolbar-offset': {xs: '56px', sm: '64px'},
             '--watched-heading-height': '44px',
+            '--watched-month-height': '44px',
             [`${theme.breakpoints.down('sm')} and (orientation: landscape)`]: {
                 '--watched-toolbar-offset': '48px'
             }
@@ -58,14 +59,35 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
             </Box>
 
             {months.map(month => (
-                <Box key={month.key} sx={{pb: 3}}>
+                <Box key={month.key} sx={{
+                    // 月份栏上下的留白放进内容区，避免吸顶交接时露出空隙。
+                    '& > :last-child': {pb: 3},
+                    '& > :nth-of-type(2)': {pt: 1},
+                    viewTimelineName: '--watched-month',
+                    viewTimelineAxis: 'block',
+                    viewTimelineInset: 'calc(var(--watched-toolbar-offset) + var(--watched-heading-height)) calc(100% - var(--watched-toolbar-offset) - var(--watched-heading-height) - var(--watched-month-height))'
+                }}>
                     <Box sx={{
-                        display: 'flex', alignItems: 'baseline', gap: 1, py: 1.25, mb: 1,
+                        display: 'flex', alignItems: 'center', gap: 1, height: 'var(--watched-month-height)',
                         // 月份只在本月范围内吸顶，并始终位于看过标题栏下方。
                         position: 'sticky',
                         top: 'calc(var(--watched-toolbar-offset) + var(--watched-heading-height))', zIndex: 1,
                         backgroundColor: 'background.default',
-                        borderTop: '1px solid', borderBottom: '1px solid', borderColor: 'divider'
+                        borderTop: '1px solid', borderBottom: '1px solid', borderColor: 'divider',
+                        '@keyframes watched-month-exit': {
+                            from: {opacity: 1, transform: 'translateY(0)'},
+                            to: {opacity: 0, transform: 'translateY(-4px)'}
+                        },
+                        '& > *': {
+                            // 淡出进度跟随本月退出吸顶区的距离；反向滚动时自然恢复。
+                            '@supports (animation-timeline: --watched-month) and (animation-range: exit 0% exit 100%)': {
+                                '@media (prefers-reduced-motion: no-preference)': {
+                                    animation: 'watched-month-exit 1s linear both',
+                                    animationTimeline: '--watched-month',
+                                    animationRange: 'exit 0% exit 100%'
+                                }
+                            }
+                        }
                     }}>
                         <Typography component="h3" variant="body2" fontWeight={700}>{month.label}</Typography>
                         <Typography variant="caption" color="text.secondary">{month.count} 部</Typography>
