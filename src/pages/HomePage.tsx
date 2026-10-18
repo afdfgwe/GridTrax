@@ -413,7 +413,12 @@ const HomePage: React.FC = () => {
                             {record.poster_path &&
                                 <PosterScoreBadge score={scores[`${record.type}-${record.tmdb_id}`]}/>}
                         </Box>
-                        <CardContent sx={{flex: 1, p: {xs: 1, sm: 1.5}, pb: '12px !important'}}>
+                        <CardContent sx={{
+                            flex: 1,
+                            px: {xs: 1, sm: 1.5},
+                            pt: {xs: 0.75, sm: 1.5},
+                            pb: {xs: '6px !important', sm: '12px !important'},
+                        }}>
                             <Typography variant="body2" fontWeight={700} noWrap title={titleText}>
                                 {titleText}
                             </Typography>
@@ -422,7 +427,7 @@ const HomePage: React.FC = () => {
                                 alignItems: 'center',
                                 gap: {xs: 0.5, sm: 0.75},
                                 minWidth: 0,
-                                mt: 0.5
+                                mt: {xs: 0.25, sm: 0.5}
                             }}>
                                 {isTv ? (
                                     <Typography
