@@ -1,7 +1,7 @@
 import {Alert, Box, Button, CircularProgress, Container, Grid, IconButton, Tooltip, Typography} from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {searchMulti} from '../api/tmdb';
 import MediaCard from '../components/MediaCard';
@@ -15,11 +15,17 @@ const SearchPage: React.FC = () => {
     const query = (searchParams.get('q') || '').trim();
     const requestedPage = Number(searchParams.get('page') || 1);
     const page = Number.isInteger(requestedPage) ? Math.max(1, Math.min(requestedPage, 500)) : 1;
-    const load = useCallback((signal: AbortSignal) => query
-        ? searchMulti(query, page, signal)
-        : Promise.resolve({results: [], total_pages: 0, page: 1}), [query, page]);
+    const [pagination, setPagination] = useState<{query: string; totalPages: number}>();
+    const load = useCallback(async (signal: AbortSignal) => {
+        if (!query) return {results: [], total_pages: 0, page: 1};
+        const result = await searchMulti(query, page, signal);
+        if (!signal.aborted) setPagination({query, totalPages: result.total_pages});
+        return result;
+    }, [query, page]);
     const {data, error, loading, retry} = useAsyncResource(`${query}:${page}`, load);
     const results = data?.results ?? [];
+    // 翻页时保留同一关键词的总页数，新关键词不使用旧搜索的分页信息。
+    const totalPages = data?.total_pages ?? (pagination?.query === query ? pagination.totalPages : undefined);
     const changePage = (next: number) => setSearchParams({q: query, page: String(next)});
 
     // 混合搜索的电影与电视剧使用不同详情路由，编号本身不能区分作品类型。
@@ -48,7 +54,10 @@ const SearchPage: React.FC = () => {
                                                                    disabled={loading || page <= 1}
                                                                    onClick={() => changePage(page - 1)}><ChevronLeftIcon
                                 fontSize="small"/></IconButton></span></Tooltip>
-                            <Typography variant="caption">{page} / {data?.total_pages || page}</Typography>
+                            <Typography variant="caption" aria-label="搜索页码"
+                                        sx={{minWidth: '7ch', textAlign: 'center', whiteSpace: 'nowrap'}}>
+                                {page} / {totalPages === undefined ? '…' : Math.max(1, totalPages)}
+                            </Typography>
                             <Tooltip title="下一页"><span><IconButton size="small" aria-label="搜索下一页"
                                                                    disabled={loading || !data || page >= data.total_pages}
                                                                    onClick={() => changePage(page + 1)}><ChevronRightIcon
