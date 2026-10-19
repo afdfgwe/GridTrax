@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {getMovie, getTVShow} from '../api/tmdb';
 import {useProgressStore} from '../store/useProgressStore';
+import {getMediaYears} from '../utils/mediaYears';
 import type {ProgressRecord} from '../types';
 
 /**
@@ -42,12 +43,11 @@ export function useHomeMediaDetails(records: ProgressRecord[]) {
                             ? current
                             : {...current, [key]: detail.vote_average});
                     }
-                    // 电视剧年份取整部剧的首播日期，不是当前季的开播日期。
-                    const date = 'release_date' in detail ? detail.release_date : detail.first_air_date;
-                    if (date && /^\d{4}/.test(date)) {
-                        const year = date.slice(0, 4);
-                        setYears((current) => current[key] === year ? current : {...current, [key]: year});
-                    }
+                    // 一次剧集详情即可提供各季年份，同一部剧的多季不会互相覆盖。
+                    const detailYears = getMediaYears(detail);
+                    setYears((current) => Object.entries(detailYears).every(([yearKey, year]) => current[yearKey] === year)
+                        ? current
+                        : {...current, ...detailYears});
                     fillMissingPosters(record.type, record.tmdb_id, detail.poster_path);
                 }));
             }

@@ -147,7 +147,7 @@ const MovieDetailPage: React.FC = () => {
                                             size="small"
                                             sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
                                         />
-                                        {movie.runtime && (
+                                        {(movie.runtime ?? 0) > 0 && (
                                             <Chip
                                                 label={`${movie.runtime} 分钟`}
                                                 size="small"

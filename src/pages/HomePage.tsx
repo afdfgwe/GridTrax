@@ -29,6 +29,7 @@ import CompactCardTitle from '../components/CompactCardTitle';
 import WatchedTimeline from '../components/WatchedTimeline';
 import WatchedViewToggle from '../components/WatchedViewToggle';
 import {useHomeMediaDetails} from '../hooks/useHomeMediaDetails';
+import {getMediaYearKey} from '../utils/mediaYears';
 import {useProgressStore} from '../store/useProgressStore';
 import {
     STATUS_LABELS,
@@ -345,7 +346,7 @@ const HomePage: React.FC = () => {
         const tagText = isTv
             ? (tvRecord?.name && tvRecord.name !== titleText ? tvRecord.name : `第 ${tvRecord?.season_number} 季`)
             : '电影';
-        const year = years[`${record.type}-${record.tmdb_id}`];
+        const year = years[getMediaYearKey(record)];
         const key = `${record.type}-${record.tmdb_id}-${isTv ? tvRecord?.season_number : ''}`;
 
         return (
@@ -594,7 +595,7 @@ const HomePage: React.FC = () => {
                                                 posterPath={record.poster_path}
                                                 episodeCount={record.episode_count}
                                                 score={scores[`tv_season-${record.tmdb_id}`]}
-                                                year={years[`tv_season-${record.tmdb_id}`]}
+                                                year={years[getMediaYearKey(record)]}
                                             />
                                         );
                                     } else {
@@ -606,7 +607,7 @@ const HomePage: React.FC = () => {
                                                 name={mvRecord.name}
                                                 posterPath={mvRecord.poster_path}
                                                 score={scores[`movie-${record.tmdb_id}`]}
-                                                year={years[`movie-${record.tmdb_id}`]}
+                                                year={years[getMediaYearKey(record)]}
                                             />
                                         );
                                     }

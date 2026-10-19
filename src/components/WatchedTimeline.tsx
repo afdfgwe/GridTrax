@@ -8,6 +8,7 @@ import {Link as RouterLink} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import type {ProgressRecord} from '../types';
 import {groupWatchedTimeline} from '../utils/watchedTimeline';
+import {getMediaYearKey} from '../utils/mediaYears';
 
 interface WatchedTimelineProps {
     records: ProgressRecord[];
@@ -129,6 +130,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                         : '电影';
                                     const key = `${record.type}-${record.tmdb_id}`;
                                     const score = scores[key];
+                                    const year = years[getMediaYearKey(record)];
                                     const hasScore = Number.isFinite(score) && score > 0;
                                     const PlaceholderIcon = isTv ? TvOutlinedIcon : MovieOutlinedIcon;
 
@@ -219,14 +221,14 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                                             {score.toFixed(1)}
                                                         </Typography>}
                                                     </Box>
-                                                    {years[key] && <Typography variant="caption" color="text.secondary"
+                                                    {year && <Typography variant="caption" color="text.secondary"
                                                                          sx={{
                                                                              display: 'block',
                                                                              mt: 0.5,
                                                                              fontSize: '0.7rem',
                                                                              fontVariantNumeric: 'tabular-nums'
                                                                          }}>
-                                                        {years[key]}年
+                                                        {year}年
                                                     </Typography>}
                                                 </Box>
                                                 <ChevronRightIcon sx={{
