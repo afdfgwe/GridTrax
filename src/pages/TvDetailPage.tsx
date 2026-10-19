@@ -218,6 +218,8 @@ const TvDetailPage: React.FC = () => {
                                     tvId={show.id}
                                     showName={show.name}
                                     showPosterPath={show.poster_path}
+                                    showOverview={show.overview}
+                                    isOnlySeason={regularSeasons.length === 1}
                                     seasonSummary={season}
                                     defaultExpanded={idx === 0}
                                 />

@@ -22,11 +22,15 @@ import {STATUS_LABELS} from '../types';
 import EpisodeGrid from './EpisodeGrid';
 import EpisodeViewToggle from './EpisodeViewToggle';
 import GlobalStatusPicker from './GlobalStatusPicker';
+import SeasonDetails from './SeasonDetails';
+import {getSeasonTitle} from '../utils/seasonDetails';
 
 interface SeasonBlockProps {
     tvId: number;
     showName: string;
     showPosterPath?: string;
+    showOverview: string;
+    isOnlySeason: boolean;
     seasonSummary: TMDBSeasonSummary;
     defaultExpanded?: boolean;
 }
@@ -36,6 +40,8 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                                                      tvId,
                                                      showName,
                                                      showPosterPath,
+                                                     showOverview,
+                                                     isOnlySeason,
                                                      seasonSummary,
                                                      defaultExpanded = false
                                                  }) => {
@@ -99,6 +105,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
         : [];
 
     const statusLabel = record?.global_status ? STATUS_LABELS[record.global_status] : null;
+    const seasonYear = seasonSummary.air_date?.match(/^\d{4}/)?.[0];
 
     return (
         <Accordion
@@ -130,20 +137,15 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                     py: 0.5,
                 }}
             >
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, flexWrap: 'wrap'}}>
-                    <Typography variant="subtitle1" fontWeight={700} sx={{color: 'text.primary'}}>
-                        {seasonSummary.name}
-                    </Typography>
-                    <Chip
-                        label={`${seasonSummary.episode_count} 集`}
-                        size="small"
-                        sx={{
-                            backgroundColor: alpha(primary, 0.15),
-                            color: primary,
-                            fontWeight: 600,
-                            fontSize: '0.7rem'
-                        }}
-                    />
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0, mr: 1, flexWrap: 'wrap'}}>
+                    <Box sx={{flex: '1 1 160px', minWidth: 0}}>
+                        <Typography variant="subtitle1" fontWeight={700} sx={{color: 'text.primary', overflowWrap: 'anywhere'}}>
+                            {getSeasonTitle(seasonSummary)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {seasonYear ? `${seasonYear}年 · ` : ''}{seasonSummary.episode_count}集
+                        </Typography>
+                    </Box>
                     {season && (
                         <Chip
                             label={`${watchedCount}/${season.episodes.length} 已看`}
@@ -172,6 +174,8 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
             </AccordionSummary>
 
             <AccordionDetails sx={{px: 2, pb: 2}}>
+                <SeasonDetails summary={seasonSummary} showOverview={showOverview} isOnlySeason={isOnlySeason}/>
+
                 {/* 折叠区内的整季观看状态选择器，展示默认值不等于已写入记录。 */}
                 <Box sx={{mb: 2}}>
                     <GlobalStatusPicker

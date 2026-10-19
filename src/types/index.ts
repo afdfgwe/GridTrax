@@ -34,7 +34,7 @@ export interface TMDBTVShow {
     status: string;
 }
 
-/** 电视剧详情中的季摘要，供详情页创建季面板和保存季名称使用。 */
+/** 电视剧详情中的季摘要，用于本季介绍、海报、首播日期和评分展示。 */
 export interface TMDBSeasonSummary {
     id: number;
     season_number: number;
@@ -43,6 +43,7 @@ export interface TMDBSeasonSummary {
     poster_path?: string;
     air_date?: string;
     episode_count: number;
+    vote_average?: number;
 }
 
 /** 单季详情，通过单独的季接口取得，episodes 用于集数展示和进度统计。 */
