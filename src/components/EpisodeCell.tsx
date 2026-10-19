@@ -180,7 +180,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
     const primary = theme.palette.primary.main;
     const primaryContrast = theme.palette.primary.contrastText;
     const episodeTitle = getEpisodeTitle(episode);
-    const numberSize = compact ? 32 : {xs: 44, sm: 36};
+    const numberSize = compact ? 36 : {xs: 44, sm: 36};
 
     return (
         <>
@@ -273,9 +273,9 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                         },
                         // 普通方块保留 44 像素触摸尺寸，详情模式使用紧凑集号。
                         '@media (pointer: coarse)': {
-                            width: showTitle ? '100%' : compact ? 32 : 44,
-                            height: showTitle ? 88 : compact ? 32 : 44,
-                            minWidth: showTitle ? 0 : compact ? 32 : 44,
+                            width: showTitle ? '100%' : compact ? 36 : 44,
+                            height: showTitle ? 88 : compact ? 36 : 44,
+                            minWidth: showTitle ? 0 : compact ? 36 : 44,
                         },
                         // 允许浏览器处理滚动等常规触摸操作，避免禁用触摸导致页面无法滑动。
                         touchAction: 'manipulation',
