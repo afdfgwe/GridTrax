@@ -4,6 +4,55 @@ import {getMediaScore, getMediaScores} from '../src/utils/mediaScores.ts';
 
 const seasonRecord = (season_number, extra = {}) => ({type: 'tv_season', tmdb_id: 10, season_number, ...extra});
 
+test('只有一季时使用整部剧评分，不使用本季评分，也不修改接口数据', () => {
+    const detail = {id: 10, number_of_seasons: 1, vote_average: 8.3,
+        seasons: [{season_number: 1, vote_average: 9.5}]};
+    const before = structuredClone(detail);
+    const scores = getMediaScores(detail);
+    assert.deepEqual(scores, {'tv_season-10': 8.3});
+    assert.equal(getMediaScore(seasonRecord(1), scores), 8.3);
+    assert.deepEqual(detail, before);
+});
+
+test('单季剧整部评分无效时隐藏评分，不改用本季评分', () => {
+    for (const vote_average of [0, undefined, null, NaN, Infinity, -1]) {
+        const scores = getMediaScores({id: 10, number_of_seasons: 1, vote_average,
+            seasons: [{season_number: 1, vote_average: 9}]});
+        assert.equal(getMediaScore(seasonRecord(1), scores), 0);
+    }
+});
+
+test('总季数缺失时按正片季数判断，特别篇不将单季剧变成多季剧', () => {
+    for (const number_of_seasons of [undefined, null, 1]) {
+        const scores = getMediaScores({id: 10, number_of_seasons, vote_average: 8,
+            seasons: [{season_number: 0, vote_average: 9}, {season_number: 1, vote_average: 9.5}]});
+        assert.equal(getMediaScore(seasonRecord(1), scores), 8);
+        assert.equal(getMediaScore(seasonRecord(0), scores), 8);
+    }
+    const scores = getMediaScores({id: 10, vote_average: 8,
+        seasons: [{season_number: 1, vote_average: 9.5}]});
+    assert.equal(getMediaScore(seasonRecord(1), scores), 8);
+});
+
+test('接口总季数为多季时，摘要仅含一季也保留该季评分', () => {
+    const scores = getMediaScores({id: 10, number_of_seasons: 2, vote_average: 8,
+        seasons: [{season_number: 1, vote_average: 9.5}]});
+    assert.equal(getMediaScore(seasonRecord(1), scores), 9.5);
+    assert.equal(getMediaScore(seasonRecord(2), scores), 8);
+});
+
+test('单季剧按整剧评分排序，与显示的分数一致', () => {
+    const movie = {type: 'movie', tmdb_id: 20};
+    const records = [seasonRecord(1), movie];
+    const scores = {
+        ...getMediaScores({id: 10, number_of_seasons: 1, vote_average: 7,
+            seasons: [{season_number: 1, vote_average: 9.5}]}),
+        ...getMediaScores({id: 20, vote_average: 8}),
+    };
+    assert.deepEqual([...records].sort((a, b) => getMediaScore(b, scores) - getMediaScore(a, scores)),
+        [movie, seasonRecord(1)]);
+});
+
 test('同剧多季优先各自评分，季评分可以低于整部剧评分，且不修改源数据', () => {
     const detail = {id: 10, vote_average: 8, seasons: [
         {season_number: 2, vote_average: 6.5},
