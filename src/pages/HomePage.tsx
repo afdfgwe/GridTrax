@@ -25,6 +25,7 @@ import {getPosterUrl} from '../api/tmdb';
 import HomeActiveCard from '../components/HomeActiveCard';
 import HomeMovieActiveCard from '../components/HomeMovieActiveCard';
 import PosterScoreBadge from '../components/PosterScoreBadge';
+import CompactCardTitle from '../components/CompactCardTitle';
 import WatchedTimeline from '../components/WatchedTimeline';
 import WatchedViewToggle from '../components/WatchedViewToggle';
 import {useHomeMediaDetails} from '../hooks/useHomeMediaDetails';
@@ -419,9 +420,7 @@ const HomePage: React.FC = () => {
                             pt: {xs: 0.75, sm: 1.5},
                             pb: {xs: '6px !important', sm: '12px !important'},
                         }}>
-                            <Typography variant="body2" fontWeight={700} noWrap title={titleText}>
-                                {titleText}
-                            </Typography>
+                            <CompactCardTitle title={titleText}/>
                             <Box sx={{
                                 display: 'flex',
                                 alignItems: 'center',
