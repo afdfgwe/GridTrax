@@ -1,9 +1,10 @@
 import MovieIcon from '@mui/icons-material/Movie';
-import {AppBar, Box, Container, Toolbar, Typography, useScrollTrigger} from '@mui/material';
+import WhatshotOutlinedIcon from '@mui/icons-material/WhatshotOutlined';
+import {AppBar, Box, Container, IconButton, Toolbar, Tooltip, Typography, useScrollTrigger} from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
 import type {SxProps, Theme} from '@mui/material/styles';
 import React, {useState} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useLocation} from 'react-router-dom';
 import BackToTopButton from './BackToTopButton';
 import DataBackupPanel from './DataBackupPanel';
 import SearchBar from './SearchBar';
@@ -44,6 +45,7 @@ interface LayoutProps {
 /** 全站公共框架：固定工具栏与页面主体，搜索、备份、主题入口跨页面保留。 */
 const Layout: React.FC<LayoutProps> = ({children}) => {
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+    const {pathname} = useLocation();
 
     return (
         <Box sx={{display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'background.default'}}>
@@ -84,6 +86,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                     noWrap
                                     sx={{
                                         fontWeight: 800,
+                                        '@media (max-width: 359px)': {display: 'none'},
                                         letterSpacing: 0,
                                         background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                                         WebkitBackgroundClip: 'text',
@@ -103,6 +106,12 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                 justifyContent: 'flex-end'
                             }}>
                                 <SearchBar onExpandChange={setIsSearchExpanded}/>
+                                <Tooltip title="电影实时热门榜"><IconButton component={Link} to="/hot" aria-label="电影实时热门榜"
+                                    aria-current={pathname === '/hot' ? 'page' : undefined}
+                                    sx={{color: pathname === '/hot' ? 'primary.main' : 'text.secondary',
+                                        display: {xs: isSearchExpanded ? 'none' : 'inline-flex', sm: 'inline-flex'}}}>
+                                    <WhatshotOutlinedIcon/>
+                                </IconButton></Tooltip>
                                 <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 1}, flexShrink: 0}}>
                                     <DataBackupPanel/>
                                     <ThemePicker/>

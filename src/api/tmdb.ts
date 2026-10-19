@@ -1,5 +1,6 @@
 /** TMDB 请求和图片地址的统一入口，页面只调用封装函数，不自行拼接鉴权头。 */
 import axios from 'axios';
+import type {MovieSearchItem} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import type {
     TMDBMovie,
@@ -55,6 +56,14 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
             (r) => r.media_type === 'tv' || r.media_type === 'movie'
         ),
     };
+}
+
+/** 豆瓣榜单匹配仅搜索电影，避免同名电视剧或人物混入结果。 */
+export async function searchMovies(query: string, signal?: AbortSignal): Promise<MovieSearchItem[]> {
+    const res = await tmdbAxios.get<{results: MovieSearchItem[]}>('/search/movie', {
+        params: {query, page: 1, language: 'zh-CN', include_adult: false}, signal,
+    });
+    return res.data.results;
 }
 
 /** 整部电视剧详情，包含剧名、首播日期、评分和 seasons 季摘要。 */

@@ -24,3 +24,6 @@ Thumbs.db
 # 本地浏览器验证生成的临时产物
 .playwright-cli/
 output/playwright/
+
+# Cloudflare 本地运行时缓存与临时构建
+.wrangler/
