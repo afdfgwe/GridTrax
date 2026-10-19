@@ -1,58 +1,8 @@
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {Box, Button, Typography} from '@mui/material';
-import {useEffect, useId, useRef, useState} from 'react';
+import {Box, Typography} from '@mui/material';
 import {getPosterUrl} from '../api/tmdb';
 import type {TMDBSeasonSummary} from '../types';
 import {getSeasonOverview, getSeasonTitle} from '../utils/seasonDetails';
-
-/** 简介是否需要展开由实际排版决定，同时适配屏幕宽度与字体加载。 */
-function SeasonOverview({text}: {text: string}) {
-    const [expanded, setExpanded] = useState(false);
-    const [canExpand, setCanExpand] = useState(false);
-    const textRef = useRef<HTMLParagraphElement>(null);
-    const textId = useId();
-
-    useEffect(() => {
-        const element = textRef.current;
-        if (!element) return;
-        let active = true;
-        const measure = () => {
-            if (!active || !element.clientWidth) return;
-            const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
-            setCanExpand(element.scrollHeight > lineHeight * 3 + 1);
-        };
-        const observer = new ResizeObserver(measure);
-        observer.observe(element);
-        void document.fonts.ready.then(measure);
-        document.fonts.addEventListener('loadingdone', measure);
-        return () => {
-            active = false;
-            observer.disconnect();
-            document.fonts.removeEventListener('loadingdone', measure);
-        };
-    }, [text]);
-
-    return (
-        <Box sx={{minWidth: 0}}>
-            <Typography ref={textRef} id={textId} variant="body2" color="text.secondary" sx={{
-                display: expanded ? 'block' : '-webkit-box',
-                WebkitLineClamp: expanded ? 'unset' : 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                overflowWrap: 'anywhere',
-                whiteSpace: 'pre-line',
-                lineHeight: 1.7,
-            }}>{text}</Typography>
-            {canExpand && <Button size="small" aria-expanded={expanded} aria-controls={textId}
-                                  onClick={() => setExpanded(value => !value)}
-                                  endIcon={expanded ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
-                                  sx={{p: 0, mt: 0.5, minWidth: 0, fontSize: '0.75rem'}}>
-                {expanded ? '收起简介' : '展开全文'}
-            </Button>}
-        </Box>
-    );
-}
+import ExpandableOverview from './ExpandableOverview';
 
 interface SeasonDetailsProps {
     summary: TMDBSeasonSummary;
@@ -106,7 +56,7 @@ export default function SeasonDetails({summary, showOverview, isOnlySeason}: Sea
                 </Typography>}
             </Box>
             {overview && <Box sx={{gridColumn: {xs: '1 / -1', sm: hasPoster ? '2' : '1'}, gridRow: 2, minWidth: 0}}>
-                <SeasonOverview text={overview}/>
+                <ExpandableOverview text={overview}/>
             </Box>}
         </Box>
     );

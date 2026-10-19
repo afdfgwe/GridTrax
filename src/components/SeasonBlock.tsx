@@ -1,6 +1,7 @@
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import {
     Accordion,
@@ -59,6 +60,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
     const [episodePage, setEpisodePage] = useState(0);
     const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
+    const [showEpisodeDetails, setShowEpisodeDetails] = useState(false);
 
     const setSeasonStatus = useProgressStore((state) => state.setSeasonStatus);
     const record = useProgressStore((state) => state.data.records[`tmdb_tv_${tvId}_s${seasonSummary.season_number}`] as SeasonRecord | undefined);
@@ -240,7 +242,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                                 {watchedCount} / {season.episodes.length}
                             </Typography>
                         </Box>
-                        <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mb: 1}}>
+                        <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: {xs: 0.5, sm: 1}, mb: 1}}>
                             <Tooltip title="上一页">
                                 <span>
                                     <IconButton
@@ -254,7 +256,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                                     </IconButton>
                                 </span>
                             </Tooltip>
-                            <Typography variant="caption" sx={{color: 'text.secondary', minWidth: 112, textAlign: 'center', fontWeight: 600}}>
+                            <Typography variant="caption" sx={{color: 'text.secondary', minWidth: {xs: 88, sm: 112}, textAlign: 'center', fontWeight: 600}}>
                                 {visibleEpisodes.length ? `第 ${pageFirstEpisode}-${pageLastEpisode} 集` : '暂无集数'}
                             </Typography>
                             <Tooltip title="下一页">
@@ -270,29 +272,56 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                                     </IconButton>
                                 </span>
                             </Tooltip>
-                            <Tooltip title={episodeOrder === 'asc' ? '倒序排列' : '正序排列'}>
-                                <IconButton
-                                    size="small"
-                                    aria-label={episodeOrder === 'asc' ? '倒序排列集数' : '正序排列集数'}
-                                    onClick={() => {
-                                        setEpisodeOrder((order) => (order === 'asc' ? 'desc' : 'asc'));
-                                        setEpisodePage(0);
+                            {/* 窄屏时将展示选项一起换行，避免详情按钮单独落在下一行。 */}
+                            <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 1}}}>
+                                <Tooltip title={episodeOrder === 'asc' ? '倒序排列' : '正序排列'}>
+                                    <IconButton
+                                        size="small"
+                                        aria-label={episodeOrder === 'asc' ? '倒序排列集数' : '正序排列集数'}
+                                        onClick={() => {
+                                            setEpisodeOrder((order) => (order === 'asc' ? 'desc' : 'asc'));
+                                            setEpisodePage(0);
+                                        }}
+                                        sx={{
+                                            border: `1px solid ${alpha(primary, episodeOrder === 'desc' ? 0.45 : 0.2)}`,
+                                            borderRadius: 1.5,
+                                            color: episodeOrder === 'desc' ? primary : 'text.secondary',
+                                            backgroundColor: episodeOrder === 'desc' ? alpha(primary, 0.08) : 'transparent',
+                                        }}
+                                    >
+                                        <SwapVertIcon fontSize="small"/>
+                                    </IconButton>
+                                </Tooltip>
+                                <EpisodeViewToggle
+                                    episodes={orderedEpisodes}
+                                    showTitles={!showEpisodeDetails && showEpisodeTitles}
+                                    onChange={() => {
+                                        // 从详情入口返回标题列表，按钮标签与实际目标保持一致。
+                                        setShowEpisodeTitles(showEpisodeDetails || !showEpisodeTitles);
+                                        setShowEpisodeDetails(false);
                                     }}
-                                    sx={{
-                                        border: `1px solid ${alpha(primary, episodeOrder === 'desc' ? 0.45 : 0.2)}`,
-                                        borderRadius: 1.5,
-                                        color: episodeOrder === 'desc' ? primary : 'text.secondary',
-                                        backgroundColor: episodeOrder === 'desc' ? alpha(primary, 0.08) : 'transparent',
-                                    }}
-                                >
-                                    <SwapVertIcon fontSize="small"/>
-                                </IconButton>
-                            </Tooltip>
-                            <EpisodeViewToggle
-                                episodes={orderedEpisodes}
-                                showTitles={showEpisodeTitles}
-                                onChange={() => setShowEpisodeTitles((value) => !value)}
-                            />
+                                />
+                                <Tooltip title={showEpisodeDetails ? '收起单集详情' : '显示单集详情'} disableTouchListener>
+                                    <Box component="span" sx={{display: 'inline-flex'}}>
+                                        <IconButton
+                                            size="small"
+                                            aria-label={showEpisodeDetails ? '收起单集详情' : '显示单集详情'}
+                                            aria-pressed={showEpisodeDetails}
+                                            disabled={!orderedEpisodes.length}
+                                            onClick={() => setShowEpisodeDetails((value) => !value)}
+                                            sx={{
+                                                flexShrink: 0,
+                                                border: `1px solid ${alpha(primary, showEpisodeDetails ? 0.45 : 0.2)}`,
+                                                borderRadius: 1.5,
+                                                color: showEpisodeDetails ? primary : 'text.secondary',
+                                                backgroundColor: showEpisodeDetails ? alpha(primary, 0.08) : 'transparent',
+                                            }}
+                                        >
+                                            <InfoOutlinedIcon fontSize="small"/>
+                                        </IconButton>
+                                    </Box>
+                                </Tooltip>
+                            </Box>
                         </Box>
                         <EpisodeGrid
                             tvId={tvId}
@@ -300,6 +329,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                             episodes={visibleEpisodes}
                             metaPayload={metaPayload}
                             showTitles={showEpisodeTitles}
+                            showDetails={showEpisodeDetails}
                             hideProgress
                         />
                     </>

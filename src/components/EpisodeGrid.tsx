@@ -11,6 +11,7 @@ import React, {useCallback, useState} from 'react';
 import {useProgressStore} from '../store/useProgressStore';
 import type {SeasonRecord, TMDBEpisode} from '../types';
 import EpisodeCell from './EpisodeCell';
+import EpisodeDetails from './EpisodeDetails';
 
 interface EpisodeGridProps {
     tvId: number;
@@ -21,6 +22,8 @@ interface EpisodeGridProps {
     /** 首页已展示整季进度时，隐藏此处基于传入数组计算的局部进度。 */
     hideProgress?: boolean;
     showTitles?: boolean;
+    /** 详情模式在所有屏幕逐集展示，仍复用同一套观看操作。 */
+    showDetails?: boolean;
 }
 
 /** 复用的集数展示与操作层：读取本地进度，并将单集／批量操作交给存储。 */
@@ -30,12 +33,13 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                                                      episodes,
                                                      metaPayload,
                                                      hideProgress = false,
-                                                     showTitles = false
+                                                     showTitles = false,
+                                                     showDetails = false
                                                  }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     // 标题列表仅在移动端启用，桌面端保持方块与悬停短标题的交互。
-    const titleView = isMobile && showTitles;
+    const titleView = !showDetails && isMobile && showTitles;
     const toggleEpisodeWatched = useProgressStore((state) => state.toggleEpisodeWatched);
     const watchUpToEpisode = useProgressStore((state) => state.watchUpToEpisode);
     const record = useProgressStore((state) => state.data.records[`tmdb_tv_${tvId}_s${seasonNumber}`] as SeasonRecord | undefined);
@@ -94,19 +98,23 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                 </Box>
             )}
 
-            {/* 标题模式固定两列，其余模式由方块自然换行。 */}
+            {/* 详情模式逐集排列；普通标题模式两列，方块模式自然换行。 */}
             <Box
+                component={showDetails ? 'ul' : 'div'}
                 sx={{
-                    display: titleView ? 'grid' : 'flex',
+                    display: showDetails ? 'block' : titleView ? 'grid' : 'flex',
                     gridTemplateColumns: titleView ? 'repeat(2, minmax(0, 1fr))' : undefined,
                     flexWrap: 'wrap',
                     gap: titleView ? '8px' : '6px',
+                    m: 0,
+                    p: 0,
+                    listStyle: 'none',
                     // 单元格的触摸尺寸由 EpisodeCell 统一控制。
                 }}
             >
                 {episodes.map((episode) => {
                     const rec = record?.episodes[String(episode.episode_number)];
-                    return (
+                    const cell = (
                         <EpisodeCell
                             key={episode.episode_number}
                             episode={episode}
@@ -116,6 +124,9 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                             onWatchUpTo={handleWatchUpTo}
                         />
                     );
+                    return showDetails ? (
+                        <EpisodeDetails key={episode.episode_number} episode={episode}>{cell}</EpisodeDetails>
+                    ) : cell;
                 })}
             </Box>
 
