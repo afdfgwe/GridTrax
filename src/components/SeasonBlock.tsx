@@ -1,3 +1,5 @@
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import {
@@ -9,6 +11,7 @@ import {
     Button,
     Chip,
     IconButton,
+    LinearProgress,
     Skeleton,
     Tooltip,
     Typography,
@@ -24,6 +27,9 @@ import EpisodeViewToggle from './EpisodeViewToggle';
 import GlobalStatusPicker from './GlobalStatusPicker';
 import SeasonDetails from './SeasonDetails';
 import {getSeasonTitle} from '../utils/seasonDetails';
+
+// 与首页“在看”板块保持一致，分页仅影响展示，不影响整季进度和记录。
+const EPISODES_PER_PAGE = 18;
 
 interface SeasonBlockProps {
     tvId: number;
@@ -51,6 +57,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
     const [seasonError, setSeasonError] = useState(false);
     const [expanded, setExpanded] = useState(defaultExpanded);
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
+    const [episodePage, setEpisodePage] = useState(0);
     const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
 
     const setSeasonStatus = useProgressStore((state) => state.setSeasonStatus);
@@ -103,6 +110,14 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                 : b.episode_number - a.episode_number
         )
         : [];
+    // 先排序再分页，范围文字取实际首尾集号，兼容倒序和不连续集号。
+    const totalPages = Math.max(Math.ceil(orderedEpisodes.length / EPISODES_PER_PAGE), 1);
+    const currentPage = Math.min(episodePage, totalPages - 1);
+    const pageStart = currentPage * EPISODES_PER_PAGE;
+    const visibleEpisodes = orderedEpisodes.slice(pageStart, pageStart + EPISODES_PER_PAGE);
+    const pageFirstEpisode = visibleEpisodes[0]?.episode_number ?? 0;
+    const pageLastEpisode = visibleEpisodes[visibleEpisodes.length - 1]?.episode_number ?? 0;
+    const progress = season?.episodes.length ? (watchedCount / season.episodes.length) * 100 : 0;
 
     const statusLabel = record?.global_status ? STATUS_LABELS[record.global_status] : null;
     const seasonYear = seasonSummary.air_date?.match(/^\d{4}/)?.[0];
@@ -190,7 +205,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                 {/* 季详情加载中的占位骨架。 */}
                 {loading && (
                     <Box sx={{display: 'flex', flexWrap: 'wrap', gap: '6px', mb: 2}}>
-                        {Array.from({length: seasonSummary.episode_count}).map((_, i) => (
+                        {Array.from({length: Math.min(seasonSummary.episode_count, EPISODES_PER_PAGE)}).map((_, i) => (
                             <Skeleton key={i} variant="rounded" width={36} height={36} sx={{borderRadius: '4px'}}/>
                         ))}
                     </Box>
@@ -201,20 +216,63 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                         setLoading(true);
                     }}>重试</Button>}>集数加载失败，请检查网络后重试。</Alert>}
 
-                {/* 详情页传入排序后的完整一季，不使用首页每页 18 集的分页限制。 */}
+                {/* 进度始终按整季统计，集数网格只接收当前页。 */}
                 {season && (
                     <>
-                        <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mb: 1}}>
-                            <EpisodeViewToggle
-                                episodes={orderedEpisodes}
-                                showTitles={showEpisodeTitles}
-                                onChange={() => setShowEpisodeTitles((value) => !value)}
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5}}>
+                            <LinearProgress
+                                variant="determinate"
+                                value={progress}
+                                sx={{
+                                    flex: 1,
+                                    height: 6,
+                                    borderRadius: 1.5,
+                                    backgroundColor: alpha(primary, 0.15),
+                                    '& .MuiLinearProgress-bar': {borderRadius: 1.5, background: primary},
+                                }}
                             />
+                            <Typography variant="caption" sx={{color: 'text.secondary', minWidth: 60, textAlign: 'right'}}>
+                                {watchedCount} / {season.episodes.length}
+                            </Typography>
+                        </Box>
+                        <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mb: 1}}>
+                            <Tooltip title="上一页">
+                                <span>
+                                    <IconButton
+                                        size="small"
+                                        aria-label="上一页集数"
+                                        disabled={currentPage <= 0}
+                                        onClick={() => setEpisodePage(Math.max(currentPage - 1, 0))}
+                                        sx={{border: `1px solid ${alpha(primary, 0.2)}`, borderRadius: 1.5}}
+                                    >
+                                        <ChevronLeftIcon fontSize="small"/>
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                            <Typography variant="caption" sx={{color: 'text.secondary', minWidth: 112, textAlign: 'center', fontWeight: 600}}>
+                                {visibleEpisodes.length ? `第 ${pageFirstEpisode}-${pageLastEpisode} 集` : '暂无集数'}
+                            </Typography>
+                            <Tooltip title="下一页">
+                                <span>
+                                    <IconButton
+                                        size="small"
+                                        aria-label="下一页集数"
+                                        disabled={currentPage >= totalPages - 1}
+                                        onClick={() => setEpisodePage(Math.min(currentPage + 1, totalPages - 1))}
+                                        sx={{border: `1px solid ${alpha(primary, 0.2)}`, borderRadius: 1.5}}
+                                    >
+                                        <ChevronRightIcon fontSize="small"/>
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
                             <Tooltip title={episodeOrder === 'asc' ? '倒序排列' : '正序排列'}>
                                 <IconButton
                                     size="small"
                                     aria-label={episodeOrder === 'asc' ? '倒序排列集数' : '正序排列集数'}
-                                    onClick={() => setEpisodeOrder((order) => (order === 'asc' ? 'desc' : 'asc'))}
+                                    onClick={() => {
+                                        setEpisodeOrder((order) => (order === 'asc' ? 'desc' : 'asc'));
+                                        setEpisodePage(0);
+                                    }}
                                     sx={{
                                         border: `1px solid ${alpha(primary, episodeOrder === 'desc' ? 0.45 : 0.2)}`,
                                         borderRadius: 1.5,
@@ -225,13 +283,19 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                                     <SwapVertIcon fontSize="small"/>
                                 </IconButton>
                             </Tooltip>
+                            <EpisodeViewToggle
+                                episodes={orderedEpisodes}
+                                showTitles={showEpisodeTitles}
+                                onChange={() => setShowEpisodeTitles((value) => !value)}
+                            />
                         </Box>
                         <EpisodeGrid
                             tvId={tvId}
                             seasonNumber={seasonSummary.season_number}
-                            episodes={orderedEpisodes}
+                            episodes={visibleEpisodes}
                             metaPayload={metaPayload}
                             showTitles={showEpisodeTitles}
+                            hideProgress
                         />
                     </>
                 )}
