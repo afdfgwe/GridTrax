@@ -30,6 +30,7 @@ import WatchedTimeline from '../components/WatchedTimeline';
 import WatchedViewToggle from '../components/WatchedViewToggle';
 import {useHomeMediaDetails} from '../hooks/useHomeMediaDetails';
 import {getMediaYearKey} from '../utils/mediaYears';
+import {getMediaScore} from '../utils/mediaScores';
 import {useProgressStore} from '../store/useProgressStore';
 import {
     STATUS_LABELS,
@@ -78,7 +79,7 @@ const sortRecords = (items: ProgressRecord[], mode: SortMode, scores: Record<str
             break;
         case 'rating':
             sorted.sort((a, b) =>
-                (scores[`${b.type}-${b.tmdb_id}`] ?? 0) - (scores[`${a.type}-${a.tmdb_id}`] ?? 0)
+                getMediaScore(b, scores) - getMediaScore(a, scores)
                 || (b.last_interacted ?? 0) - (a.last_interacted ?? 0)
             );
             break;
@@ -413,7 +414,7 @@ const HomePage: React.FC = () => {
                                 </Typography>
                             )}
                             {record.poster_path &&
-                                <PosterScoreBadge score={scores[`${record.type}-${record.tmdb_id}`]}/>}
+                                <PosterScoreBadge score={getMediaScore(record, scores)}/>}
                         </Box>
                         <CardContent sx={{
                             flex: 1,
@@ -594,7 +595,7 @@ const HomePage: React.FC = () => {
                                                 showName={(record as SeasonRecord).show_name}
                                                 posterPath={record.poster_path}
                                                 episodeCount={record.episode_count}
-                                                score={scores[`tv_season-${record.tmdb_id}`]}
+                                                score={getMediaScore(record, scores)}
                                                 year={years[getMediaYearKey(record)]}
                                             />
                                         );
@@ -606,7 +607,7 @@ const HomePage: React.FC = () => {
                                                 movieId={record.tmdb_id}
                                                 name={mvRecord.name}
                                                 posterPath={mvRecord.poster_path}
-                                                score={scores[`movie-${record.tmdb_id}`]}
+                                                score={getMediaScore(record, scores)}
                                                 year={years[getMediaYearKey(record)]}
                                             />
                                         );

@@ -9,6 +9,7 @@ import {getPosterUrl} from '../api/tmdb';
 import type {ProgressRecord} from '../types';
 import {groupWatchedTimeline} from '../utils/watchedTimeline';
 import {getMediaYearKey} from '../utils/mediaYears';
+import {getMediaScore} from '../utils/mediaScores';
 
 interface WatchedTimelineProps {
     records: ProgressRecord[];
@@ -129,7 +130,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                         ? record.name && record.name !== title ? record.name : `第 ${record.season_number} 季`
                                         : '电影';
                                     const key = `${record.type}-${record.tmdb_id}`;
-                                    const score = scores[key];
+                                    const score = getMediaScore(record, scores);
                                     const year = years[getMediaYearKey(record)];
                                     const hasScore = Number.isFinite(score) && score > 0;
                                     const PlaceholderIcon = isTv ? TvOutlinedIcon : MovieOutlinedIcon;

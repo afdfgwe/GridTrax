@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {getMovie, getTVShow} from '../api/tmdb';
 import {useProgressStore} from '../store/useProgressStore';
 import {getMediaYears} from '../utils/mediaYears';
+import {getMediaScores} from '../utils/mediaScores';
 import type {ProgressRecord} from '../types';
 
 /**
@@ -37,12 +38,19 @@ export function useHomeMediaDetails(records: ProgressRecord[]) {
                             return undefined;
                         });
                     if (cancelled || !detail) return;
-                    // 只展示有效且大于零的 TMDB 评分；相同值直接复用旧状态。
-                    if (Number.isFinite(detail.vote_average) && detail.vote_average > 0) {
-                        setScores((current) => current[key] === detail.vote_average
-                            ? current
-                            : {...current, [key]: detail.vote_average});
-                    }
+                    const detailScores = getMediaScores(detail);
+                    setScores((current) => {
+                        const previousKeys = Object.keys(current).filter(scoreKey =>
+                            scoreKey === key || scoreKey.startsWith(`${key}-`));
+                        if (previousKeys.length === Object.keys(detailScores).length
+                            && Object.entries(detailScores).every(([scoreKey, score]) => current[scoreKey] === score)) {
+                            return current;
+                        }
+                        // 完整替换本作品评分，避免接口撤回季评分后继续显示旧值。
+                        const next = {...current};
+                        previousKeys.forEach(scoreKey => { delete next[scoreKey]; });
+                        return {...next, ...detailScores};
+                    });
                     // 一次剧集详情即可提供各季年份，同一部剧的多季不会互相覆盖。
                     const detailYears = getMediaYears(detail);
                     setYears((current) => Object.entries(detailYears).every(([yearKey, year]) => current[yearKey] === year)

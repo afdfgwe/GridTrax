@@ -1,6 +1,6 @@
 import type {ProgressRecord, TMDBMovie, TMDBTVShow} from '../types';
 
-/** 年份按季区分；评分仍使用整部作品的键，不受此规则影响。 */
+/** 电视剧年份按季区分，电影年份按作品区分。 */
 export function getMediaYearKey(record: ProgressRecord): string {
     return record.type === 'tv_season'
         ? `tv_season-${record.tmdb_id}-${record.season_number}`
