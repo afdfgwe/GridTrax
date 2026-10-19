@@ -14,7 +14,8 @@ export default function EpisodeDetails({episode, children}: {episode: TMDBEpisod
         <Box component="li" aria-label={`第 ${episode.episode_number} 集详情`} sx={{
             display: 'grid',
             gridTemplateColumns: 'auto minmax(0, 1fr)',
-            gap: {xs: 1.25, sm: 1.5},
+            columnGap: {xs: 1.25, sm: 1.5},
+            rowGap: 1,
             alignItems: 'start',
             py: 1.5,
             borderBottom: '1px solid',
@@ -34,8 +35,10 @@ export default function EpisodeDetails({episode, children}: {episode: TMDBEpisod
                         {runtime !== undefined && `${runtime} 分钟`}
                     </Typography>
                 )}
-                {overview && <Box sx={{mt: 0.75}}><ExpandableOverview text={overview}/></Box>}
             </Box>
+            {overview && <Box sx={{gridColumn: '1 / -1', minWidth: 0}}>
+                <ExpandableOverview text={overview} indentFirstLine/>
+            </Box>}
         </Box>
     );
 }

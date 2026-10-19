@@ -4,7 +4,7 @@ import {Box, Button, Typography} from '@mui/material';
 import {useEffect, useId, useRef, useState} from 'react';
 
 /** 简介默认显示三行，仅在实际溢出时提供展开入口，并保留原始段落。 */
-export default function ExpandableOverview({text}: {text: string}) {
+export default function ExpandableOverview({text, indentFirstLine = false}: {text: string; indentFirstLine?: boolean}) {
     const [expanded, setExpanded] = useState(false);
     const [canExpand, setCanExpand] = useState(false);
     const textRef = useRef<HTMLParagraphElement>(null);
@@ -39,6 +39,7 @@ export default function ExpandableOverview({text}: {text: string}) {
                 overflow: 'hidden',
                 overflowWrap: 'anywhere',
                 whiteSpace: 'pre-line',
+                textIndent: indentFirstLine ? '2em' : undefined,
                 lineHeight: 1.7,
             }}>{text}</Typography>
             {canExpand && <Button size="small" aria-expanded={expanded} aria-controls={textId}
