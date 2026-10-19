@@ -153,11 +153,11 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                 }}
             >
                 <Box sx={{display: 'flex', flexDirection: {xs: 'column', sm: 'row'}, alignItems: {xs: 'stretch', sm: 'center'}, gap: 1, flex: 1, minWidth: 0, mr: 1}}>
-                    <Box sx={{flex: {sm: 1}, minWidth: 0}}>
-                        <Typography variant="subtitle1" fontWeight={700} sx={{color: 'text.primary', overflowWrap: 'anywhere'}}>
+                    <Box sx={{flex: {sm: 1}, minWidth: 0, display: {xs: 'flex', sm: 'block'}, alignItems: 'baseline', flexWrap: 'wrap', columnGap: 1, rowGap: 0.25}}>
+                        <Typography variant="subtitle1" fontWeight={700} sx={{color: 'text.primary', minWidth: 0, maxWidth: '100%', overflowWrap: 'anywhere'}}>
                             {getSeasonTitle(seasonSummary)}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{whiteSpace: 'nowrap'}}>
                             {seasonYear ? `${seasonYear}年 · ` : ''}{seasonSummary.episode_count}集
                         </Typography>
                     </Box>
