@@ -11,10 +11,11 @@ import {
     Typography,
 } from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getPosterUrl, getTVShow} from '../api/tmdb';
 import SeasonBlock from '../components/SeasonBlock';
+import ExpandableOverview from '../components/ExpandableOverview';
 import {useProgressStore} from '../store/useProgressStore';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 
@@ -24,7 +25,6 @@ const TvDetailPage: React.FC = () => {
     const navigate = useNavigate();
     const load = useCallback(() => getTVShow(Number(id)), [id]);
     const {data: show, loading, error, retry} = useAsyncResource(`tv:${id}`, load);
-    const [expandedOverview, setExpandedOverview] = useState(false);
 
     // 按路由编号加载整剧详情；路由切换或卸载后忽略旧请求的结果。
     useEffect(() => {
@@ -175,36 +175,7 @@ const TvDetailPage: React.FC = () => {
                                             />
                                         ))}
                                     </Box>
-                                    <Box sx={{position: 'relative'}}>
-                                        <Typography
-                                            variant="body2"
-                                            color="text.secondary"
-                                            sx={{
-                                                display: expandedOverview ? 'block' : '-webkit-box',
-                                                WebkitLineClamp: expandedOverview ? 'unset' : 3,
-                                                WebkitBoxOrient: 'vertical',
-                                                overflow: 'hidden',
-                                                transition: 'all 0.3s ease',
-                                            }}
-                                        >
-                                            {show.overview || '暂无简介'}
-                                        </Typography>
-                                        {show.overview && show.overview.length > 100 && (
-                                            <Button
-                                                size="small"
-                                                onClick={() => setExpandedOverview(!expandedOverview)}
-                                                sx={{
-                                                    p: 0,
-                                                    minWidth: 'auto',
-                                                    fontSize: '0.75rem',
-                                                    mt: 0.5,
-                                                    textTransform: 'none'
-                                                }}
-                                            >
-                                                {expandedOverview ? '收起' : '展开阅读'}
-                                            </Button>
-                                        )}
-                                    </Box>
+                                    <ExpandableOverview key={show.id} text={show.overview || '暂无简介'}/>
                                 </Box>
                             </Box>
 
