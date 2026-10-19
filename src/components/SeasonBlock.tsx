@@ -152,8 +152,8 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                     py: 0.5,
                 }}
             >
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0, mr: 1, flexWrap: 'wrap'}}>
-                    <Box sx={{flex: '1 1 160px', minWidth: 0}}>
+                <Box sx={{display: 'flex', flexDirection: {xs: 'column', sm: 'row'}, alignItems: {xs: 'stretch', sm: 'center'}, gap: 1, flex: 1, minWidth: 0, mr: 1}}>
+                    <Box sx={{flex: {sm: 1}, minWidth: 0}}>
                         <Typography variant="subtitle1" fontWeight={700} sx={{color: 'text.primary', overflowWrap: 'anywhere'}}>
                             {getSeasonTitle(seasonSummary)}
                         </Typography>
@@ -161,29 +161,34 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                             {seasonYear ? `${seasonYear}年 · ` : ''}{seasonSummary.episode_count}集
                         </Typography>
                     </Box>
-                    {season && (
-                        <Chip
-                            label={`${watchedCount}/${season.episodes.length} 已看`}
-                            size="small"
-                            sx={{
-                                backgroundColor: alpha('#4CAF50', 0.15),
-                                color: '#4CAF50',
-                                fontWeight: 600,
-                                fontSize: '0.7rem'
-                            }}
-                        />
-                    )}
-                    {statusLabel && (
-                        <Chip
-                            label={statusLabel}
-                            size="small"
-                            sx={{
-                                backgroundColor: alpha(primary, 0.2),
-                                color: primary,
-                                fontWeight: 600,
-                                fontSize: '0.7rem'
-                            }}
-                        />
+                    {/* 进度与观看状态始终作为一组排列，窄屏不再拆到标题两侧。 */}
+                    {(season || statusLabel) && (
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0}}>
+                            {season && (
+                                <Chip
+                                    label={`${watchedCount}/${season.episodes.length} 已看`}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: alpha('#4CAF50', 0.15),
+                                        color: '#4CAF50',
+                                        fontWeight: 600,
+                                        fontSize: '0.7rem'
+                                    }}
+                                />
+                            )}
+                            {statusLabel && (
+                                <Chip
+                                    label={statusLabel}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: alpha(primary, 0.2),
+                                        color: primary,
+                                        fontWeight: 600,
+                                        fontSize: '0.7rem'
+                                    }}
+                                />
+                            )}
+                        </Box>
                     )}
                 </Box>
             </AccordionSummary>
