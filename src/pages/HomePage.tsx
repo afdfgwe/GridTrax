@@ -393,8 +393,8 @@ const HomePage: React.FC = () => {
                                     variant="caption"
                                     sx={{
                                         position: 'absolute',
-                                        top: 4,
-                                        left: 4,
+                                        top: 2,
+                                        left: 2,
                                         px: 0.5,
                                         py: 0.25,
                                         borderRadius: 0.75,
