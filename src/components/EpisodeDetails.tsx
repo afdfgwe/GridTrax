@@ -23,7 +23,7 @@ export default function EpisodeDetails({episode, children}: {episode: TMDBEpisod
             '&:first-of-type': {pt: 0.5},
             '&:last-of-type': {borderBottom: 0, pb: 0},
         }}>
-            <Box sx={{pt: 0.25}}>{children}</Box>
+            <Box sx={{alignSelf: 'center'}}>{children}</Box>
             <Box sx={{minWidth: 0}}>
                 <Typography variant="body2" component="h3" sx={{fontWeight: 600, overflowWrap: 'anywhere'}}>
                     {title || `第 ${episode.episode_number} 集`}

@@ -10,6 +10,8 @@ interface EpisodeCellProps {
     episode: TMDBEpisode;
     watched: boolean;
     showTitle?: boolean;
+    /** 单集详情使用紧凑集号按钮，不影响普通宫格和标题列表。 */
+    compact?: boolean;
     onSingleClick: (episodeNumber: number) => void;
     onWatchUpTo: (episodeNumber: number) => void;
 }
@@ -21,6 +23,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                                                      episode,
                                                      watched,
                                                      showTitle = false,
+                                                     compact = false,
                                                      onSingleClick,
                                                      onWatchUpTo,
                                                  }) => {
@@ -177,6 +180,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
     const primary = theme.palette.primary.main;
     const primaryContrast = theme.palette.primary.contrastText;
     const episodeTitle = getEpisodeTitle(episode);
+    const numberSize = compact ? 32 : {xs: 44, sm: 36};
 
     return (
         <>
@@ -229,9 +233,9 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                     onContextMenu={handleContextMenu}
                     sx={{
                         position: 'relative',
-                        width: showTitle ? '100%' : {xs: 44, sm: 36},
-                        height: showTitle ? 88 : {xs: 44, sm: 36},
-                        minWidth: showTitle ? 0 : {xs: 44, sm: 36},
+                        width: showTitle ? '100%' : numberSize,
+                        height: showTitle ? 88 : numberSize,
+                        minWidth: showTitle ? 0 : numberSize,
                         boxSizing: 'border-box',
                         p: showTitle ? 1.25 : 0,
                         border: 'none',
@@ -267,11 +271,11 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
                             background: alpha('#fff', ripple ? 0.25 : 0),
                             transition: 'background 350ms ease',
                         },
-                        // 粗指针设备的方块固定为 44 像素，标题模式保持 88 像素高度。
+                        // 普通方块保留 44 像素触摸尺寸，详情模式使用紧凑集号。
                         '@media (pointer: coarse)': {
-                            width: showTitle ? '100%' : 44,
-                            height: showTitle ? 88 : 44,
-                            minWidth: showTitle ? 0 : 44,
+                            width: showTitle ? '100%' : compact ? 32 : 44,
+                            height: showTitle ? 88 : compact ? 32 : 44,
+                            minWidth: showTitle ? 0 : compact ? 32 : 44,
                         },
                         // 允许浏览器处理滚动等常规触摸操作，避免禁用触摸导致页面无法滑动。
                         touchAction: 'manipulation',

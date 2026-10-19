@@ -120,6 +120,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
                             episode={episode}
                             watched={rec?.watched ?? false}
                             showTitle={titleView}
+                            compact={showDetails}
                             onSingleClick={handleSingleClick}
                             onWatchUpTo={handleWatchUpTo}
                         />
