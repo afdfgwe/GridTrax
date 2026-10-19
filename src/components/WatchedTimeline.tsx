@@ -108,6 +108,12 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                 }}>{day.day}</Typography>
                                 <Typography variant="caption" color="text.secondary"
                                             sx={{fontSize: '0.7rem'}}>{day.weekday}</Typography>
+                                <Typography variant="caption" color="text.secondary"
+                                            aria-label={`当天观看数量：${day.entries.length}`}
+                                            sx={{
+                                                display: 'block', mt: 0.25, fontSize: '0.7rem',
+                                                fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere'
+                                            }}>（{day.entries.length}）</Typography>
                             </Box>
                             <Box component="ol" sx={{
                                 listStyle: 'none', m: 0, pl: {xs: 1.5, sm: 2.5}, pb: 1,
