@@ -1,4 +1,4 @@
-import type {HotMovie, MovieSearchItem} from '../types/hotMovies.ts';
+import type {HotItem, HotSearchItem} from '../types/hotMovies.ts';
 
 /** 忽略空白、标点和不可见方向标记，但保留数字，避免混淆续集。 */
 export function normalizeMovieTitle(title: string): string {
@@ -6,7 +6,7 @@ export function normalizeMovieTitle(title: string): string {
 }
 
 /** 仅匹配片名相同且年份相符的唯一候选；允许不同地区上映年份相差一年。 */
-export function matchHotMovie(item: HotMovie, results: MovieSearchItem[]): MovieSearchItem | undefined {
+export function matchHotMovie(item: HotItem, results: HotSearchItem[]): HotSearchItem | undefined {
     const names = new Set([item.title, item.originalTitle].filter((name): name is string => !!name).map(normalizeMovieTitle));
     const unique = [...new Map(results.map(movie => [movie.id, movie])).values()];
     const candidates = unique.filter(movie => Number.isInteger(movie.id) && movie.id > 0
@@ -22,10 +22,10 @@ export function matchHotMovie(item: HotMovie, results: MovieSearchItem[]): Movie
 
 /** 中文名未找到时再搜索原片名；不按搜索热度盲选第一条。 */
 export async function resolveHotMovie(
-    item: HotMovie,
-    search: (query: string, signal: AbortSignal) => Promise<MovieSearchItem[]>,
+    item: HotItem,
+    search: (query: string, signal: AbortSignal) => Promise<HotSearchItem[]>,
     signal: AbortSignal,
-): Promise<MovieSearchItem | undefined> {
+): Promise<HotSearchItem | undefined> {
     signal.throwIfAborted();
     const results = await search(item.title, signal);
     signal.throwIfAborted();

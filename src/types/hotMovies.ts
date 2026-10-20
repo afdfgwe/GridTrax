@@ -1,5 +1,7 @@
+export type HotKind = 'movie' | 'tv';
+
 /** 榜单只保留作品资料，不转发豆瓣返回的用户、评论及追踪信息。 */
-export interface HotMovie {
+export interface HotItem {
     id: string;
     rank: number;
     title: string;
@@ -8,13 +10,13 @@ export interface HotMovie {
     rating?: number;
 }
 
-export interface HotMoviesFeed {
-    items: HotMovie[];
+export interface HotFeed {
+    items: HotItem[];
     fetchedAt: string;
 }
 
-/** 电影搜索没有 media_type 字段，不复用混合搜索的类型。 */
-export interface MovieSearchItem {
+/** 将电影和电视剧搜索结果映射为相同字段，避免误用混合搜索的人物结果。 */
+export interface HotSearchItem {
     id: number;
     title: string;
     original_title?: string;
@@ -24,9 +26,9 @@ export interface MovieSearchItem {
     vote_average?: number;
 }
 
-export interface HotMovieRow {
-    item: HotMovie;
-    movie?: MovieSearchItem;
+export interface HotRow {
+    item: HotItem;
+    movie?: HotSearchItem;
     status: 'loading' | 'matched' | 'unmatched' | 'error';
     error?: string;
 }

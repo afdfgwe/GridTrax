@@ -1,6 +1,6 @@
 /** TMDB 请求和图片地址的统一入口，页面只调用封装函数，不自行拼接鉴权头。 */
 import axios from 'axios';
-import type {MovieSearchItem} from '../types/hotMovies';
+import type {HotSearchItem} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import type {
     TMDBMovie,
@@ -59,11 +59,26 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
 }
 
 /** 豆瓣榜单匹配仅搜索电影，避免同名电视剧或人物混入结果。 */
-export async function searchMovies(query: string, signal?: AbortSignal): Promise<MovieSearchItem[]> {
-    const res = await tmdbAxios.get<{results: MovieSearchItem[]}>('/search/movie', {
+export async function searchMovies(query: string, signal?: AbortSignal): Promise<HotSearchItem[]> {
+    const res = await tmdbAxios.get<{ results: HotSearchItem[] }>('/search/movie', {
         params: {query, page: 1, language: 'zh-CN', include_adult: false}, signal,
     });
     return res.data.results;
+}
+
+/** 电视剧搜索字段与电影不同，映射后共用严格的片名及年份匹配。 */
+export async function searchTV(query: string, signal?: AbortSignal): Promise<HotSearchItem[]> {
+    const res = await tmdbAxios.get<{
+        results: Array<{
+            id: number; name: string; original_name?: string; first_air_date?: string;
+            poster_path?: string | null; overview?: string; vote_average?: number;
+        }>
+    }>('/search/tv', {
+        params: {query, page: 1, language: 'zh-CN', include_adult: false}, signal,
+    });
+    return res.data.results.map(({name, original_name, first_air_date, ...rest}) => ({
+        ...rest, title: name, original_title: original_name, release_date: first_air_date,
+    }));
 }
 
 /** 整部电视剧详情，包含剧名、首播日期、评分和 seasons 季摘要。 */
