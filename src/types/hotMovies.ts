@@ -29,9 +29,17 @@ export interface HotSearchItem {
     vote_average?: number;
 }
 
-/** TMDB 趋势接口直接提供电影资料，类型编号通过中文类型字典展示。 */
+/** 榜单共用的 TMDB 资料；电视剧字段映射为电影同名字段后展示。 */
 export interface TrendingMovie extends HotSearchItem {
     genre_ids?: number[];
+    origin_country?: string[];
+}
+
+/** TMDB 电视剧趋势接口的原始字段，保留地区代码和电视剧专属类型。 */
+export interface TrendingTVShow extends Omit<TrendingMovie, 'title' | 'original_title' | 'release_date'> {
+    name: string;
+    original_name?: string;
+    first_air_date?: string;
 }
 
 export interface HotRow {

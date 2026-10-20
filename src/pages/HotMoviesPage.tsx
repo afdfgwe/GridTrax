@@ -7,12 +7,12 @@ import {getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
 import type {HotKind, HotRow, HotSource, TrendingWindow} from '../types/hotMovies';
-import type {TMDBGenre} from '../types';
+import type {TMDBCountry, TMDBGenre} from '../types';
 import {parseHotMovieInfo} from '../utils/hotMovieInfo';
 import {getTrendingInfo} from '../utils/trendingMovies';
 
-function HotInfo({row, source, genres}: {row: HotRow; source: HotSource; genres: TMDBGenre[]}) {
-    const parts = source === 'tmdb' ? getTrendingInfo(row.movie, genres) : parseHotMovieInfo(row.item.info);
+function HotInfo({row, source, genres, countries}: {row: HotRow; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[]}) {
+    const parts = source === 'tmdb' ? getTrendingInfo(row.movie, genres, countries) : parseHotMovieInfo(row.item.info);
     if (!parts.length) return null;
     return (
         <Box component="dl" sx={{display: 'grid', rowGap: 0.375, m: 0, mt: 1}}>
@@ -52,7 +52,7 @@ function Scores({row}: {row: HotRow}) {
     );
 }
 
-function MovieRow({row, kind, source, genres}: {row: HotRow; kind: HotKind; source: HotSource; genres: TMDBGenre[]}) {
+function MovieRow({row, kind, source, genres, countries}: {row: HotRow; kind: HotKind; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[]}) {
     const {item, movie, status} = row;
     const destination = movie ? `/${kind}/${movie.id}` : `/search?q=${encodeURIComponent(item.title)}`;
     const showPoster = source === 'douban' || Boolean(movie?.poster_path);
@@ -100,7 +100,7 @@ function MovieRow({row, kind, source, genres}: {row: HotRow; kind: HotKind; sour
                         sx={{mt: 0.375, fontWeight: 750, fontSize: {xs: 14, sm: 16}, lineHeight: 1.4, overflowWrap: 'anywhere'}}>
                         {originalTitle}
                     </Typography>}
-                    <HotInfo row={row} source={source} genres={genres}/>
+                    <HotInfo row={row} source={source} genres={genres} countries={countries}/>
                     <Scores row={row}/>
                     {status === 'loading' && <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
             </Box>
@@ -111,7 +111,7 @@ function MovieRow({row, kind, source, genres}: {row: HotRow; kind: HotKind; sour
     );
 }
 
-/** 支持豆瓣电影、电视剧榜单和 TMDB 电影日榜、周榜，切换来源不改动观看记录。 */
+/** 支持豆瓣电影、电视剧榜单和 TMDB 电影、电视剧日榜及周榜，切换不改动观看记录。 */
 export default function HotMoviesPage() {
     // 榜单选项随当前网址保留，详情返回或刷新时恢复，不额外增加切换历史。
     const [searchParams, setSearchParams] = useSearchParams();
@@ -125,8 +125,8 @@ export default function HotMoviesPage() {
             return next;
         }, {replace: true});
     };
-    const activeKind = source === 'tmdb' ? 'movie' : kind;
-    const {rows, genres, genreError, fetchedAt, error, loading, matching, refresh} = useHotMovies(
+    const activeKind = kind;
+    const {rows, genres, genreError, countries, countryError, fetchedAt, error, loading, matching, refresh} = useHotMovies(
         activeKind, source, source === 'tmdb' ? timeWindow : 'day',
     );
     const sourceLabel = source === 'tmdb' ? 'TMDB' : '豆瓣';
@@ -153,13 +153,13 @@ export default function HotMoviesPage() {
                           '& .MuiTab-root': {minHeight: 44, minWidth: 72, px: {xs: 1.5, sm: 2.5},
                           fontWeight: 700, fontSize: 15}}}>
                     <Tab value="movie" label="电影"/>
-                    {source === 'douban' && <Tab value="tv" label="电视剧"/>}
+                    <Tab value="tv" label="电视剧"/>
                 </Tabs>
                 {source === 'tmdb' ? <ToggleButtonGroup value={timeWindow} exclusive size="small" aria-label="TMDB 榜单周期"
                     onChange={(_, value: TrendingWindow | null) => { if (value) changeSelection('window', value); }}
                     sx={{mb: 0.75, flexShrink: 0, '& .MuiToggleButton-root': {px: 1, py: 0.5, fontSize: 12, lineHeight: 1.5}}}>
-                    <ToggleButton value="day" aria-label="TMDB 电影日榜">日榜</ToggleButton>
-                    <ToggleButton value="week" aria-label="TMDB 电影周榜">周榜</ToggleButton>
+                    <ToggleButton value="day" aria-label={`TMDB ${kind === 'movie' ? '电影' : '电视剧'}日榜`}>日榜</ToggleButton>
+                    <ToggleButton value="week" aria-label={`TMDB ${kind === 'movie' ? '电影' : '电视剧'}周榜`}>周榜</ToggleButton>
                 </ToggleButtonGroup> : <Typography variant="caption" color="text.secondary"
                     sx={{pb: 1.25, whiteSpace: 'nowrap', fontWeight: 700}}>豆瓣 TOP 10</Typography>}
                 {(loading || matching) && <LinearProgress aria-label="加载热门榜"
@@ -174,7 +174,11 @@ export default function HotMoviesPage() {
             {error && <Alert severity="warning" sx={{mb: 2}} action={<Button color="inherit" size="small" onClick={refresh}>重试</Button>}>{error}</Alert>}
             {genreError && <Alert severity="warning" sx={{mb: 2}}
                 action={<Button color="inherit" size="small" onClick={refresh}>重试</Button>}>
-                电影榜单已加载，类型名称暂时无法获取。{genreError}
+                {kind === 'movie' ? '电影' : '电视剧'}榜单已加载，类型名称暂时无法获取。{genreError}
+            </Alert>}
+            {countryError && <Alert severity="warning" sx={{mb: 2}}
+                action={<Button color="inherit" size="small" onClick={refresh}>重试</Button>}>
+                地区名称暂时无法获取，暂显示地区代码。{countryError}
             </Alert>}
             {matchError && <Alert severity="warning" sx={{mb: 2}}
                                   action={<Button color="inherit" size="small" disabled={matching} onClick={refresh}>重试</Button>}>
@@ -190,7 +194,7 @@ export default function HotMoviesPage() {
             </Box>}
             {rows.length > 0 && <Box component="ol" aria-label={`${sourceLabel}${activeKind === 'movie' ? '电影' : '电视剧'}实时热门榜`}
                                      sx={{listStyle: 'none', p: 0, m: 0}}>
-                {rows.map(row => <MovieRow key={`${source}-${activeKind}-${source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row} kind={activeKind} source={source} genres={genres}/>)}
+                {rows.map(row => <MovieRow key={`${source}-${activeKind}-${source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row} kind={activeKind} source={source} genres={genres} countries={countries}/>)}
             </Box>}
         </Container>
     );

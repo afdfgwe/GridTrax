@@ -1,8 +1,9 @@
 /** TMDB 请求和图片地址的统一入口，页面只调用封装函数，不自行拼接鉴权头。 */
 import axios from 'axios';
-import type {HotSearchItem, TrendingMovie, TrendingWindow} from '../types/hotMovies';
+import type {HotKind, HotSearchItem, TrendingMovie, TrendingTVShow, TrendingWindow} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import type {
+    TMDBCountry,
     TMDBGenre,
     TMDBMovie,
     TMDBSearchResult,
@@ -28,7 +29,8 @@ const tmdbAxios = axios.create({
 // 缓存只保存在内存，不写入观影记录；单个页面卸载不能取消其他页面共用的请求。
 const detailsCache = createRequestCache<TMDBMovie | TMDBTVShow | TMDBSeason>();
 // 类型字典变更较少，缓存一天并共享进行中的请求，不随单个榜单的取消而中断。
-const genresCache = createRequestCache<TMDBGenre[]>(1, 24 * 60 * 60_000);
+const genresCache = createRequestCache<TMDBGenre[]>(2, 24 * 60 * 60_000);
+const countriesCache = createRequestCache<TMDBCountry[]>(1, 24 * 60 * 60_000);
 
 function getDetails<T extends TMDBMovie | TMDBTVShow | TMDBSeason>(path: string): Promise<T> {
     return detailsCache.load(path, async () => {
@@ -61,10 +63,10 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
     };
 }
 
-/** 电影类型使用简体中文名称，失败结果不缓存，刷新榜单时可重试。 */
-export function getMovieGenres(): Promise<TMDBGenre[]> {
-    return genresCache.load('movie:zh-CN', async () => {
-        const res = await tmdbAxios.get<{genres: TMDBGenre[]}>('/genre/movie/list', {
+/** 电影、电视剧分别获取并缓存中文类型，失败结果不缓存，刷新榜单时可重试。 */
+export function getGenres(kind: HotKind): Promise<TMDBGenre[]> {
+    return genresCache.load(`${kind}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<{genres: TMDBGenre[]}>(`/genre/${kind}/list`, {
             params: {language: 'zh-CN'},
         });
         if (!Array.isArray(res.data.genres)) throw new Error('类型列表格式错误');
@@ -72,9 +74,28 @@ export function getMovieGenres(): Promise<TMDBGenre[]> {
     });
 }
 
+/** 地区列表请求中文版本，与类型字典一样共享请求并缓存一天，失败时可重试。 */
+export function getCountries(): Promise<TMDBCountry[]> {
+    return countriesCache.load('countries:zh-CN', async () => {
+        const res = await tmdbAxios.get<TMDBCountry[]>('/configuration/countries', {
+            params: {language: 'zh-CN'},
+        });
+        if (!Array.isArray(res.data)) throw new Error('地区列表格式错误');
+        return res.data;
+    });
+}
+
 /** TMDB 电影日榜、周榜直接返回完整条目，无需再次搜索匹配。 */
 export async function getTrendingMovies(timeWindow: TrendingWindow = 'day', signal?: AbortSignal): Promise<TrendingMovie[]> {
     const res = await tmdbAxios.get<{results: TrendingMovie[]}>(`/trending/movie/${timeWindow}`, {
+        params: {language: 'zh-CN', page: 1}, signal,
+    });
+    return res.data.results;
+}
+
+/** 电视剧日榜、周榜直接使用趋势接口，保留首播日期、原名和地区代码。 */
+export async function getTrendingTVShows(timeWindow: TrendingWindow = 'day', signal?: AbortSignal): Promise<TrendingTVShow[]> {
+    const res = await tmdbAxios.get<{results: TrendingTVShow[]}>(`/trending/tv/${timeWindow}`, {
         params: {language: 'zh-CN', page: 1}, signal,
     });
     return res.data.results;

@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
-import {getMovieGenres, getTrendingMovies, searchMovies, searchTV} from '../api/tmdb';
-import type {TMDBGenre} from '../types';
+import {getCountries, getGenres, getTrendingMovies, getTrendingTVShows, searchMovies, searchTV} from '../api/tmdb';
+import type {TMDBCountry, TMDBGenre} from '../types';
 import type {HotRow, HotFeed, HotKind, HotSource, TrendingWindow} from '../types/hotMovies';
 import {resolveHotMovie} from '../utils/hotMovieMatch';
 import {requestErrorMessage} from '../utils/requestError';
@@ -15,6 +15,8 @@ interface Result {
     rows: HotRow[];
     genres?: TMDBGenre[];
     genreError?: string;
+    countries?: TMDBCountry[];
+    countryError?: string;
     error?: string;
 }
 
@@ -28,23 +30,30 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWi
 
         async function load() {
             if (source === 'tmdb') {
-                // 类型与榜单并行获取，类型失败不影响影片展示，也不产生未处理的拒绝。
-                const genresRequest = getMovieGenres().then(
+                // 字典与榜单并行获取，分别处理失败；电影榜不额外请求电视剧使用的地区字典。
+                const genresRequest = getGenres(kind).then(
                     genres => ({genres, genreError: undefined}),
                     error => ({genres: [], genreError: requestErrorMessage(error)}),
                 );
+                const countriesRequest = kind === 'tv' ? getCountries().then(
+                    countries => ({countries, countryError: undefined}),
+                    error => ({countries: [], countryError: requestErrorMessage(error)}),
+                ) : Promise.resolve({countries: [], countryError: undefined});
                 try {
-                    const movies = await getTrendingMovies(timeWindow, signal);
+                    const movies = await (kind === 'movie' ? getTrendingMovies : getTrendingTVShows)(timeWindow, signal);
                     if (!Array.isArray(movies)) throw new Error('榜单格式错误');
                     if (signal.aborted) return;
                     const rows = toTrendingRows(movies);
                     setResult({source, kind, timeWindow, attempt, rows, feed: {
                         items: rows.map(row => row.item), fetchedAt: new Date().toISOString(),
                     }});
-                    const genresResult = await genresRequest;
-                    if (!signal.aborted) setResult(previous => previous?.source === source &&
-                        previous.kind === kind && previous.timeWindow === timeWindow && previous.attempt === attempt
-                        ? {...previous, ...genresResult} : previous);
+                    const updateMetadata = (metadata: Pick<Result, 'genres' | 'genreError' | 'countries' | 'countryError'>) => {
+                        if (!signal.aborted) setResult(previous => previous?.source === source &&
+                            previous.kind === kind && previous.timeWindow === timeWindow && previous.attempt === attempt
+                            ? {...previous, ...metadata} : previous);
+                    };
+                    // 字典完成后各自更新，不让较慢的接口阻塞另一个字典的展示。
+                    await Promise.all([genresRequest.then(updateMetadata), countriesRequest.then(updateMetadata)]);
                 } catch (error) {
                     if (!signal.aborted) setResult({source, kind, timeWindow, attempt, rows: [],
                         error: `TMDB 榜单暂时无法加载。${requestErrorMessage(error)}`});
@@ -95,6 +104,8 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWi
         rows: current?.rows ?? [],
         genres: current?.genres ?? [],
         genreError: current?.genreError,
+        countries: current?.countries ?? [],
+        countryError: current?.countryError,
         fetchedAt: current?.feed?.fetchedAt,
         error: current?.error,
         loading: !current,
