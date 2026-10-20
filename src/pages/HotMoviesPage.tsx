@@ -1,6 +1,7 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {Alert, Box, Button, Container, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, Typography} from '@mui/material';
+import {darken, lighten} from '@mui/material/styles';
 import {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
@@ -18,7 +19,10 @@ function HotInfo({info}: {info?: string}) {
                                                sx={{display: 'grid', gridTemplateColumns: 'max-content minmax(0, 1fr)', columnGap: 0.75,
                                                    alignItems: 'baseline', minWidth: 0}}>
                 <Typography component="dt" variant="body2" color="text.secondary">{label}</Typography>
-                <Typography component="dd" variant="body2" sx={{m: 0, minWidth: 0, overflowWrap: 'anywhere'}}>
+                <Typography component="dd" variant="body2" sx={{m: 0, minWidth: 0, overflowWrap: 'anywhere',
+                    color: theme => theme.palette.mode === 'light'
+                        ? darken(theme.palette.text.primary, 0.12)
+                        : lighten(theme.palette.text.primary, 0.12)}}>
                     {value}
                 </Typography>
             </Box>)}
@@ -32,7 +36,7 @@ function Scores({row}: {row: HotRow}) {
     const tmdb = typeof movie?.vote_average === 'number' && Number.isFinite(movie.vote_average) && movie.vote_average > 0;
     if (!douban && !tmdb) return null;
     return (
-        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: {xs: 1.5, sm: 2.5}, alignItems: 'baseline', mt: 1.25}}>
+        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: {xs: 1.5, sm: 2.5}, alignItems: 'baseline', mt: 0.75}}>
             {douban && <Box sx={{display: 'inline-flex', alignItems: 'baseline', gap: 0.5}}>
                 <Typography variant="caption" color="text.secondary">豆瓣</Typography>
                 <Typography component="span" sx={{fontSize: 20, lineHeight: 1.2, fontWeight: 800,
