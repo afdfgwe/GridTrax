@@ -108,7 +108,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                 <SearchBar onExpandChange={setIsSearchExpanded}/>
                                 <Tooltip title="电影实时热门榜"><IconButton component={Link} to="/hot" aria-label="电影实时热门榜"
                                     aria-current={pathname === '/hot' ? 'page' : undefined}
-                                    sx={{color: pathname === '/hot' ? 'primary.main' : 'text.secondary',
+                                    sx={{color: 'text.secondary',
                                         display: {xs: isSearchExpanded ? 'none' : 'inline-flex', sm: 'inline-flex'}}}>
                                     <WhatshotOutlinedIcon/>
                                 </IconButton></Tooltip>

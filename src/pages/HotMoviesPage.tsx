@@ -15,7 +15,7 @@ function HotInfo({info}: {info?: string}) {
     return (
         <Box component="dl" sx={{display: 'grid', rowGap: 0.375, m: 0, mt: 1}}>
             {parts.map(({label, value}) => <Box component="div" key={label}
-                                               sx={{display: 'grid', gridTemplateColumns: '2.5em minmax(0, 1fr)', columnGap: 1,
+                                               sx={{display: 'grid', gridTemplateColumns: 'max-content minmax(0, 1fr)', columnGap: 0.75,
                                                    alignItems: 'baseline', minWidth: 0}}>
                 <Typography component="dt" variant="body2" color="text.secondary">{label}</Typography>
                 <Typography component="dd" variant="body2" sx={{m: 0, minWidth: 0, overflowWrap: 'anywhere'}}>
