@@ -38,7 +38,7 @@ function MovieRow({row}: {row: HotMovieRow}) {
                             豆瓣 {item.rating.toFixed(1)}
                         </Typography>}
                     {typeof movie?.vote_average === 'number' && Number.isFinite(movie.vote_average) && movie.vote_average > 0 &&
-                        <Typography variant="body2" sx={{fontWeight: 700, color: 'text.secondary'}}>
+                        <Typography variant="body2" sx={{fontWeight: 700, color: 'primary.main'}}>
                             TMDB {movie.vote_average.toFixed(1)}
                         </Typography>}
                 </Box>
