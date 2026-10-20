@@ -40,7 +40,7 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
             columnGap: {xs: 2, sm: 3}, rowGap: 1.5, py: {xs: 2.5, sm: 3}, px: {xs: 0, sm: 1}}}>
             <Box component={Link} to={destination} aria-label={movie ? `查看${item.title}详情` : `搜索${item.title}`}
                  sx={{position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
-                     gridRow: {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 0.5, bgcolor: 'action.hover',
+                     gridRow: {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 1.5, bgcolor: 'action.hover',
                      '&:hover img': {transform: 'scale(1.035)'},
                      '@media (prefers-reduced-motion: reduce)': {'& img': {transition: 'none'}}}}>
                     {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> :
@@ -70,6 +70,8 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
                     <Typography variant="body2" color="text.secondary" sx={{mt: 0.75}}>
                         {[item.year, kind === 'movie' ? '电影' : '电视剧'].filter(Boolean).join(' · ')}
                     </Typography>
+                    {item.info && <Typography variant="body2" color="text.secondary"
+                                              sx={{mt: 0.75, overflowWrap: 'anywhere'}}>{item.info}</Typography>}
                     <Scores row={row}/>
                     {status === 'loading' && <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
             </Box>

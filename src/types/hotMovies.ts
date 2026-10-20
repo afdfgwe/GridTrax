@@ -7,6 +7,7 @@ export interface HotItem {
     title: string;
     originalTitle?: string;
     year?: string;
+    info?: string;
     rating?: number;
 }
 

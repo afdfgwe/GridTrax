@@ -20,6 +20,7 @@ test('只提取榜单所需字段，评分用 rating.value，不带出评论和�
     const data = source(rawMovie({
         title: '测试电影\u200e',
         original_title: 'Test Movie',
+        info: ' 中国大陆 / 剧情\u200e / 主演 ',
         comments: ['private'],
         user: {id: 99}
     }));
@@ -30,6 +31,7 @@ test('只提取榜单所需字段，评分用 rating.value，不带出评论和�
         title: '测试电影',
         originalTitle: 'Test Movie',
         year: '2026',
+        info: '中国大陆 / 剧情 / 主演',
         rating: 7.3
     }]);
     assert.deepEqual(data, before);
@@ -47,9 +49,10 @@ test('最多保留十部电影，维持排名、过滤无效 ID 和重复条目'
 
 test('无评分、无年份和格式错误的响应不伪造资料', () => {
     for (const value of [0, null, undefined, -1, 11, '7.3', NaN]) {
-        const [parsed] = parseHotMovies(source(rawMovie({year: '待定', rating: {value}})));
+        const [parsed] = parseHotMovies(source(rawMovie({year: '待定', info: 123, rating: {value}})));
         assert.equal(parsed.rating, undefined);
         assert.equal(parsed.year, undefined);
+        assert.equal(parsed.info, undefined);
     }
     for (const data of [null, {}, {subject_collection_items: []}, source({id: 1})]) {
         assert.throws(() => parseHotMovies(data));
@@ -57,10 +60,10 @@ test('无评分、无年份和格式错误的响应不伪造资料', () => {
 });
 
 test('电视剧只取榜单字段，忽略电影、热度及无评分的零值', () => {
-    const data = source(rawTV({original_title: 'Test Show', comments: [{user: {id: 42}}]}), rawMovie());
+    const data = source(rawTV({original_title: 'Test Show', info: '中国大陆 / 剧情', comments: [{user: {id: 42}}]}), rawMovie());
     assert.deepEqual(parseHotItems(data, 'tv'), [{
         id: '456', rank: 1, title: '测试剧集',
-        originalTitle: 'Test Show', year: '2026', rating: undefined
+        originalTitle: 'Test Show', year: '2026', info: '中国大陆 / 剧情', rating: undefined
     }]);
     assert.equal(parseHotItems(source(rawMovie(), rawTV()), 'movie').length, 1);
     assert.throws(() => parseHotItems(source(rawMovie()), 'tv'));

@@ -34,6 +34,7 @@ export function parseHotItems(data: unknown, kind: HotKind): HotItem[] {
                 ? Number(item.rank) : index + 1,
             originalTitle: text(item.original_title) || undefined,
             year: /^\d{4}$/.test(year) ? year : undefined,
+            info: text(item.info) || undefined,
             rating: typeof rating === 'number' && Number.isFinite(rating) && rating > 0 && rating <= 10
                 ? rating : undefined,
         });
