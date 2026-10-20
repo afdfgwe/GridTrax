@@ -6,7 +6,7 @@ import {Link, useSearchParams} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
-import type {HotKind, HotRow, HotSource} from '../types/hotMovies';
+import type {HotKind, HotRow, HotSource, TrendingWindow} from '../types/hotMovies';
 import type {TMDBGenre} from '../types';
 import {parseHotMovieInfo} from '../utils/hotMovieInfo';
 import {getTrendingInfo} from '../utils/trendingMovies';
@@ -111,13 +111,14 @@ function MovieRow({row, kind, source, genres}: {row: HotRow; kind: HotKind; sour
     );
 }
 
-/** 支持豆瓣电影、电视剧榜单和 TMDB 电影日榜，切换来源不改动观看记录。 */
+/** 支持豆瓣电影、电视剧榜单和 TMDB 电影日榜、周榜，切换来源不改动观看记录。 */
 export default function HotMoviesPage() {
     // 榜单选项随当前网址保留，详情返回或刷新时恢复，不额外增加切换历史。
     const [searchParams, setSearchParams] = useSearchParams();
     const source: HotSource = searchParams.get('source') === 'tmdb' ? 'tmdb' : 'douban';
     const kind: HotKind = searchParams.get('kind') === 'tv' ? 'tv' : 'movie';
-    const changeSelection = (key: 'source' | 'kind', value: HotSource | HotKind) => {
+    const timeWindow: TrendingWindow = searchParams.get('window') === 'week' ? 'week' : 'day';
+    const changeSelection = (key: 'source' | 'kind' | 'window', value: HotSource | HotKind | TrendingWindow) => {
         setSearchParams(previous => {
             const next = new URLSearchParams(previous);
             next.set(key, value);
@@ -125,7 +126,9 @@ export default function HotMoviesPage() {
         }, {replace: true});
     };
     const activeKind = source === 'tmdb' ? 'movie' : kind;
-    const {rows, genres, genreError, fetchedAt, error, loading, matching, refresh} = useHotMovies(activeKind, source);
+    const {rows, genres, genreError, fetchedAt, error, loading, matching, refresh} = useHotMovies(
+        activeKind, source, source === 'tmdb' ? timeWindow : 'day',
+    );
     const sourceLabel = source === 'tmdb' ? 'TMDB' : '豆瓣';
     const matchError = rows.find(row => row.error)?.error;
     const fetchedDate = fetchedAt ? new Date(fetchedAt) : undefined;
@@ -152,9 +155,13 @@ export default function HotMoviesPage() {
                     <Tab value="movie" label="电影"/>
                     {source === 'douban' && <Tab value="tv" label="电视剧"/>}
                 </Tabs>
-                <Typography variant="caption" color="text.secondary" sx={{pb: 1.25, whiteSpace: 'nowrap', fontWeight: 700}}>
-                    {source === 'tmdb' ? 'TMDB 日榜' : '豆瓣 TOP 10'}
-                </Typography>
+                {source === 'tmdb' ? <ToggleButtonGroup value={timeWindow} exclusive size="small" aria-label="TMDB 榜单周期"
+                    onChange={(_, value: TrendingWindow | null) => { if (value) changeSelection('window', value); }}
+                    sx={{mb: 0.75, flexShrink: 0, '& .MuiToggleButton-root': {px: 1, py: 0.5, fontSize: 12, lineHeight: 1.5}}}>
+                    <ToggleButton value="day" aria-label="TMDB 电影日榜">日榜</ToggleButton>
+                    <ToggleButton value="week" aria-label="TMDB 电影周榜">周榜</ToggleButton>
+                </ToggleButtonGroup> : <Typography variant="caption" color="text.secondary"
+                    sx={{pb: 1.25, whiteSpace: 'nowrap', fontWeight: 700}}>豆瓣 TOP 10</Typography>}
                 {(loading || matching) && <LinearProgress aria-label="加载热门榜"
                     sx={{position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderRadius: 0}}/>}
             </Box>
@@ -183,7 +190,7 @@ export default function HotMoviesPage() {
             </Box>}
             {rows.length > 0 && <Box component="ol" aria-label={`${sourceLabel}${activeKind === 'movie' ? '电影' : '电视剧'}实时热门榜`}
                                      sx={{listStyle: 'none', p: 0, m: 0}}>
-                {rows.map(row => <MovieRow key={`${source}-${activeKind}-${row.item.id}`} row={row} kind={activeKind} source={source} genres={genres}/>)}
+                {rows.map(row => <MovieRow key={`${source}-${activeKind}-${source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row} kind={activeKind} source={source} genres={genres}/>)}
             </Box>}
         </Container>
     );

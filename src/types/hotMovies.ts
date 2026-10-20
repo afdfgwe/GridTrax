@@ -1,5 +1,6 @@
 export type HotKind = 'movie' | 'tv';
 export type HotSource = 'douban' | 'tmdb';
+export type TrendingWindow = 'day' | 'week';
 
 /** 榜单只保留作品资料，不转发豆瓣返回的用户、评论及追踪信息。 */
 export interface HotItem {

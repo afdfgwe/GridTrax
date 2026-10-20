@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {getMovieGenres, getTrendingMovies, searchMovies, searchTV} from '../api/tmdb';
 import type {TMDBGenre} from '../types';
-import type {HotRow, HotFeed, HotKind, HotSource} from '../types/hotMovies';
+import type {HotRow, HotFeed, HotKind, HotSource, TrendingWindow} from '../types/hotMovies';
 import {resolveHotMovie} from '../utils/hotMovieMatch';
 import {requestErrorMessage} from '../utils/requestError';
 import {toTrendingRows} from '../utils/trendingMovies';
@@ -9,6 +9,7 @@ import {toTrendingRows} from '../utils/trendingMovies';
 interface Result {
     source: HotSource;
     kind: HotKind;
+    timeWindow: TrendingWindow;
     attempt: number;
     feed?: HotFeed;
     rows: HotRow[];
@@ -17,8 +18,8 @@ interface Result {
     error?: string;
 }
 
-/** 豆瓣以五路并发补全资料，TMDB 直接展示日榜；切换或刷新时取消旧请求。 */
-export function useHotMovies(kind: HotKind, source: HotSource = 'douban') {
+/** 豆瓣以五路并发补全资料，TMDB 直接展示日榜或周榜；切换或刷新时取消旧请求。 */
+export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWindow: TrendingWindow = 'day') {
     const [attempt, setAttempt] = useState(0);
     const [result, setResult] = useState<Result>();
     useEffect(() => {
@@ -33,19 +34,19 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban') {
                     error => ({genres: [], genreError: requestErrorMessage(error)}),
                 );
                 try {
-                    const movies = await getTrendingMovies(signal);
+                    const movies = await getTrendingMovies(timeWindow, signal);
                     if (!Array.isArray(movies)) throw new Error('榜单格式错误');
                     if (signal.aborted) return;
                     const rows = toTrendingRows(movies);
-                    setResult({source, kind, attempt, rows, feed: {
+                    setResult({source, kind, timeWindow, attempt, rows, feed: {
                         items: rows.map(row => row.item), fetchedAt: new Date().toISOString(),
                     }});
                     const genresResult = await genresRequest;
                     if (!signal.aborted) setResult(previous => previous?.source === source &&
-                        previous.kind === kind && previous.attempt === attempt
+                        previous.kind === kind && previous.timeWindow === timeWindow && previous.attempt === attempt
                         ? {...previous, ...genresResult} : previous);
                 } catch (error) {
-                    if (!signal.aborted) setResult({source, kind, attempt, rows: [],
+                    if (!signal.aborted) setResult({source, kind, timeWindow, attempt, rows: [],
                         error: `TMDB 榜单暂时无法加载。${requestErrorMessage(error)}`});
                 }
                 return;
@@ -57,11 +58,11 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban') {
                 feed = await response.json() as HotFeed;
                 if (!Array.isArray(feed.items) || !feed.items.length) throw new Error('榜单为空');
             } catch {
-                if (!signal.aborted) setResult({source, kind, attempt, rows: [], error: '豆瓣榜单暂时无法加载，请稍后重试。'});
+                if (!signal.aborted) setResult({source, kind, timeWindow, attempt, rows: [], error: '豆瓣榜单暂时无法加载，请稍后重试。'});
                 return;
             }
             if (signal.aborted) return;
-            setResult({source, kind, attempt, feed, rows: feed.items.map(item => ({item, status: 'loading'}))});
+            setResult({source, kind, timeWindow, attempt, feed, rows: feed.items.map(item => ({item, status: 'loading'}))});
             let next = 0;
 
             async function worker() {
@@ -77,7 +78,7 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban') {
                     }
                     if (signal.aborted) return;
                     // 按原始索引替换，不让请求完成顺序改变豆瓣排名。
-                    setResult(previous => previous?.source === source && previous.kind === kind && previous.attempt === attempt ? {
+                    setResult(previous => previous?.source === source && previous.kind === kind && previous.timeWindow === timeWindow && previous.attempt === attempt ? {
                         ...previous, rows: previous.rows.map((value, position) => position === index ? row : value),
                     } : previous);
                 }
@@ -88,8 +89,8 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban') {
 
         void load();
         return () => controller.abort();
-    }, [attempt, kind, source]);
-    const current = result?.source === source && result.kind === kind && result.attempt === attempt ? result : undefined;
+    }, [attempt, kind, source, timeWindow]);
+    const current = result?.source === source && result.kind === kind && result.timeWindow === timeWindow && result.attempt === attempt ? result : undefined;
     return {
         rows: current?.rows ?? [],
         genres: current?.genres ?? [],

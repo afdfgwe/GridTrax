@@ -1,6 +1,6 @@
 /** TMDB 请求和图片地址的统一入口，页面只调用封装函数，不自行拼接鉴权头。 */
 import axios from 'axios';
-import type {HotSearchItem, TrendingMovie} from '../types/hotMovies';
+import type {HotSearchItem, TrendingMovie, TrendingWindow} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import type {
     TMDBGenre,
@@ -72,9 +72,9 @@ export function getMovieGenres(): Promise<TMDBGenre[]> {
     });
 }
 
-/** TMDB 电影日榜直接返回完整条目，无需再次搜索匹配。 */
-export async function getTrendingMovies(signal?: AbortSignal): Promise<TrendingMovie[]> {
-    const res = await tmdbAxios.get<{results: TrendingMovie[]}>('/trending/movie/day', {
+/** TMDB 电影日榜、周榜直接返回完整条目，无需再次搜索匹配。 */
+export async function getTrendingMovies(timeWindow: TrendingWindow = 'day', signal?: AbortSignal): Promise<TrendingMovie[]> {
+    const res = await tmdbAxios.get<{results: TrendingMovie[]}>(`/trending/movie/${timeWindow}`, {
         params: {language: 'zh-CN', page: 1}, signal,
     });
     return res.data.results;
