@@ -48,7 +48,9 @@ export function useHomeMediaDetails(records: ProgressRecord[]) {
                         }
                         // 完整替换本作品评分，避免接口撤回季评分后继续显示旧值。
                         const next = {...current};
-                        previousKeys.forEach(scoreKey => { delete next[scoreKey]; });
+                        previousKeys.forEach(scoreKey => {
+                            delete next[scoreKey];
+                        });
                         return {...next, ...detailScores};
                     });
                     // 一次剧集详情即可提供各季年份，同一部剧的多季不会互相覆盖。

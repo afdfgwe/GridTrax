@@ -15,7 +15,7 @@ const SearchPage: React.FC = () => {
     const query = (searchParams.get('q') || '').trim();
     const requestedPage = Number(searchParams.get('page') || 1);
     const page = Number.isInteger(requestedPage) ? Math.max(1, Math.min(requestedPage, 500)) : 1;
-    const [pagination, setPagination] = useState<{query: string; totalPages: number}>();
+    const [pagination, setPagination] = useState<{ query: string; totalPages: number }>();
     const load = useCallback(async (signal: AbortSignal) => {
         if (!query) return {results: [], total_pages: 0, page: 1};
         const result = await searchMulti(query, page, signal);

@@ -77,7 +77,11 @@ test('无评分、无年份和格式错误的响应不伪造资料', () => {
 });
 
 test('电视剧只取榜单字段，忽略电影、热度及无评分的零值', () => {
-    const data = source(rawTV({original_title: 'Test Show', info: '中国大陆 / 剧情', comments: [{user: {id: 42}}]}), rawMovie());
+    const data = source(rawTV({
+        original_title: 'Test Show',
+        info: '中国大陆 / 剧情',
+        comments: [{user: {id: 42}}]
+    }), rawMovie());
     assert.deepEqual(parseHotItems(data, 'tv'), [{
         id: '456', rank: 1, title: '测试剧集',
         originalTitle: 'Test Show', year: '2026', info: '中国大陆 / 剧情', rating: undefined

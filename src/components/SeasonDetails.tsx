@@ -32,27 +32,29 @@ export default function SeasonDetails({summary, showOverview, isOnlySeason}: Sea
             borderColor: 'divider',
         }}>
             {hasPoster && <Box component="img" src={getPosterUrl(summary.poster_path, 'w185')}
-                              alt={`${getSeasonTitle(summary)}海报`} loading="lazy" decoding="async"
-                              sx={{
-                                  gridColumn: 1,
-                                  gridRow: {xs: '1', sm: overview ? '1 / span 2' : '1'},
-                                  width: '100%',
-                                  aspectRatio: '2 / 3',
-                                  objectFit: 'cover',
-                                  borderRadius: 1,
-                                  backgroundColor: 'action.hover',
-                              }}/>}
-            <Box sx={{gridColumn: hasPoster ? 2 : 1, gridRow: 1, minWidth: 0,
-                display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5}}>
+                               alt={`${getSeasonTitle(summary)}海报`} loading="lazy" decoding="async"
+                               sx={{
+                                   gridColumn: 1,
+                                   gridRow: {xs: '1', sm: overview ? '1 / span 2' : '1'},
+                                   width: '100%',
+                                   aspectRatio: '2 / 3',
+                                   objectFit: 'cover',
+                                   borderRadius: 1,
+                                   backgroundColor: 'action.hover',
+                               }}/>}
+            <Box sx={{
+                gridColumn: hasPoster ? 2 : 1, gridRow: 1, minWidth: 0,
+                display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5
+            }}>
                 {date && <Typography variant="caption" color="text.secondary">
                     首播：<Box component="time" dateTime={date}>{date}</Box>
                 </Typography>}
                 <Typography variant="caption" color="text.secondary">共 {summary.episode_count} 集</Typography>
                 {hasScore && <Typography variant="caption" color="text.secondary">
                     本季评分 <Box component="span" aria-label={`本季 TMDB 评分 ${score.toFixed(1)}`} sx={theme => ({
-                        ml: 0.5, fontWeight: 700,
-                        color: theme.palette.mode === 'light' ? '#9b6500' : '#FFE082',
-                    })}>{score.toFixed(1)}</Box>
+                    ml: 0.5, fontWeight: 700,
+                    color: theme.palette.mode === 'light' ? '#9b6500' : '#FFE082',
+                })}>{score.toFixed(1)}</Box>
                 </Typography>}
             </Box>
             {overview && <Box sx={{gridColumn: {xs: '1 / -1', sm: hasPoster ? '2' : '1'}, gridRow: 2, minWidth: 0}}>

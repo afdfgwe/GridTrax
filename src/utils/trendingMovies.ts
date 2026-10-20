@@ -37,10 +37,12 @@ export function getTrendingInfo(movie?: TrendingMovie, genres: readonly TMDBGenr
         country.native_name?.trim() || country.english_name?.trim()]));
     return [
         {label: '上映', value: movie?.release_date?.trim()},
-        {label: '地区', value: movie?.origin_country?.map(country => {
-            const code = country.trim().toUpperCase();
-            return code ? countryNames.get(code) || code : '';
-        }).filter(Boolean).join(' ')},
+        {
+            label: '地区', value: movie?.origin_country?.map(country => {
+                const code = country.trim().toUpperCase();
+                return code ? countryNames.get(code) || code : '';
+            }).filter(Boolean).join(' ')
+        },
         {label: '类型', value: movie?.genre_ids?.map(id => names.get(id)).filter(Boolean).join(' ')},
     ].filter(part => part.value);
 }

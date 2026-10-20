@@ -10,7 +10,11 @@ test('单集详情保留首播日期、时长与简介段落，不修改接口�
 });
 
 test('缺失、空白与空值不提供占位详情', () => {
-    for (const episode of [{}, {air_date: null, runtime: null, overview: null}, {air_date: ' ', overview: ' \n ', runtime: 0}]) {
+    for (const episode of [{}, {air_date: null, runtime: null, overview: null}, {
+        air_date: ' ',
+        overview: ' \n ',
+        runtime: 0
+    }]) {
         assert.deepEqual(getEpisodeDetails(episode), {airDate: '', runtime: undefined, overview: ''});
     }
 });

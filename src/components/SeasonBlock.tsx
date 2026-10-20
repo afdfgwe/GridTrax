@@ -154,9 +154,30 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                     py: 0.5,
                 }}
             >
-                <Box sx={{display: 'flex', flexDirection: {xs: 'column', sm: 'row'}, alignItems: {xs: 'stretch', sm: 'center'}, gap: 1, flex: 1, minWidth: 0, mr: 1}}>
-                    <Box sx={{flex: {sm: 1}, minWidth: 0, display: {xs: 'flex', sm: 'block'}, alignItems: 'baseline', flexWrap: 'wrap', columnGap: 1, rowGap: 0.25}}>
-                        <Typography variant="subtitle1" fontWeight={700} sx={{color: 'text.primary', minWidth: 0, maxWidth: '100%', overflowWrap: 'anywhere'}}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: {xs: 'column', sm: 'row'},
+                    alignItems: {xs: 'stretch', sm: 'center'},
+                    gap: 1,
+                    flex: 1,
+                    minWidth: 0,
+                    mr: 1
+                }}>
+                    <Box sx={{
+                        flex: {sm: 1},
+                        minWidth: 0,
+                        display: {xs: 'flex', sm: 'block'},
+                        alignItems: 'baseline',
+                        flexWrap: 'wrap',
+                        columnGap: 1,
+                        rowGap: 0.25
+                    }}>
+                        <Typography variant="subtitle1" fontWeight={700} sx={{
+                            color: 'text.primary',
+                            minWidth: 0,
+                            maxWidth: '100%',
+                            overflowWrap: 'anywhere'
+                        }}>
                             {getSeasonTitle(seasonSummary)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" sx={{whiteSpace: 'nowrap'}}>
@@ -238,11 +259,18 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                                     '& .MuiLinearProgress-bar': {borderRadius: 1.5, background: primary},
                                 }}
                             />
-                            <Typography variant="caption" sx={{color: 'text.secondary', minWidth: 60, textAlign: 'right'}}>
+                            <Typography variant="caption"
+                                        sx={{color: 'text.secondary', minWidth: 60, textAlign: 'right'}}>
                                 {watchedCount} / {season.episodes.length}
                             </Typography>
                         </Box>
-                        <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: {xs: 0.5, sm: 1}, mb: 1}}>
+                        <Box sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            gap: {xs: 0.5, sm: 1},
+                            mb: 1
+                        }}>
                             <Tooltip title="上一页">
                                 <span>
                                     <IconButton
@@ -256,7 +284,12 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                                     </IconButton>
                                 </span>
                             </Tooltip>
-                            <Typography variant="caption" sx={{color: 'text.secondary', minWidth: {xs: 88, sm: 112}, textAlign: 'center', fontWeight: 600}}>
+                            <Typography variant="caption" sx={{
+                                color: 'text.secondary',
+                                minWidth: {xs: 88, sm: 112},
+                                textAlign: 'center',
+                                fontWeight: 600
+                            }}>
                                 {visibleEpisodes.length ? `第 ${pageFirstEpisode}-${pageLastEpisode} 集` : '暂无集数'}
                             </Typography>
                             <Tooltip title="下一页">

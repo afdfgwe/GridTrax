@@ -66,7 +66,7 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
 /** 电影、电视剧分别获取并缓存中文类型，失败结果不缓存，刷新榜单时可重试。 */
 export function getGenres(kind: HotKind): Promise<TMDBGenre[]> {
     return genresCache.load(`${kind}:zh-CN`, async () => {
-        const res = await tmdbAxios.get<{genres: TMDBGenre[]}>(`/genre/${kind}/list`, {
+        const res = await tmdbAxios.get<{ genres: TMDBGenre[] }>(`/genre/${kind}/list`, {
             params: {language: 'zh-CN'},
         });
         if (!Array.isArray(res.data.genres)) throw new Error('类型列表格式错误');
@@ -87,7 +87,7 @@ export function getCountries(): Promise<TMDBCountry[]> {
 
 /** TMDB 电影日榜、周榜直接返回完整条目，无需再次搜索匹配。 */
 export async function getTrendingMovies(timeWindow: TrendingWindow = 'day', signal?: AbortSignal): Promise<TrendingMovie[]> {
-    const res = await tmdbAxios.get<{results: TrendingMovie[]}>(`/trending/movie/${timeWindow}`, {
+    const res = await tmdbAxios.get<{ results: TrendingMovie[] }>(`/trending/movie/${timeWindow}`, {
         params: {language: 'zh-CN', page: 1}, signal,
     });
     return res.data.results;
@@ -95,7 +95,7 @@ export async function getTrendingMovies(timeWindow: TrendingWindow = 'day', sign
 
 /** 电视剧日榜、周榜直接使用趋势接口，保留首播日期、原名和地区代码。 */
 export async function getTrendingTVShows(timeWindow: TrendingWindow = 'day', signal?: AbortSignal): Promise<TrendingTVShow[]> {
-    const res = await tmdbAxios.get<{results: TrendingTVShow[]}>(`/trending/tv/${timeWindow}`, {
+    const res = await tmdbAxios.get<{ results: TrendingTVShow[] }>(`/trending/tv/${timeWindow}`, {
         params: {language: 'zh-CN', page: 1}, signal,
     });
     return res.data.results;

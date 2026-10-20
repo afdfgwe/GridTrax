@@ -20,7 +20,8 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "noEmit": true, // 此阶段只做类型检查，不生成 JavaScript 文件。
+    "noEmit": true,
+    // 此阶段只做类型检查，不生成 JavaScript 文件。
     "jsx": "react-jsx",
     /* 严格检查未使用的声明、分支遗漏及无效的副作用导入等问题。 */
     "strict": true,

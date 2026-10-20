@@ -6,7 +6,7 @@ import {getEpisodeTitle} from './episodeTitle';
 import ExpandableOverview from './ExpandableOverview';
 
 /** 详情文字与集号按钮分离，阅读或展开简介不会改变观看记录。 */
-export default function EpisodeDetails({episode, children}: {episode: TMDBEpisode; children: ReactNode}) {
+export default function EpisodeDetails({episode, children}: { episode: TMDBEpisode; children: ReactNode }) {
     const title = getEpisodeTitle(episode);
     const {airDate, runtime, overview} = getEpisodeDetails(episode);
 
@@ -29,7 +29,8 @@ export default function EpisodeDetails({episode, children}: {episode: TMDBEpisod
                     {title || `第 ${episode.episode_number} 集`}
                 </Typography>
                 {(airDate || runtime !== undefined) && (
-                    <Typography variant="caption" color="text.secondary" sx={{display: 'block', mt: 0.25, overflowWrap: 'anywhere'}}>
+                    <Typography variant="caption" color="text.secondary"
+                                sx={{display: 'block', mt: 0.25, overflowWrap: 'anywhere'}}>
                         {airDate && <>首播：<Box component="time" dateTime={airDate}>{airDate}</Box></>}
                         {airDate && runtime !== undefined ? ' · ' : ''}
                         {runtime !== undefined && `${runtime} 分钟`}

@@ -44,19 +44,23 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWi
                     if (!Array.isArray(movies)) throw new Error('榜单格式错误');
                     if (signal.aborted) return;
                     const rows = toTrendingRows(movies);
-                    setResult({source, kind, timeWindow, attempt, rows, feed: {
-                        items: rows.map(row => row.item), fetchedAt: new Date().toISOString(),
-                    }});
+                    setResult({
+                        source, kind, timeWindow, attempt, rows, feed: {
+                            items: rows.map(row => row.item), fetchedAt: new Date().toISOString(),
+                        }
+                    });
                     const updateMetadata = (metadata: Pick<Result, 'genres' | 'genreError' | 'countries' | 'countryError'>) => {
                         if (!signal.aborted) setResult(previous => previous?.source === source &&
-                            previous.kind === kind && previous.timeWindow === timeWindow && previous.attempt === attempt
+                        previous.kind === kind && previous.timeWindow === timeWindow && previous.attempt === attempt
                             ? {...previous, ...metadata} : previous);
                     };
                     // 字典完成后各自更新，不让较慢的接口阻塞另一个字典的展示。
                     await Promise.all([genresRequest.then(updateMetadata), countriesRequest.then(updateMetadata)]);
                 } catch (error) {
-                    if (!signal.aborted) setResult({source, kind, timeWindow, attempt, rows: [],
-                        error: `TMDB 榜单暂时无法加载。${requestErrorMessage(error)}`});
+                    if (!signal.aborted) setResult({
+                        source, kind, timeWindow, attempt, rows: [],
+                        error: `TMDB 榜单暂时无法加载。${requestErrorMessage(error)}`
+                    });
                 }
                 return;
             }
@@ -67,11 +71,25 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWi
                 feed = await response.json() as HotFeed;
                 if (!Array.isArray(feed.items) || !feed.items.length) throw new Error('榜单为空');
             } catch {
-                if (!signal.aborted) setResult({source, kind, timeWindow, attempt, rows: [], error: '豆瓣榜单暂时无法加载，请稍后重试。'});
+                if (!signal.aborted) setResult({
+                    source,
+                    kind,
+                    timeWindow,
+                    attempt,
+                    rows: [],
+                    error: '豆瓣榜单暂时无法加载，请稍后重试。'
+                });
                 return;
             }
             if (signal.aborted) return;
-            setResult({source, kind, timeWindow, attempt, feed, rows: feed.items.map(item => ({item, status: 'loading'}))});
+            setResult({
+                source,
+                kind,
+                timeWindow,
+                attempt,
+                feed,
+                rows: feed.items.map(item => ({item, status: 'loading'}))
+            });
             let next = 0;
 
             async function worker() {

@@ -1,5 +1,8 @@
 {
   "version": 1,
-  "include": ["/api/hot/movies", "/api/hot/tv"],
+  "include": [
+    "/api/hot/movies",
+    "/api/hot/tv"
+  ],
   "exclude": []
 }
