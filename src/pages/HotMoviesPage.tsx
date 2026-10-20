@@ -113,10 +113,11 @@ export default function HotMoviesPage() {
                 <Tooltip title="刷新榜单"><span><IconButton aria-label="刷新榜单" onClick={refresh}
                                                         disabled={loading || matching} size="small"><RefreshIcon fontSize="small"/></IconButton></span></Tooltip>
             </Box>
-            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1,
+            <Box sx={{position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1,
                 borderBottom: 1, borderColor: 'divider', mt: {xs: 2, sm: 3}}}>
                 <Tabs value={kind} onChange={(_, value: HotKind) => setKind(value)} aria-label="热门榜类型"
-                      sx={{minHeight: 44, '& .MuiTab-root': {minHeight: 44, minWidth: 72, px: {xs: 1.5, sm: 2.5},
+                      sx={{minHeight: 44, '& .MuiTabs-indicator': {height: 2, visibility: loading || matching ? 'hidden' : 'visible'},
+                          '& .MuiTab-root': {minHeight: 44, minWidth: 72, px: {xs: 1.5, sm: 2.5},
                           fontWeight: 700, fontSize: 15}}}>
                     <Tab value="movie" label="电影"/>
                     <Tab value="tv" label="电视剧"/>
@@ -124,9 +125,9 @@ export default function HotMoviesPage() {
                 <Typography variant="caption" color="text.secondary" sx={{pb: 1.25, whiteSpace: 'nowrap', fontWeight: 700}}>
                     豆瓣 TOP 10
                 </Typography>
+                {(loading || matching) && <LinearProgress aria-label="加载热门榜"
+                    sx={{position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderRadius: 0}}/>}
             </Box>
-            <Box sx={{height: 3}}>{(loading || matching) &&
-                <LinearProgress sx={{height: 3}} aria-label="加载热门榜"/>}</Box>
             <Box sx={{display: 'flex', justifyContent: 'flex-end', minHeight: 36, alignItems: 'center'}}>
                 {fetchedDate && Number.isFinite(fetchedDate.getTime()) &&
                     <Typography variant="caption" color="text.secondary" sx={{fontVariantNumeric: 'tabular-nums'}}>
