@@ -3,6 +3,7 @@ import axios from 'axios';
 import type {HotSearchItem, TrendingMovie} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import type {
+    TMDBGenre,
     TMDBMovie,
     TMDBSearchResult,
     TMDBSeason,
@@ -26,6 +27,8 @@ const tmdbAxios = axios.create({
 
 // 缓存只保存在内存，不写入观影记录；单个页面卸载不能取消其他页面共用的请求。
 const detailsCache = createRequestCache<TMDBMovie | TMDBTVShow | TMDBSeason>();
+// 类型字典变更较少，缓存一天并共享进行中的请求，不随单个榜单的取消而中断。
+const genresCache = createRequestCache<TMDBGenre[]>(1, 24 * 60 * 60_000);
 
 function getDetails<T extends TMDBMovie | TMDBTVShow | TMDBSeason>(path: string): Promise<T> {
     return detailsCache.load(path, async () => {
@@ -56,6 +59,17 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
             (r) => r.media_type === 'tv' || r.media_type === 'movie'
         ),
     };
+}
+
+/** 电影类型使用简体中文名称，失败结果不缓存，刷新榜单时可重试。 */
+export function getMovieGenres(): Promise<TMDBGenre[]> {
+    return genresCache.load('movie:zh-CN', async () => {
+        const res = await tmdbAxios.get<{genres: TMDBGenre[]}>('/genre/movie/list', {
+            params: {language: 'zh-CN'},
+        });
+        if (!Array.isArray(res.data.genres)) throw new Error('类型列表格式错误');
+        return res.data.genres;
+    });
 }
 
 /** TMDB 电影日榜直接返回完整条目，无需再次搜索匹配。 */

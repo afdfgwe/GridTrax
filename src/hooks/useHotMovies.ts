@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
-import {getTrendingMovies, searchMovies, searchTV} from '../api/tmdb';
+import {getMovieGenres, getTrendingMovies, searchMovies, searchTV} from '../api/tmdb';
+import type {TMDBGenre} from '../types';
 import type {HotRow, HotFeed, HotKind, HotSource} from '../types/hotMovies';
 import {resolveHotMovie} from '../utils/hotMovieMatch';
 import {requestErrorMessage} from '../utils/requestError';
@@ -11,6 +12,8 @@ interface Result {
     attempt: number;
     feed?: HotFeed;
     rows: HotRow[];
+    genres?: TMDBGenre[];
+    genreError?: string;
     error?: string;
 }
 
@@ -24,6 +27,11 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban') {
 
         async function load() {
             if (source === 'tmdb') {
+                // 类型与榜单并行获取，类型失败不影响影片展示，也不产生未处理的拒绝。
+                const genresRequest = getMovieGenres().then(
+                    genres => ({genres, genreError: undefined}),
+                    error => ({genres: [], genreError: requestErrorMessage(error)}),
+                );
                 try {
                     const movies = await getTrendingMovies(signal);
                     if (!Array.isArray(movies)) throw new Error('榜单格式错误');
@@ -32,6 +40,10 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban') {
                     setResult({source, kind, attempt, rows, feed: {
                         items: rows.map(row => row.item), fetchedAt: new Date().toISOString(),
                     }});
+                    const genresResult = await genresRequest;
+                    if (!signal.aborted) setResult(previous => previous?.source === source &&
+                        previous.kind === kind && previous.attempt === attempt
+                        ? {...previous, ...genresResult} : previous);
                 } catch (error) {
                     if (!signal.aborted) setResult({source, kind, attempt, rows: [],
                         error: `TMDB 榜单暂时无法加载。${requestErrorMessage(error)}`});
@@ -80,6 +92,8 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban') {
     const current = result?.source === source && result.kind === kind && result.attempt === attempt ? result : undefined;
     return {
         rows: current?.rows ?? [],
+        genres: current?.genres ?? [],
+        genreError: current?.genreError,
         fetchedAt: current?.feed?.fetchedAt,
         error: current?.error,
         loading: !current,

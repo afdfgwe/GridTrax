@@ -28,7 +28,7 @@ export interface HotSearchItem {
     vote_average?: number;
 }
 
-/** TMDB 趋势接口直接提供电影资料，类型编号暂按原始数组展示。 */
+/** TMDB 趋势接口直接提供电影资料，类型编号通过中文类型字典展示。 */
 export interface TrendingMovie extends HotSearchItem {
     genre_ids?: number[];
 }

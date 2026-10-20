@@ -8,11 +8,12 @@ import {getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
 import type {HotKind, HotRow, HotSource} from '../types/hotMovies';
+import type {TMDBGenre} from '../types';
 import {parseHotMovieInfo} from '../utils/hotMovieInfo';
 import {getTrendingInfo} from '../utils/trendingMovies';
 
-function HotInfo({row, source}: {row: HotRow; source: HotSource}) {
-    const parts = source === 'tmdb' ? getTrendingInfo(row.movie) : parseHotMovieInfo(row.item.info);
+function HotInfo({row, source, genres}: {row: HotRow; source: HotSource; genres: TMDBGenre[]}) {
+    const parts = source === 'tmdb' ? getTrendingInfo(row.movie, genres) : parseHotMovieInfo(row.item.info);
     if (!parts.length) return null;
     return (
         <Box component="dl" sx={{display: 'grid', rowGap: 0.375, m: 0, mt: 1}}>
@@ -52,10 +53,11 @@ function Scores({row}: {row: HotRow}) {
     );
 }
 
-function MovieRow({row, kind, source}: {row: HotRow; kind: HotKind; source: HotSource}) {
+function MovieRow({row, kind, source, genres}: {row: HotRow; kind: HotKind; source: HotSource; genres: TMDBGenre[]}) {
     const {item, movie, status} = row;
     const destination = movie ? `/${kind}/${movie.id}` : `/search?q=${encodeURIComponent(item.title)}`;
     const showPoster = source === 'douban' || Boolean(movie?.poster_path);
+    const originalTitle = source === 'tmdb' ? movie?.original_title?.trim() : undefined;
     const overview = source === 'tmdb' ? movie?.overview?.trim() : status === 'error' ? 'TMDB 资料加载失败' :
         status === 'unmatched' ? '暂未匹配到 TMDB 影片' : movie?.overview || '暂无简介';
     return (
@@ -95,7 +97,11 @@ function MovieRow({row, kind, source}: {row: HotRow; kind: HotKind; source: HotS
                                                   sx={{display: 'inline-block', ml: 0.75, fontSize: {xs: 14, sm: 16},
                                                       fontWeight: 400, whiteSpace: 'nowrap'}}>({item.year})</Typography>}
                     </Typography>
-                    <HotInfo row={row} source={source}/>
+                    {originalTitle && <Typography color="text.secondary"
+                        sx={{mt: 0.375, fontSize: {xs: 14, sm: 16}, lineHeight: 1.4, overflowWrap: 'anywhere'}}>
+                        {originalTitle}
+                    </Typography>}
+                    <HotInfo row={row} source={source} genres={genres}/>
                     <Scores row={row}/>
                     {status === 'loading' && <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
             </Box>
@@ -111,7 +117,7 @@ export default function HotMoviesPage() {
     const [source, setSource] = useState<HotSource>('douban');
     const [kind, setKind] = useState<HotKind>('movie');
     const activeKind = source === 'tmdb' ? 'movie' : kind;
-    const {rows, fetchedAt, error, loading, matching, refresh} = useHotMovies(activeKind, source);
+    const {rows, genres, genreError, fetchedAt, error, loading, matching, refresh} = useHotMovies(activeKind, source);
     const sourceLabel = source === 'tmdb' ? 'TMDB' : '豆瓣';
     const matchError = rows.find(row => row.error)?.error;
     const fetchedDate = fetchedAt ? new Date(fetchedAt) : undefined;
@@ -151,6 +157,10 @@ export default function HotMoviesPage() {
                     </Typography>}
             </Box>
             {error && <Alert severity="warning" sx={{mb: 2}} action={<Button color="inherit" size="small" onClick={refresh}>重试</Button>}>{error}</Alert>}
+            {genreError && <Alert severity="warning" sx={{mb: 2}}
+                action={<Button color="inherit" size="small" onClick={refresh}>重试</Button>}>
+                电影榜单已加载，类型名称暂时无法获取。{genreError}
+            </Alert>}
             {matchError && <Alert severity="warning" sx={{mb: 2}}
                                   action={<Button color="inherit" size="small" disabled={matching} onClick={refresh}>重试</Button>}>
                 豆瓣榜单已加载，部分 TMDB 资料未能获取。{matchError}
@@ -165,7 +175,7 @@ export default function HotMoviesPage() {
             </Box>}
             {rows.length > 0 && <Box component="ol" aria-label={`${sourceLabel}${activeKind === 'movie' ? '电影' : '电视剧'}实时热门榜`}
                                      sx={{listStyle: 'none', p: 0, m: 0}}>
-                {rows.map(row => <MovieRow key={`${source}-${activeKind}-${row.item.id}`} row={row} kind={activeKind} source={source}/>)}
+                {rows.map(row => <MovieRow key={`${source}-${activeKind}-${row.item.id}`} row={row} kind={activeKind} source={source} genres={genres}/>)}
             </Box>}
         </Container>
     );

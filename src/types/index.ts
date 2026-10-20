@@ -2,6 +2,12 @@
  * 项目共用的数据契约。
  * TMDB 类型保留接口字段名；本地观影记录另行定义，不能把用户评分与接口评分混用。
  */
+/** TMDB 类型字典，电影列表中的 genre_ids 通过 id 对应本地化名称。 */
+export interface TMDBGenre {
+    id: number;
+    name: string;
+}
+
 // TMDB 多类型搜索结果：电视剧使用 name，电影使用 title。
 export interface TMDBSearchResult {
     id: number;

@@ -1,4 +1,5 @@
 import type {HotRow, TrendingMovie} from '../types/hotMovies.ts';
+import type {TMDBGenre} from '../types/index.ts';
 
 /** 保持接口排名并复用榜单行结构，不把 TMDB 评分填入豆瓣评分字段。 */
 export function toTrendingRows(movies: TrendingMovie[]): HotRow[] {
@@ -14,11 +15,11 @@ export function toTrendingRows(movies: TrendingMovie[]): HotRow[] {
     }));
 }
 
-/** 缺少的资料不占行，类型先使用接口提供的数字编号。 */
-export function getTrendingInfo(movie?: TrendingMovie) {
+/** 原名单独展示；类型按接口编号顺序转为中文，未知编号和缺失资料不占行。 */
+export function getTrendingInfo(movie?: TrendingMovie, genres: readonly TMDBGenre[] = []) {
+    const names = new Map(genres.map(genre => [genre.id, genre.name.trim()]));
     return [
-        {label: '原名', value: movie?.original_title?.trim()},
         {label: '上映', value: movie?.release_date?.trim()},
-        {label: '类型', value: movie?.genre_ids?.join(' / ')},
+        {label: '类型', value: movie?.genre_ids?.map(id => names.get(id)).filter(Boolean).join(' ')},
     ].filter(part => part.value);
 }
