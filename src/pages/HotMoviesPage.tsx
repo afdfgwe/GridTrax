@@ -33,9 +33,14 @@ function MovieRow({row}: {row: HotMovieRow}) {
                 </Typography>
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mt: 0.5}}>
                     {item.year && <Typography variant="caption" color="text.secondary">{item.year}</Typography>}
-                    <Typography variant="body2" sx={{fontWeight: 700, color: item.rating ? 'warning.main' : 'text.secondary'}}>
-                        {item.rating ? `豆瓣 ${item.rating.toFixed(1)}` : '豆瓣 暂无评分'}
-                    </Typography>
+                    {typeof item.rating === 'number' && Number.isFinite(item.rating) && item.rating > 0 &&
+                        <Typography variant="body2" sx={{fontWeight: 700, color: 'warning.main'}}>
+                            豆瓣 {item.rating.toFixed(1)}
+                        </Typography>}
+                    {typeof movie?.vote_average === 'number' && Number.isFinite(movie.vote_average) && movie.vote_average > 0 &&
+                        <Typography variant="body2" sx={{fontWeight: 700, color: 'text.secondary'}}>
+                            TMDB {movie.vote_average.toFixed(1)}
+                        </Typography>}
                 </Box>
                 {status === 'loading' ? <Box sx={{mt: 1}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton/><Skeleton width="70%"/></Box> :
                     <Typography variant="body2" color="text.secondary" sx={{...clamp, WebkitLineClamp: 3, mt: 1, lineHeight: 1.7, overflowWrap: 'anywhere'}}>
@@ -54,7 +59,7 @@ function MovieRow({row}: {row: HotMovieRow}) {
     );
 }
 
-/** 榜单评分来自豆瓣，详情和观看记录仍使用 TMDB，二者不互相覆盖。 */
+/** 榜单同时展示豆瓣与 TMDB 评分，详情和观看记录仍使用 TMDB，二者不互相覆盖。 */
 export default function HotMoviesPage() {
     const {rows, fetchedAt, error, loading, matching, refresh} = useHotMovies();
     const matchError = rows.find(row => row.error)?.error;

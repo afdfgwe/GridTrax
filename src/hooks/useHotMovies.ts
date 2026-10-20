@@ -11,7 +11,7 @@ interface Result {
     error?: string;
 }
 
-/** 先展示榜单，再以三路并发补全 TMDB 资料；离开或刷新时取消旧请求。 */
+/** 先展示榜单，再以五路并发补全 TMDB 资料；离开或刷新时取消旧请求。 */
 export function useHotMovies() {
     const [attempt, setAttempt] = useState(0);
     const [result, setResult] = useState<Result>();
@@ -50,7 +50,7 @@ export function useHotMovies() {
                     } : previous);
                 }
             }
-            await Promise.all(Array.from({length: Math.min(3, feed.items.length)}, worker));
+            await Promise.all(Array.from({length: Math.min(5, feed.items.length)}, worker));
         }
         void load();
         return () => controller.abort();
