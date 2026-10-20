@@ -1,10 +1,10 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {Alert, Box, Button, Container, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, Typography} from '@mui/material';
-import {alpha} from '@mui/material/styles';
 import {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
+import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
 import type {HotKind, HotRow} from '../types/hotMovies';
 
@@ -35,18 +35,14 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
     const overview = status === 'error' ? 'TMDB 资料加载失败' :
         status === 'unmatched' ? '暂未匹配到 TMDB 影片' : movie?.overview || '暂无简介';
     return (
-        <Box component="li" sx={{minWidth: 0, borderBottom: 1, borderColor: 'divider'}}>
+        <Box component="li" sx={{minWidth: 0, borderBottom: 1, borderColor: 'divider', display: 'grid',
+            gridTemplateColumns: {xs: '96px minmax(0, 1fr)', sm: '140px minmax(0, 1fr)'},
+            columnGap: {xs: 2, sm: 3}, rowGap: 1.5, py: {xs: 2.5, sm: 3}, px: {xs: 0, sm: 1}}}>
             <Box component={Link} to={destination} aria-label={movie ? `查看${item.title}详情` : `搜索${item.title}`}
-                 sx={{display: 'grid', gridTemplateColumns: {xs: '96px minmax(0, 1fr)', sm: '140px minmax(0, 1fr)'},
-                     columnGap: {xs: 2, sm: 3}, rowGap: 1.5, py: {xs: 2.5, sm: 3}, px: {xs: 0, sm: 1},
-                     color: 'text.primary', textDecoration: 'none', borderRadius: 0.5,
-                     transition: 'background-color 180ms ease',
-                     '&:hover, &:focus-visible': {bgcolor: (theme) => alpha(theme.palette.primary.main, 0.055)},
+                 sx={{position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
+                     gridRow: {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 0.5, bgcolor: 'action.hover',
                      '&:hover img': {transform: 'scale(1.035)'},
-                     '@media (prefers-reduced-motion: reduce)': {transition: 'none', '& img': {transition: 'none'}}}}>
-                <Box sx={{position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
-                    gridRow: {sm: '1 / span 2'},
-                    overflow: 'hidden', borderRadius: 0.5, bgcolor: 'action.hover'}}>
+                     '@media (prefers-reduced-motion: reduce)': {'& img': {transition: 'none'}}}}>
                     {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> :
                         <Box component="img" src={getPosterUrl(movie?.poster_path ?? undefined)} alt=""
                              loading={item.rank <= 3 ? 'eager' : 'lazy'}
@@ -62,20 +58,24 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
                         fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums'}}>
                         {String(item.rank).padStart(2, '0')}
                     </Box>
-                </Box>
-                <Box sx={{minWidth: 0}}>
+            </Box>
+            <Box sx={{minWidth: 0}}>
                     <Typography component="h2" sx={{fontWeight: 750, fontSize: {xs: 18, sm: 23}, lineHeight: 1.35,
-                        overflowWrap: 'anywhere'}}>{item.title}</Typography>
+                        overflowWrap: 'anywhere'}}>
+                        <Box component={Link} to={destination} sx={{color: 'text.primary', textDecoration: 'none',
+                            '&:hover, &:focus-visible': {color: 'primary.main', textDecoration: 'underline'}}}>
+                            {item.title}
+                        </Box>
+                    </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{mt: 0.75}}>
                         {[item.year, kind === 'movie' ? '电影' : '电视剧'].filter(Boolean).join(' · ')}
                     </Typography>
                     <Scores row={row}/>
                     {status === 'loading' && <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
-                </Box>
-                {status !== 'loading' && <Typography color="text.secondary" sx={{
-                    gridColumn: {xs: '1 / -1', sm: '2'}, fontSize: 14, lineHeight: 1.75, whiteSpace: 'pre-line',
-                    overflowWrap: 'anywhere'}}>{overview}</Typography>}
             </Box>
+            {status !== 'loading' && <Box sx={{gridColumn: {xs: '1 / -1', sm: '2'}}}>
+                <ExpandableOverview text={overview} collapsedLines={4} expandLabel="展开全部"/>
+            </Box>}
         </Box>
     );
 }

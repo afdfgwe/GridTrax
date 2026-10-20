@@ -3,8 +3,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {Box, Button, Typography} from '@mui/material';
 import {useEffect, useId, useRef, useState} from 'react';
 
-/** 简介默认显示三行，仅在实际溢出时提供展开入口，并保留原始段落。 */
-export default function ExpandableOverview({text, indentFirstLine = false}: {text: string; indentFirstLine?: boolean}) {
+/** 简介仅在实际溢出时提供展开入口，并保留原始段落。 */
+export default function ExpandableOverview({text, indentFirstLine = false, collapsedLines = 3, expandLabel = '展开全文'}: {
+    text: string; indentFirstLine?: boolean; collapsedLines?: number; expandLabel?: string;
+}) {
     const [expanded, setExpanded] = useState(false);
     const [canExpand, setCanExpand] = useState(false);
     const textRef = useRef<HTMLParagraphElement>(null);
@@ -17,7 +19,7 @@ export default function ExpandableOverview({text, indentFirstLine = false}: {tex
         const measure = () => {
             if (!active || !element.clientWidth) return;
             const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
-            setCanExpand(element.scrollHeight > lineHeight * 3 + 1);
+            setCanExpand(element.scrollHeight > lineHeight * collapsedLines + 1);
         };
         const observer = new ResizeObserver(measure);
         observer.observe(element);
@@ -28,13 +30,13 @@ export default function ExpandableOverview({text, indentFirstLine = false}: {tex
             observer.disconnect();
             document.fonts.removeEventListener('loadingdone', measure);
         };
-    }, [text]);
+    }, [text, collapsedLines]);
 
     return (
         <Box sx={{minWidth: 0}}>
             <Typography ref={textRef} id={textId} variant="body2" color="text.secondary" sx={{
                 display: expanded ? 'block' : '-webkit-box',
-                WebkitLineClamp: expanded ? 'unset' : 3,
+                WebkitLineClamp: expanded ? 'unset' : collapsedLines,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 overflowWrap: 'anywhere',
@@ -46,7 +48,7 @@ export default function ExpandableOverview({text, indentFirstLine = false}: {tex
                                   onClick={() => setExpanded(value => !value)}
                                   endIcon={expanded ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
                                   sx={{p: 0, mt: 0.5, minWidth: 0, fontSize: '0.75rem'}}>
-                {expanded ? '收起简介' : '展开全文'}
+                {expanded ? '收起简介' : expandLabel}
             </Button>}
         </Box>
     );
