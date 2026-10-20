@@ -84,9 +84,9 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
                             '&:hover, &:focus-visible': {color: 'primary.main', textDecoration: 'underline'}}}>
                             {item.title}
                         </Box>
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{mt: 0.75}}>
-                        {[item.year, kind === 'movie' ? '电影' : '电视剧'].filter(Boolean).join(' · ')}
+                        {item.year && <Typography component="span" color="text.secondary"
+                                                  sx={{display: 'inline-block', ml: 0.75, fontSize: {xs: 14, sm: 16},
+                                                      fontWeight: 400, whiteSpace: 'nowrap'}}>({item.year})</Typography>}
                     </Typography>
                     <HotInfo info={item.info}/>
                     <Scores row={row}/>
