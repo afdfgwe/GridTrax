@@ -59,7 +59,8 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
     return (
         <Box component="li" sx={{minWidth: 0, borderBottom: 1, borderColor: 'divider', display: 'grid',
             gridTemplateColumns: {xs: '96px minmax(0, 1fr)', sm: '140px minmax(0, 1fr)'},
-            columnGap: {xs: 2, sm: 3}, rowGap: 1.5, py: {xs: 2.5, sm: 3}, px: {xs: 0, sm: 1}}}>
+            columnGap: {xs: 2, sm: 3}, rowGap: 1.5, py: {xs: 2.5, sm: 3}, px: {xs: 0, sm: 1},
+            '&:first-of-type': {pt: {xs: 1.5, sm: 2}}}}>
             <Box component={Link} to={destination} aria-label={movie ? `查看${item.title}详情` : `搜索${item.title}`}
                  sx={{position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
                      gridRow: {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 1.5, bgcolor: 'action.hover',
@@ -144,7 +145,8 @@ export default function HotMoviesPage() {
                 豆瓣榜单已加载，部分 TMDB 资料未能获取。{matchError}
             </Alert>}
             {loading && <Box aria-label="正在获取豆瓣榜单">
-                {Array.from({length: 5}, (_, index) => <Box key={index} sx={{display: 'flex', gap: 2, py: 3, borderBottom: 1, borderColor: 'divider'}}>
+                {Array.from({length: 5}, (_, index) => <Box key={index} sx={{display: 'flex', gap: 2, py: 3, borderBottom: 1, borderColor: 'divider',
+                    '&:first-of-type': {pt: 2}}}>
                     <Skeleton variant="rectangular" width={96} height={144}/>
                     <Box sx={{flex: 1}}><Skeleton width="55%" height={32}/><Skeleton width="30%"/><Skeleton/><Skeleton width="85%"/></Box>
                 </Box>)}
