@@ -2,8 +2,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {Alert, Box, Button, Container, IconButton, LinearProgress, Skeleton, Tab, Tabs, ToggleButton, ToggleButtonGroup, Tooltip, Typography} from '@mui/material';
 import {darken, lighten} from '@mui/material/styles';
-import {useState} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useSearchParams} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
@@ -98,7 +97,7 @@ function MovieRow({row, kind, source, genres}: {row: HotRow; kind: HotKind; sour
                                                       fontWeight: 400, whiteSpace: 'nowrap'}}>({item.year})</Typography>}
                     </Typography>
                     {originalTitle && <Typography color="text.secondary"
-                        sx={{mt: 0.375, fontSize: {xs: 14, sm: 16}, lineHeight: 1.4, overflowWrap: 'anywhere'}}>
+                        sx={{mt: 0.375, fontWeight: 750, fontSize: {xs: 14, sm: 16}, lineHeight: 1.4, overflowWrap: 'anywhere'}}>
                         {originalTitle}
                     </Typography>}
                     <HotInfo row={row} source={source} genres={genres}/>
@@ -114,8 +113,17 @@ function MovieRow({row, kind, source, genres}: {row: HotRow; kind: HotKind; sour
 
 /** 支持豆瓣电影、电视剧榜单和 TMDB 电影日榜，切换来源不改动观看记录。 */
 export default function HotMoviesPage() {
-    const [source, setSource] = useState<HotSource>('douban');
-    const [kind, setKind] = useState<HotKind>('movie');
+    // 榜单选项随当前网址保留，详情返回或刷新时恢复，不额外增加切换历史。
+    const [searchParams, setSearchParams] = useSearchParams();
+    const source: HotSource = searchParams.get('source') === 'tmdb' ? 'tmdb' : 'douban';
+    const kind: HotKind = searchParams.get('kind') === 'tv' ? 'tv' : 'movie';
+    const changeSelection = (key: 'source' | 'kind', value: HotSource | HotKind) => {
+        setSearchParams(previous => {
+            const next = new URLSearchParams(previous);
+            next.set(key, value);
+            return next;
+        }, {replace: true});
+    };
     const activeKind = source === 'tmdb' ? 'movie' : kind;
     const {rows, genres, genreError, fetchedAt, error, loading, matching, refresh} = useHotMovies(activeKind, source);
     const sourceLabel = source === 'tmdb' ? 'TMDB' : '豆瓣';
@@ -127,7 +135,7 @@ export default function HotMoviesPage() {
                 <Tooltip title="返回追踪"><IconButton component={Link} to="/" aria-label="返回追踪" size="small"><ArrowBackIcon fontSize="small"/></IconButton></Tooltip>
                 <Typography component="h1" sx={{fontSize: {xs: 22, sm: 30}, fontWeight: 800, flex: 1, lineHeight: 1.25}}>实时热门榜</Typography>
                 <ToggleButtonGroup value={source} exclusive size="small" aria-label="热门榜来源"
-                                   onChange={(_, value: HotSource | null) => { if (value) setSource(value); }}
+                                   onChange={(_, value: HotSource | null) => { if (value) changeSelection('source', value); }}
                                    sx={{flexShrink: 0, '& .MuiToggleButton-root': {px: 0.75, py: 0.5, fontSize: 12, lineHeight: 1.5}}}>
                     <ToggleButton value="douban" aria-label="豆瓣榜单">豆瓣</ToggleButton>
                     <ToggleButton value="tmdb" aria-label="TMDB 榜单">TMDB</ToggleButton>
@@ -137,7 +145,7 @@ export default function HotMoviesPage() {
             </Box>
             <Box sx={{position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1,
                 borderBottom: 1, borderColor: 'divider', mt: {xs: 2, sm: 3}}}>
-                <Tabs value={activeKind} onChange={(_, value: HotKind) => setKind(value)} aria-label="热门榜类型"
+                <Tabs value={activeKind} onChange={(_, value: HotKind) => changeSelection('kind', value)} aria-label="热门榜类型"
                       sx={{minHeight: 44, '& .MuiTabs-indicator': {height: 2, visibility: loading || matching ? 'hidden' : 'visible'},
                           '& .MuiTab-root': {minHeight: 44, minWidth: 72, px: {xs: 1.5, sm: 2.5},
                           fontWeight: 700, fontSize: 15}}}>
