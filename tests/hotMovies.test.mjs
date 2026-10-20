@@ -2,6 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHotHandler, createHotMoviesHandler, parseHotItems, parseHotMovies} from '../server/hotMovies.ts';
 import {matchHotMovie, normalizeMovieTitle, resolveHotMovie} from '../src/utils/hotMovieMatch.ts';
+import {parseHotMovieInfo} from '../src/utils/hotMovieInfo.ts';
+
+test('榜单 info 按地区、类型、导演和演员分组，缺项不占位置', () => {
+    assert.deepEqual(parseHotMovieInfo('中国大陆 / 剧情 爱情 古装 / 杨龙 / 田曦薇 闫桉'), [
+        {label: '地区', value: '中国大陆'},
+        {label: '类型', value: '剧情 爱情 古装'},
+        {label: '导演', value: '杨龙'},
+        {label: '演员', value: '田曦薇 闫桉'},
+    ]);
+    assert.deepEqual(parseHotMovieInfo('美国 / 科幻 / / 演员甲 / 演员乙'), [
+        {label: '地区', value: '美国'},
+        {label: '类型', value: '科幻'},
+        {label: '演员', value: '演员甲 · 演员乙'},
+    ]);
+    assert.deepEqual(parseHotMovieInfo(' /  /  '), []);
+    assert.deepEqual(parseHotMovieInfo(), []);
+});
 
 const rawMovie = (overrides = {}) => ({
     id: '123', title: '测试电影', type: 'movie', year: '2026', rank: 1,

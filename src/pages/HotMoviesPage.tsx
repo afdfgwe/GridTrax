@@ -7,6 +7,24 @@ import {getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
 import type {HotKind, HotRow} from '../types/hotMovies';
+import {parseHotMovieInfo} from '../utils/hotMovieInfo';
+
+function HotInfo({info}: {info?: string}) {
+    const parts = parseHotMovieInfo(info);
+    if (!parts.length) return null;
+    return (
+        <Box component="dl" sx={{display: 'grid', rowGap: 0.375, m: 0, mt: 1}}>
+            {parts.map(({label, value}) => <Box component="div" key={label}
+                                               sx={{display: 'grid', gridTemplateColumns: '2.5em minmax(0, 1fr)', columnGap: 1,
+                                                   alignItems: 'baseline', minWidth: 0}}>
+                <Typography component="dt" variant="body2" color="text.secondary">{label}</Typography>
+                <Typography component="dd" variant="body2" sx={{m: 0, minWidth: 0, overflowWrap: 'anywhere'}}>
+                    {value}
+                </Typography>
+            </Box>)}
+        </Box>
+    );
+}
 
 function Scores({row}: {row: HotRow}) {
     const {item, movie} = row;
@@ -70,8 +88,7 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
                     <Typography variant="body2" color="text.secondary" sx={{mt: 0.75}}>
                         {[item.year, kind === 'movie' ? '电影' : '电视剧'].filter(Boolean).join(' · ')}
                     </Typography>
-                    {item.info && <Typography variant="body2" color="text.secondary"
-                                              sx={{mt: 0.75, overflowWrap: 'anywhere'}}>{item.info}</Typography>}
+                    <HotInfo info={item.info}/>
                     <Scores row={row}/>
                     {status === 'loading' && <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
             </Box>
