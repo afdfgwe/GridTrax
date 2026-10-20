@@ -36,65 +36,59 @@ function Scores({row}: {row: HotRow}) {
     );
 }
 
-function Poster({row, destination, featured}: {row: HotRow; destination: string; featured: boolean}) {
+function Poster({row, destination, lead}: {row: HotRow; destination: string; lead: boolean}) {
     const {item, movie, status} = row;
     return (
         <Box component={Link} to={destination} aria-label={movie ? `查看${item.title}详情` : `搜索${item.title}`}
-             sx={{display: 'block', position: 'relative', aspectRatio: '2 / 3', overflow: 'hidden', borderRadius: 1,
-                 bgcolor: 'action.hover', boxShadow: featured ? 5 : 1,
+             sx={{display: 'block', position: 'relative', aspectRatio: '2 / 3', overflow: 'hidden', borderRadius: 0.5,
+                 bgcolor: 'action.hover',
                  '&:hover img': {transform: 'scale(1.045)'}}}>
             {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> :
                 <Box component="img" src={getPosterUrl(movie?.poster_path ?? undefined)} alt={item.title}
-                     loading={featured ? 'eager' : 'lazy'}
+                     loading={lead ? 'eager' : 'lazy'}
                      onError={event => {
                          event.currentTarget.onerror = null;
                          event.currentTarget.src = '/placeholder-poster.svg';
                      }}
                      sx={{display: 'block', width: '100%', height: '100%', objectFit: 'cover',
                          transition: 'transform 250ms ease', '@media (prefers-reduced-motion: reduce)': {transition: 'none'}}}/>}
-            {featured && <Box aria-hidden="true" sx={{position: 'absolute', top: 0, left: 0, px: 1.25, py: 0.5,
-                bgcolor: 'primary.main', color: 'primary.contrastText', fontSize: 18, fontWeight: 900,
-                fontVariantNumeric: 'tabular-nums', borderBottomRightRadius: 6}}>01</Box>}
         </Box>
     );
 }
 
-function RowContent({row, kind, featured}: {row: HotRow; kind: HotKind; featured: boolean}) {
+function RowContent({row, kind, lead}: {row: HotRow; kind: HotKind; lead: boolean}) {
     const {item, movie, status} = row;
     const destination = movie ? `/${kind}/${movie.id}` : `/search?q=${encodeURIComponent(item.title)}`;
     return (
         <Box sx={{minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', height: '100%'}}>
-            {featured && <Typography variant="overline" sx={{lineHeight: 1.5, fontWeight: 800, color: 'primary.main'}}>
-                本期榜首 / NO. 01
-            </Typography>}
             <Typography component={Link} to={destination} title={item.title}
-                        sx={{...clamp, WebkitLineClamp: 2, fontSize: featured ? {xs: 21, sm: 27} : {xs: 16, sm: 17},
-                            lineHeight: 1.35, fontWeight: 800, color: 'text.primary', textDecoration: 'none',
-                            overflowWrap: 'anywhere', mt: featured ? 0.75 : 0,
+                        sx={{...clamp, WebkitLineClamp: 2, fontSize: lead ? {xs: 20, sm: 26} : {xs: 16, sm: 17},
+                            lineHeight: 1.35, fontWeight: 750, color: 'text.primary', textDecoration: 'none',
+                            overflowWrap: 'anywhere',
                             '&:hover': {color: 'primary.main'}}}>
                 {item.title}
             </Typography>
             {item.year && <Typography variant="caption" color="text.secondary" sx={{mt: 0.5, fontVariantNumeric: 'tabular-nums'}}>
                 {item.year} · {kind === 'movie' ? '电影' : '电视剧'}
             </Typography>}
-            <Box sx={{mt: featured ? 1.5 : 1}}><Scores row={row}/></Box>
+            <Box sx={{mt: lead ? 1.5 : 0.75}}><Scores row={row}/></Box>
             {status === 'loading' ?
-                <Box sx={{mt: 1.5, width: '100%'}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="72%"/></Box> :
+                <Box sx={{mt: 1, width: '100%'}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="72%"/></Box> :
                 <Typography variant="body2" color="text.secondary"
-                            sx={{...clamp, WebkitLineClamp: featured ? 3 : 2, mt: featured ? 1.5 : 1,
+                            sx={{...clamp, WebkitLineClamp: lead ? 3 : 1, mt: lead ? 1.5 : 0.75,
                                 lineHeight: 1.7, overflowWrap: 'anywhere'}}>
                     {status === 'error' ? 'TMDB 资料加载失败' : status === 'unmatched' ? '暂未匹配到 TMDB 影片' : movie?.overview || '暂无简介'}
                 </Typography>}
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, mt: 'auto', pt: featured ? 1.5 : 0.75}}>
-                {featured && <Button component={Link} to={destination} size="small" endIcon={movie ? <ArrowForwardIcon/> : <SearchIcon/>}
-                                     sx={{px: 0.5, mr: 1}}>{movie ? '查看详情' : '搜索影片'}</Button>}
+            <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, mt: 'auto', pt: lead ? 1.25 : 0.25}}>
+                {lead && <Button component={Link} to={destination} size="small" endIcon={movie ? <ArrowForwardIcon/> : <SearchIcon/>}
+                                 sx={{px: 0, mr: 0.5}}>{movie ? '查看详情' : '搜索影片'}</Button>}
                 <Tooltip title="在豆瓣查看"><IconButton size="small" component="a"
                                                    href={`https://m.douban.com/movie/subject/${item.id}/`}
                                                    target="_blank" rel="noopener noreferrer"
                                                    aria-label={`在豆瓣查看${item.title}`} sx={{color: 'text.secondary'}}>
                     <OpenInNewIcon sx={{fontSize: 17}}/>
                 </IconButton></Tooltip>
-                {!featured && (status === 'unmatched' || status === 'error') &&
+                {!lead && (status === 'unmatched' || status === 'error') &&
                     <Tooltip title="搜索影片"><IconButton size="small" component={Link} to={destination}
                                                       aria-label={`搜索${item.title}`}><SearchIcon sx={{fontSize: 18}}/></IconButton></Tooltip>}
             </Box>
@@ -102,23 +96,30 @@ function RowContent({row, kind, featured}: {row: HotRow; kind: HotKind; featured
     );
 }
 
-function MovieRow({row, kind, featured = false}: {row: HotRow; kind: HotKind; featured?: boolean}) {
+function MovieRow({row, kind, index}: {row: HotRow; kind: HotKind; index: number}) {
     const {item, movie} = row;
     const destination = movie ? `/${kind}/${movie.id}` : `/search?q=${encodeURIComponent(item.title)}`;
-    if (featured) return (
-        <Box component="li" sx={{display: 'grid', gridColumn: '1 / -1',
-            gridTemplateColumns: {xs: '108px minmax(0, 1fr)', sm: '154px minmax(0, 1fr)'},
-            gap: {xs: 2, sm: 3.5}, p: {xs: 2, sm: 3}, borderRadius: 1, bgcolor: 'background.paper',
-            border: 1, borderColor: (theme) => alpha(theme.palette.primary.main, 0.28),
-            boxShadow: (theme) => `0 12px 38px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.16 : 0.07)}`}}>
-            <Poster row={row} destination={destination} featured/>
-            <RowContent row={row} kind={kind} featured/>
+    const lead = index === 0;
+    if (lead) return (
+        <Box component="li" sx={{gridColumn: {md: 1}, gridRow: {md: '1 / 3'}, display: 'grid',
+            gridTemplateColumns: {xs: '110px minmax(0, 1fr)', sm: '150px minmax(0, 1fr)'},
+            gap: {xs: 1.75, sm: 2.5}, px: {xs: 0.5, sm: 1.5}, py: {xs: 2, sm: 2.5},
+            borderTop: 2, borderBottom: 1, borderTopColor: 'primary.main', borderBottomColor: 'divider', minWidth: 0}}>
+            <Poster row={row} destination={destination} lead/>
+            <Box sx={{minWidth: 0, display: 'flex', flexDirection: 'column'}}>
+                <Typography aria-label={`第 ${item.rank} 名`} sx={{fontSize: {xs: 29, sm: 42}, lineHeight: 1,
+                    color: 'primary.main', fontWeight: 850, fontVariantNumeric: 'tabular-nums', mb: {xs: 1.5, sm: 2}}}>
+                    {String(item.rank).padStart(2, '0')}
+                </Typography>
+                <RowContent row={row} kind={kind} lead/>
+            </Box>
         </Box>
     );
     return (
         <Box component="li" sx={{display: 'grid',
-            gridTemplateColumns: {xs: '30px 78px minmax(0, 1fr)', sm: '36px 94px minmax(0, 1fr)'},
-            gap: {xs: 1.25, sm: 1.75}, py: {xs: 2, sm: 2.5}, px: {xs: 0.5, sm: 1},
+            gridColumn: {md: index < 3 ? 2 : 'auto'}, gridRow: {md: index === 1 ? 1 : index === 2 ? 2 : 'auto'},
+            gridTemplateColumns: {xs: '30px 72px minmax(0, 1fr)', sm: '38px 82px minmax(0, 1fr)'},
+            gap: {xs: 1.25, sm: 1.75}, py: {xs: 1.75, sm: 2}, px: {xs: 0.5, sm: 1.5},
             borderBottom: 1, borderColor: 'divider', minWidth: 0, alignItems: 'start',
             transition: 'background-color 180ms ease',
             '&:hover': {bgcolor: (theme) => alpha(theme.palette.primary.main, 0.045)},
@@ -127,8 +128,8 @@ function MovieRow({row, kind, featured = false}: {row: HotRow; kind: HotKind; fe
                 fontVariantNumeric: 'tabular-nums', color: item.rank <= 3 ? 'primary.main' : 'text.secondary'}}>
                 {String(item.rank).padStart(2, '0')}
             </Typography>
-            <Poster row={row} destination={destination} featured={false}/>
-            <RowContent row={row} kind={kind} featured={false}/>
+            <Poster row={row} destination={destination} lead={false}/>
+            <RowContent row={row} kind={kind} lead={false}/>
         </Box>
     );
 }
@@ -174,14 +175,18 @@ export default function HotMoviesPage() {
             </Alert>}
             {loading && <Box aria-label="正在获取豆瓣榜单" sx={{display: 'grid',
                 gridTemplateColumns: {xs: '1fr', md: '1fr 1fr'}, gap: 2, py: 2}}>
-                <Skeleton variant="rectangular" height={220} sx={{gridColumn: {md: '1 / -1'}, borderRadius: 1}}/>
-                {Array.from({length: 4}, (_, index) => <Skeleton key={index} variant="rectangular" height={156} sx={{borderRadius: 1}}/>)}
+                <Skeleton variant="rectangular" height={260} sx={{borderRadius: 0.5}}/>
+                <Box sx={{display: 'grid', gap: 2}}>
+                    <Skeleton variant="rectangular" height={122} sx={{borderRadius: 0.5}}/>
+                    <Skeleton variant="rectangular" height={122} sx={{borderRadius: 0.5}}/>
+                </Box>
+                {Array.from({length: 4}, (_, index) => <Skeleton key={index} variant="rectangular" height={140} sx={{borderRadius: 0.5}}/>)}
             </Box>}
             {rows.length > 0 && <Box component="ol" aria-label={`豆瓣${kind === 'movie' ? '电影' : '电视剧'}实时热门榜`}
                                      sx={{listStyle: 'none', p: 0, m: 0, display: 'grid',
                                          gridTemplateColumns: {xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))'},
-                                         columnGap: {md: 3, lg: 5}}}>
-                {rows.map((row, index) => <MovieRow key={row.item.id} row={row} kind={kind} featured={index === 0}/>)}
+                                         columnGap: {md: 2, lg: 3}}}>
+                {rows.map((row, index) => <MovieRow key={row.item.id} row={row} kind={kind} index={index}/>)}
             </Box>}
         </Container>
     );
