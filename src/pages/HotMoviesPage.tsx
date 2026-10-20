@@ -1,17 +1,18 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import {Alert, Box, Button, Container, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, Typography} from '@mui/material';
+import {Alert, Box, Button, Container, IconButton, LinearProgress, Skeleton, Tab, Tabs, ToggleButton, ToggleButtonGroup, Tooltip, Typography} from '@mui/material';
 import {darken, lighten} from '@mui/material/styles';
 import {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
-import type {HotKind, HotRow} from '../types/hotMovies';
+import type {HotKind, HotRow, HotSource} from '../types/hotMovies';
 import {parseHotMovieInfo} from '../utils/hotMovieInfo';
+import {getTrendingInfo} from '../utils/trendingMovies';
 
-function HotInfo({info}: {info?: string}) {
-    const parts = parseHotMovieInfo(info);
+function HotInfo({row, source}: {row: HotRow; source: HotSource}) {
+    const parts = source === 'tmdb' ? getTrendingInfo(row.movie) : parseHotMovieInfo(row.item.info);
     if (!parts.length) return null;
     return (
         <Box component="dl" sx={{display: 'grid', rowGap: 0.375, m: 0, mt: 1}}>
@@ -51,17 +52,18 @@ function Scores({row}: {row: HotRow}) {
     );
 }
 
-function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
+function MovieRow({row, kind, source}: {row: HotRow; kind: HotKind; source: HotSource}) {
     const {item, movie, status} = row;
     const destination = movie ? `/${kind}/${movie.id}` : `/search?q=${encodeURIComponent(item.title)}`;
-    const overview = status === 'error' ? 'TMDB 资料加载失败' :
+    const showPoster = source === 'douban' || Boolean(movie?.poster_path);
+    const overview = source === 'tmdb' ? movie?.overview?.trim() : status === 'error' ? 'TMDB 资料加载失败' :
         status === 'unmatched' ? '暂未匹配到 TMDB 影片' : movie?.overview || '暂无简介';
     return (
         <Box component="li" sx={{minWidth: 0, borderBottom: 1, borderColor: 'divider', display: 'grid',
-            gridTemplateColumns: {xs: '96px minmax(0, 1fr)', sm: '140px minmax(0, 1fr)'},
+            gridTemplateColumns: showPoster ? {xs: '96px minmax(0, 1fr)', sm: '140px minmax(0, 1fr)'} : 'minmax(0, 1fr)',
             columnGap: {xs: 2, sm: 3}, rowGap: 1.5, py: {xs: 2.5, sm: 3}, px: {xs: 0, sm: 1},
             '&:first-of-type': {pt: {xs: 1.5, sm: 2}}}}>
-            <Box component={Link} to={destination} aria-label={movie ? `查看${item.title}详情` : `搜索${item.title}`}
+            {showPoster && <Box component={Link} to={destination} aria-label={movie ? `查看${item.title}详情` : `搜索${item.title}`}
                  sx={{position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
                      gridRow: {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 1.5, bgcolor: 'action.hover',
                      '&:hover img': {transform: 'scale(1.035)'},
@@ -81,7 +83,7 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
                         fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums'}}>
                         {String(item.rank).padStart(2, '0')}
                     </Box>
-            </Box>
+            </Box>}
             <Box sx={{minWidth: 0}}>
                     <Typography component="h2" sx={{fontWeight: 750, fontSize: {xs: 18, sm: 23}, lineHeight: 1.35,
                         overflowWrap: 'anywhere'}}>
@@ -93,42 +95,51 @@ function MovieRow({row, kind}: {row: HotRow; kind: HotKind}) {
                                                   sx={{display: 'inline-block', ml: 0.75, fontSize: {xs: 14, sm: 16},
                                                       fontWeight: 400, whiteSpace: 'nowrap'}}>({item.year})</Typography>}
                     </Typography>
-                    <HotInfo info={item.info}/>
+                    <HotInfo row={row} source={source}/>
                     <Scores row={row}/>
                     {status === 'loading' && <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
             </Box>
-            {status !== 'loading' && <Box sx={{gridColumn: {xs: '1 / -1', sm: '2'}}}>
+            {status !== 'loading' && overview && <Box sx={{gridColumn: showPoster ? {xs: '1 / -1', sm: '2'} : '1'}}>
                 <ExpandableOverview text={overview} collapsedLines={4} expandLabel="展开全部"/>
             </Box>}
         </Box>
     );
 }
 
-/** 豆瓣决定排名，TMDB 提供海报、简介与详情；未匹配的作品仍可通过站内搜索打开。 */
+/** 支持豆瓣电影、电视剧榜单和 TMDB 电影日榜，切换来源不改动观看记录。 */
 export default function HotMoviesPage() {
+    const [source, setSource] = useState<HotSource>('douban');
     const [kind, setKind] = useState<HotKind>('movie');
-    const {rows, fetchedAt, error, loading, matching, refresh} = useHotMovies(kind);
+    const activeKind = source === 'tmdb' ? 'movie' : kind;
+    const {rows, fetchedAt, error, loading, matching, refresh} = useHotMovies(activeKind, source);
+    const sourceLabel = source === 'tmdb' ? 'TMDB' : '豆瓣';
     const matchError = rows.find(row => row.error)?.error;
     const fetchedDate = fetchedAt ? new Date(fetchedAt) : undefined;
     return (
         <Container maxWidth="md" sx={{py: {xs: 2, sm: 4}, px: {xs: 2, sm: 3}}}>
             <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                 <Tooltip title="返回追踪"><IconButton component={Link} to="/" aria-label="返回追踪" size="small"><ArrowBackIcon fontSize="small"/></IconButton></Tooltip>
-                <Typography component="h1" sx={{fontSize: {xs: 24, sm: 30}, fontWeight: 800, flex: 1, lineHeight: 1.25}}>实时热门榜</Typography>
+                <Typography component="h1" sx={{fontSize: {xs: 22, sm: 30}, fontWeight: 800, flex: 1, lineHeight: 1.25}}>实时热门榜</Typography>
+                <ToggleButtonGroup value={source} exclusive size="small" aria-label="热门榜来源"
+                                   onChange={(_, value: HotSource | null) => { if (value) setSource(value); }}
+                                   sx={{flexShrink: 0, '& .MuiToggleButton-root': {px: 0.75, py: 0.5, fontSize: 12, lineHeight: 1.5}}}>
+                    <ToggleButton value="douban" aria-label="豆瓣榜单">豆瓣</ToggleButton>
+                    <ToggleButton value="tmdb" aria-label="TMDB 榜单">TMDB</ToggleButton>
+                </ToggleButtonGroup>
                 <Tooltip title="刷新榜单"><span><IconButton aria-label="刷新榜单" onClick={refresh}
                                                         disabled={loading || matching} size="small"><RefreshIcon fontSize="small"/></IconButton></span></Tooltip>
             </Box>
             <Box sx={{position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1,
                 borderBottom: 1, borderColor: 'divider', mt: {xs: 2, sm: 3}}}>
-                <Tabs value={kind} onChange={(_, value: HotKind) => setKind(value)} aria-label="热门榜类型"
+                <Tabs value={activeKind} onChange={(_, value: HotKind) => setKind(value)} aria-label="热门榜类型"
                       sx={{minHeight: 44, '& .MuiTabs-indicator': {height: 2, visibility: loading || matching ? 'hidden' : 'visible'},
                           '& .MuiTab-root': {minHeight: 44, minWidth: 72, px: {xs: 1.5, sm: 2.5},
                           fontWeight: 700, fontSize: 15}}}>
                     <Tab value="movie" label="电影"/>
-                    <Tab value="tv" label="电视剧"/>
+                    {source === 'douban' && <Tab value="tv" label="电视剧"/>}
                 </Tabs>
                 <Typography variant="caption" color="text.secondary" sx={{pb: 1.25, whiteSpace: 'nowrap', fontWeight: 700}}>
-                    豆瓣 TOP 10
+                    {source === 'tmdb' ? 'TMDB 日榜' : '豆瓣 TOP 10'}
                 </Typography>
                 {(loading || matching) && <LinearProgress aria-label="加载热门榜"
                     sx={{position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderRadius: 0}}/>}
@@ -144,16 +155,17 @@ export default function HotMoviesPage() {
                                   action={<Button color="inherit" size="small" disabled={matching} onClick={refresh}>重试</Button>}>
                 豆瓣榜单已加载，部分 TMDB 资料未能获取。{matchError}
             </Alert>}
-            {loading && <Box aria-label="正在获取豆瓣榜单">
+            {!loading && !error && rows.length === 0 && <Typography color="text.secondary" sx={{py: 2}}>暂无热门影片</Typography>}
+            {loading && <Box aria-label={`正在获取${sourceLabel}榜单`}>
                 {Array.from({length: 5}, (_, index) => <Box key={index} sx={{display: 'flex', gap: 2, py: 3, borderBottom: 1, borderColor: 'divider',
                     '&:first-of-type': {pt: 2}}}>
                     <Skeleton variant="rectangular" width={96} height={144}/>
                     <Box sx={{flex: 1}}><Skeleton width="55%" height={32}/><Skeleton width="30%"/><Skeleton/><Skeleton width="85%"/></Box>
                 </Box>)}
             </Box>}
-            {rows.length > 0 && <Box component="ol" aria-label={`豆瓣${kind === 'movie' ? '电影' : '电视剧'}实时热门榜`}
+            {rows.length > 0 && <Box component="ol" aria-label={`${sourceLabel}${activeKind === 'movie' ? '电影' : '电视剧'}实时热门榜`}
                                      sx={{listStyle: 'none', p: 0, m: 0}}>
-                {rows.map(row => <MovieRow key={row.item.id} row={row} kind={kind}/>)}
+                {rows.map(row => <MovieRow key={`${source}-${activeKind}-${row.item.id}`} row={row} kind={activeKind} source={source}/>)}
             </Box>}
         </Container>
     );

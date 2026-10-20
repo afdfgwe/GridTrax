@@ -1,6 +1,6 @@
 /** TMDB 请求和图片地址的统一入口，页面只调用封装函数，不自行拼接鉴权头。 */
 import axios from 'axios';
-import type {HotSearchItem} from '../types/hotMovies';
+import type {HotSearchItem, TrendingMovie} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import type {
     TMDBMovie,
@@ -56,6 +56,14 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
             (r) => r.media_type === 'tv' || r.media_type === 'movie'
         ),
     };
+}
+
+/** TMDB 电影日榜直接返回完整条目，无需再次搜索匹配。 */
+export async function getTrendingMovies(signal?: AbortSignal): Promise<TrendingMovie[]> {
+    const res = await tmdbAxios.get<{results: TrendingMovie[]}>('/trending/movie/day', {
+        params: {language: 'zh-CN', page: 1}, signal,
+    });
+    return res.data.results;
 }
 
 /** 豆瓣榜单匹配仅搜索电影，避免同名电视剧或人物混入结果。 */

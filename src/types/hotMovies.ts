@@ -1,4 +1,5 @@
 export type HotKind = 'movie' | 'tv';
+export type HotSource = 'douban' | 'tmdb';
 
 /** 榜单只保留作品资料，不转发豆瓣返回的用户、评论及追踪信息。 */
 export interface HotItem {
@@ -27,9 +28,14 @@ export interface HotSearchItem {
     vote_average?: number;
 }
 
+/** TMDB 趋势接口直接提供电影资料，类型编号暂按原始数组展示。 */
+export interface TrendingMovie extends HotSearchItem {
+    genre_ids?: number[];
+}
+
 export interface HotRow {
     item: HotItem;
-    movie?: HotSearchItem;
+    movie?: TrendingMovie;
     status: 'loading' | 'matched' | 'unmatched' | 'error';
     error?: string;
 }
