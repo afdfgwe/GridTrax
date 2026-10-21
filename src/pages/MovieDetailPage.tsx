@@ -131,17 +131,19 @@ const MovieDetailPage: React.FC = () => {
                                         </Typography>
                                     )}
                                     <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5}}>
-                                        <Chip
-                                            icon={<StarIcon
-                                                sx={{fontSize: '14px !important', color: '#FFD54F !important'}}/>}
-                                            label={movie.vote_average.toFixed(1)}
-                                            size="small"
-                                            sx={{
-                                                backgroundColor: alpha('#FFD54F', 0.15),
-                                                color: '#FFD54F',
-                                                fontWeight: 700
-                                            }}
-                                        />
+                                        {Number.isFinite(movie.vote_average) && movie.vote_average > 0 && (
+                                            <Chip
+                                                icon={<StarIcon
+                                                    sx={{fontSize: '14px !important', color: '#FFD54F !important'}}/>}
+                                                label={movie.vote_average.toFixed(1)}
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: alpha('#FFD54F', 0.15),
+                                                    color: '#FFD54F',
+                                                    fontWeight: 700
+                                                }}
+                                            />
+                                        )}
                                         <Chip
                                             label={movie.release_date?.slice(0, 4)}
                                             size="small"
