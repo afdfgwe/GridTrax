@@ -31,7 +31,7 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
     const meta = {name, poster_path: posterPath};
 
     return (
-        <Card
+        <Card data-media-key={`movie-${movieId}`}
             sx={{
                 display: 'flex',
                 flexDirection: 'column',

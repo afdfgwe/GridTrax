@@ -29,6 +29,7 @@ import CompactCardTitle from '../components/CompactCardTitle';
 import WatchedTimeline from '../components/WatchedTimeline';
 import WatchedViewToggle from '../components/WatchedViewToggle';
 import {useHomeMediaDetails} from '../hooks/useHomeMediaDetails';
+import {useMediaVisibility} from '../hooks/useMediaVisibility';
 import {getMediaYearKey} from '../utils/mediaYears';
 import {getMediaScore} from '../utils/mediaScores';
 import {useProgressStore} from '../store/useProgressStore';
@@ -303,7 +304,8 @@ const HomePage: React.FC = () => {
         return Object.values(records).filter((record) => record.global_status);
     }, [records]);
 
-    const {scores, years, failedCount, retry} = useHomeMediaDetails(trackedItems);
+    const {containerRef, getPriorityKeys} = useMediaVisibility();
+    const {scores, years, failedCount, retry} = useHomeMediaDetails(trackedItems, getPriorityKeys);
 
     const itemsByStatus = useMemo(() => {
         const groups: Record<WatchStatus, (SeasonRecord | MovieRecord)[]> = {
@@ -354,7 +356,7 @@ const HomePage: React.FC = () => {
 
         return (
             // MUI 栅格按 12 份分配：手机每行 3 张，中屏 4 张，大屏 5 张。
-            <Grid key={key} size={{xs: 4, sm: 3, lg: 2.4}}>
+            <Grid key={key} data-media-key={`${record.type}-${record.tmdb_id}`} size={{xs: 4, sm: 3, lg: 2.4}}>
                 <Card
                     sx={{
                         height: '100%',
@@ -561,7 +563,7 @@ const HomePage: React.FC = () => {
 
     return (
         <Box sx={{minHeight: '100vh'}}>
-            <Container maxWidth="lg" sx={{pt: 2, pb: 6}}>
+            <Container ref={containerRef} maxWidth="lg" sx={{pt: 2, pb: 6}}>
                 {failedCount > 0 && <Alert severity="warning" sx={{mb: 2}} action={<Button size="small" color="inherit"
                                                                                            onClick={retry}>重试</Button>}>部分影片资料加载失败，海报、年份或评分可能暂不完整；观看记录不受影响。</Alert>}
                 <Typography variant="h5" fontWeight={700} sx={{mb: 3}}>

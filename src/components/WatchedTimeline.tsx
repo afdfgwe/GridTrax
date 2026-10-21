@@ -143,7 +143,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                     const PlaceholderIcon = isTv ? TvOutlinedIcon : MovieOutlinedIcon;
 
                                     return (
-                                        <Box component="li" key={`${key}-${isTv ? record.season_number : ''}`} sx={{
+                                        <Box component="li" key={`${key}-${isTv ? record.season_number : ''}`} data-media-key={key} sx={{
                                             position: 'relative',
                                             minWidth: 0,
                                             ...(index === 0 ? {

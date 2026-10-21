@@ -126,7 +126,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     };
 
     return (
-        <Card
+        <Card data-media-key={`tv_season-${tvId}`}
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
