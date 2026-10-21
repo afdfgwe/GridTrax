@@ -59,7 +59,7 @@ export default function SeasonDetails({summary, showOverview, isOnlySeason}: Sea
                 </Typography>}
             </Box>
             {overview && <Box sx={{gridColumn: {xs: '1 / -1', sm: hasPoster ? '2' : '1'}, gridRow: 2, minWidth: 0}}>
-                <ExpandableOverview text={overview}/>
+                <ExpandableOverview text={overview} collapsedLines={4}/>
             </Box>}
         </Box>
     );

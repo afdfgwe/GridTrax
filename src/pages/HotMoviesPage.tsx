@@ -92,8 +92,17 @@ function MovieRow({
                       countries
                   }: { row: HotRow; kind: HotKind; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[] }) {
     const {item, movie, status} = row;
-    // 豆瓣条目未匹配到 TMDB 时进入站内搜索，不拼接无效详情地址。
-    const destination = movie ? `/${kind}/${movie.id}` : `/search?q=${encodeURIComponent(item.title)}`;
+    // 匹配结束后仍无 TMDB 资料时，使用豆瓣条目编号打开原始详情；加载中保留站内搜索。
+    const openDouban = source === 'douban' && !movie && (status === 'unmatched' || status === 'error');
+    const linkProps = {
+        to: movie ? `/${kind}/${movie.id}` : openDouban
+            ? `https://movie.douban.com/subject/${encodeURIComponent(item.id)}/`
+            : `/search?q=${encodeURIComponent(item.title)}`,
+        target: openDouban ? '_blank' : undefined,
+        rel: openDouban ? 'noopener noreferrer' : undefined,
+        'aria-label': openDouban ? `在豆瓣查看${item.title}详情（新标签页打开）`
+            : movie ? `查看${item.title}详情` : `搜索${item.title}`,
+    };
     const showPoster = source === 'douban' || Boolean(movie?.poster_path);
     const originalTitle = source === 'tmdb' ? movie?.original_title?.trim() : undefined;
     const overview = source === 'tmdb' ? movie?.overview?.trim() : status === 'error' ? 'TMDB 资料加载失败' :
@@ -109,7 +118,7 @@ function MovieRow({
             '&:first-of-type': {pt: {xs: 1.5, sm: 2}}
         }}>
             {showPoster &&
-                <Box component={Link} to={destination} aria-label={movie ? `查看${item.title}详情` : `搜索${item.title}`}
+                <Box component={Link} {...linkProps}
                      sx={{
                          position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
                          gridRow: {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 1.5, bgcolor: 'action.hover',
@@ -141,7 +150,7 @@ function MovieRow({
                     fontWeight: 750, fontSize: {xs: 18, sm: 23}, lineHeight: 1.35,
                     overflowWrap: 'anywhere'
                 }}>
-                    <Box component={Link} to={destination} sx={{
+                    <Box component={Link} {...linkProps} sx={{
                         color: 'text.primary', textDecoration: 'none',
                         '&:hover, &:focus-visible': {color: 'primary.main', textDecoration: 'underline'}
                     }}>

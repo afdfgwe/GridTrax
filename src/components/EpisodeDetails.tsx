@@ -40,7 +40,7 @@ export default function EpisodeDetails({episode, children}: { episode: TMDBEpiso
             </Box>
             {/* 简介独占下一行并横跨两列，不受左侧集号按钮宽度影响。 */}
             {overview && <Box sx={{gridColumn: '1 / -1', minWidth: 0}}>
-                <ExpandableOverview text={overview} indentFirstLine/>
+                <ExpandableOverview text={overview} collapsedLines={4} indentFirstLine/>
             </Box>}
         </Box>
     );
