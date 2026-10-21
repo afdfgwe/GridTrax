@@ -39,6 +39,7 @@ export function useHomeMediaDetails(records: ProgressRecord[]) {
                         });
                     if (cancelled || !detail) return;
                     const detailScores = getMediaScores(detail);
+                    // 比较后再写状态，缓存命中或海报补齐触发重跑时，避免无变化的重复渲染。
                     setScores((current) => {
                         const previousKeys = Object.keys(current).filter(scoreKey =>
                             scoreKey === key || scoreKey.startsWith(`${key}-`));

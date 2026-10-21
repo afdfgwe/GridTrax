@@ -19,10 +19,12 @@ export default function ExpandableOverview({text, indentFirstLine = false, colla
         const measure = () => {
             if (!active || !element.clientWidth) return;
             const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
+            // 预留 1 像素测量误差，避免恰好三行等临界情况下误显示展开按钮。
             setCanExpand(element.scrollHeight > lineHeight * collapsedLines + 1);
         };
         const observer = new ResizeObserver(measure);
         observer.observe(element);
+        // 字体替换也会改变换行，不能只在组件挂载时测量一次。
         void document.fonts.ready.then(measure);
         document.fonts.addEventListener('loadingdone', measure);
         return () => {

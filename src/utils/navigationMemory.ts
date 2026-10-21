@@ -6,6 +6,7 @@ export function createNavigationMemory(limit = 60) {
             return entries.get(key);
         },
         set(key: string, value: { scroll?: number; pages?: Record<string, number> }) {
+            // 滚动位置与网格页码由不同组件保存，合并字段避免其中一次写入抹掉另一项。
             const next = {...entries.get(key), ...value};
             entries.delete(key);
             entries.set(key, next);

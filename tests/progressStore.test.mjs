@@ -10,6 +10,7 @@ globalThis.window = {
         removeItem: key => values.delete(key),
     }
 };
+// 必须先安装存储替身再动态导入：Zustand 在模块初始化时就会尝试恢复持久化状态。
 const {useProgressStore} = await import('../src/store/useProgressStore.ts');
 const reset = () => useProgressStore.setState({data: {user_id: 'test', last_sync: 0, records: {}}});
 

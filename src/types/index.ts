@@ -99,6 +99,7 @@ export interface TMDBMovie {
 }
 
 // 本地观影记录：状态代码也是备份文件的字段值，修改时需要考虑旧备份兼容性。
+// 依次对应想看、在看、看过、搁置、抛弃，界面文案统一取下方 STATUS_LABELS。
 export type WatchStatus = 'Wish' | 'Do' | 'Collect' | 'OnHold' | 'Dropped';
 
 export interface EpisodeRecord {
@@ -140,6 +141,7 @@ export interface MovieRecord {
 /** 使用 type 区分电影与电视剧季，访问季专属字段前应先判断类型。 */
 export type ProgressRecord = SeasonRecord | MovieRecord;
 
+/** 持久化与导入导出共用的观影数据，不包含主题偏好、接口缓存或临时分页状态。 */
 export interface ProgressData {
     user_id: string; // 本地数据标识，当前并非在线账号。
     last_sync: number; // 沿用旧版时间字段，当前项目不执行云同步。

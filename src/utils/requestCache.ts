@@ -5,10 +5,12 @@ export function createRequestCache<T>(maxEntries = 160, ttl = 5 * 60_000, now = 
         load(key: string, loader: () => Promise<T>): Promise<T> {
             const cached = entries.get(key);
             if (cached && cached.expires > now()) {
+                // 命中时移到 Map 尾部，容量不足时优先淘汰最久未访问的条目。
                 entries.delete(key);
                 entries.set(key, cached);
                 return cached.promise;
             }
+            // 进行中的请求不按时间过期；成功后才开始计时，同步抛错也转为 Promise 拒绝。
             const entry = {promise: Promise.resolve().then(loader), expires: Infinity};
             entries.set(key, entry);
             entry.promise = entry.promise.then((value) => {

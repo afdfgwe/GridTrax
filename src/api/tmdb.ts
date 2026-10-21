@@ -32,6 +32,7 @@ const detailsCache = createRequestCache<TMDBMovie | TMDBTVShow | TMDBSeason>();
 const genresCache = createRequestCache<TMDBGenre[]>(2, 24 * 60 * 60_000);
 const countriesCache = createRequestCache<TMDBCountry[]>(1, 24 * 60 * 60_000);
 
+// 请求路径含作品类型、作品 ID 和季号，可直接作为详情缓存键，避免不同资源相互覆盖。
 function getDetails<T extends TMDBMovie | TMDBTVShow | TMDBSeason>(path: string): Promise<T> {
     return detailsCache.load(path, async () => {
         const res = await tmdbAxios.get<T>(path, {params: {language: 'zh-CN'}});
@@ -56,6 +57,7 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
     });
     return {
         page: res.data.page,
+        // 搜索接口最多允许访问前 500 页，分页控件与接口限制保持一致。
         total_pages: Math.min(res.data.total_pages, 500),
         results: (res.data.results as TMDBSearchResult[]).filter(
             (r) => r.media_type === 'tv' || r.media_type === 'movie'

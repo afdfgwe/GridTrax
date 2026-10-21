@@ -8,6 +8,7 @@ const hotHandlers = {movies: createHotHandler('movie'), tv: createHotHandler('tv
 export default defineConfig({
     plugins: [react(), {
         name: 'local-hot-movies',
+        // 这里只接入开发服务器；线上 /api 路径由 functions 中的 Pages 函数提供。
         configureServer(server) {
             // 本地开发复用 Pages 的上游处理器，无需另启一个后端。
             server.middlewares.use(async (req, res, next) => {

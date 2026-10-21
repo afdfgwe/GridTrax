@@ -10,6 +10,7 @@ export default function BackToTopButton() {
         <Fade in={visible} unmountOnExit timeout={reduceMotion ? 0 : undefined}>
             <Box sx={{
                 position: 'fixed',
+                // 同时避开手机安全区域和屏幕边缘，横竖屏都保留可点击空间。
                 right: {xs: 'max(16px, env(safe-area-inset-right))', sm: 'max(24px, env(safe-area-inset-right))'},
                 bottom: {xs: 'max(16px, env(safe-area-inset-bottom))', sm: 'max(24px, env(safe-area-inset-bottom))'},
                 zIndex: (theme) => theme.zIndex.fab

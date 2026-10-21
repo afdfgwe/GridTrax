@@ -20,6 +20,7 @@ export const useThemeStore = create<ThemeState>()(
             getActiveThemeConfig: () => getThemeConfig(get().themeId),
         }),
         {
+            // 这是浏览器存储键，不是主题名称；改动会使旧的主题偏好无法自动恢复。
             name: 'gridtrax-theme',
         }
     )

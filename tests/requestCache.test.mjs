@@ -3,6 +3,7 @@ import test from 'node:test';
 import {createRequestCache} from '../src/utils/requestCache.ts';
 import {requestErrorMessage} from '../src/utils/requestError.ts';
 
+// 注入可控时钟和未完成的 Promise，精确验证有效期边界，无需真实等待网络或计时器。
 test('并发读取共用请求，成功后才开始计算有效期', async () => {
     let now = 0;
     let resolve;
@@ -49,6 +50,7 @@ test('缓存按最近使用淘汰，并且不同资源不会串数据', async ()
     assert.equal(await cache.load('tv:1', async () => 4), 4);
 });
 
+// 故意让旧请求晚于新请求创建后失败，覆盖缓存淘汰与异步回调交错的竞态。
 test('已淘汰的旧请求失败不能删除同名新请求', async () => {
     const cache = createRequestCache(1);
     let reject;

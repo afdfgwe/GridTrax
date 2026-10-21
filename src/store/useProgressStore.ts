@@ -66,6 +66,7 @@ const defaultMovieRecord = (movieId: number, meta?: { name?: string; poster_path
 const defaultEpisodeRecord = (): EpisodeRecord => ({watched: false, comment: ''});
 
 export const useProgressStore = create<ProgressState>()(
+    // 仅持久化观影数据；请求缓存、分页和主题各自管理，避免混入导出文件。
     persist(
         (set, get) => ({
             data: {
@@ -140,6 +141,7 @@ export const useProgressStore = create<ProgressState>()(
                                 ...state.data.records,
                                 [key]: {
                                     ...record,
+                                    // 只保存最近一次操作时间，每次操作覆盖，不累积历史事件。
                                     last_interacted: Date.now(),
                                     episodes: {
                                         ...record.episodes,

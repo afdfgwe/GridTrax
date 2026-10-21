@@ -23,6 +23,7 @@ export default function EpisodeDetails({episode, children}: { episode: TMDBEpiso
             '&:first-of-type': {pt: 0.5},
             '&:last-of-type': {borderBottom: 0, pb: 0},
         }}>
+            {/* 父组件传入真正的集号操作按钮；文字区不绑定整行点击，避免阅读时误标记。 */}
             <Box sx={{alignSelf: 'center'}}>{children}</Box>
             <Box sx={{minWidth: 0}}>
                 <Typography variant="body2" component="h3" sx={{fontWeight: 600, overflowWrap: 'anywhere'}}>
@@ -37,6 +38,7 @@ export default function EpisodeDetails({episode, children}: { episode: TMDBEpiso
                     </Typography>
                 )}
             </Box>
+            {/* 简介独占下一行并横跨两列，不受左侧集号按钮宽度影响。 */}
             {overview && <Box sx={{gridColumn: '1 / -1', minWidth: 0}}>
                 <ExpandableOverview text={overview} indentFirstLine/>
             </Box>}

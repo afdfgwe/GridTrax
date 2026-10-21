@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {getTrendingInfo, toTrendingRows} from '../src/utils/trendingMovies.ts';
 
+// 只测试接口数据到统一榜单行的转换，榜单顺序与评分来源不能因复用豆瓣组件而改变。
 test('TMDB 日榜保留所有条目和接口顺序，直接使用影片 ID 且不混用豆瓣评分', () => {
     const movies = Array.from({length: 20}, (_, index) => ({
         id: 100 - index, title: `电影${index}`, original_title: `Movie ${index}`,

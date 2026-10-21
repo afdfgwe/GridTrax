@@ -44,6 +44,7 @@ interface LayoutProps {
 
 /** 全站公共框架：固定工具栏与页面主体，搜索、备份、主题入口跨页面保留。 */
 const Layout: React.FC<LayoutProps> = ({children}) => {
+    // 搜索组件只上报展开状态；公共布局据此分配空间，不接管输入或查询请求。
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const {pathname} = useLocation();
 

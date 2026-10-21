@@ -111,6 +111,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
         )
         : [];
     const totalPages = season ? Math.max(Math.ceil(orderedEpisodes.length / EPISODES_PER_PAGE), 1) : 1;
+    // 展示时夹紧页码，防止接口集数变少后落在空页；不在渲染期间更新状态。
     const currentPage = Math.min(episodePage, totalPages - 1);
     const pageStart = currentPage * EPISODES_PER_PAGE;
     const pageEnd = season ? Math.min(pageStart + EPISODES_PER_PAGE, orderedEpisodes.length) : 0;

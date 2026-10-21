@@ -18,6 +18,7 @@ const CompactCardTitle = ({title}: { title: string }) => {
             const distance = Math.max(0, text.scrollWidth - container.clientWidth);
             container.dataset.overflow = String(distance > 1);
             container.style.setProperty('--title-scroll-distance', `-${distance}px`);
+            // 按实际溢出距离延长周期，避免很长的片名为了固定时长而滚动过快。
             container.style.setProperty('--title-scroll-duration', `${Math.max(6, distance / 24 + 3)}s`);
         };
 

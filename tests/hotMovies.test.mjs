@@ -20,6 +20,7 @@ test('榜单 info 按地区、类型、导演和演员分组，缺项不占位�
     assert.deepEqual(parseHotMovieInfo(), []);
 });
 
+// 同时提供热度 score 与评分 rating.value，确保解析器不会误将热度当成影片评分。
 const rawMovie = (overrides = {}) => ({
     id: '123', title: '测试电影', type: 'movie', year: '2026', rank: 1,
     score: 99999, rating: {value: 7.3}, ...overrides
@@ -145,6 +146,7 @@ test('取消后不发起后续匹配请求', async () => {
     assert.equal(calls, 1);
 });
 
+// 请求函数和时钟均可注入，测试不访问真实豆瓣，也不依赖个人 Cookie。
 test('服务端固定上游且不发送 Cookie，成功结果缓存五分钟并合并并发', async () => {
     let time = Date.parse('2026-10-19T00:00:00Z');
     let calls = 0;

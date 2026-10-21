@@ -13,9 +13,11 @@ const SearchPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const query = (searchParams.get('q') || '').trim();
+    // 地址栏可被手动修改，先限制为接口支持的整数页码，再参与请求和按钮计算。
     const requestedPage = Number(searchParams.get('page') || 1);
     const page = Number.isInteger(requestedPage) ? Math.max(1, Math.min(requestedPage, 500)) : 1;
     const [pagination, setPagination] = useState<{ query: string; totalPages: number }>();
+    // 稳定加载函数的引用，避免普通重渲染触发 useAsyncResource 重新请求。
     const load = useCallback(async (signal: AbortSignal) => {
         if (!query) return {results: [], total_pages: 0, page: 1};
         const result = await searchMulti(query, page, signal);

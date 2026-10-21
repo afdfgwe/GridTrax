@@ -33,6 +33,7 @@ export function groupWatchedTimeline(records: ProgressRecord[]): TimelineMonth[]
         .map(record => ({record, timestamp: getTimestamp(record)}))
         .sort((a, b) => (b.timestamp ?? -1) - (a.timestamp ?? -1));
     const months = new Map<string, TimelineMonth>();
+    // 使用浏览器本地日期分组，同一次观看不会因转成 UTC 日期而被划到前一天或后一天。
     const weekdayFormat = new Intl.DateTimeFormat('zh-CN', {weekday: 'short'});
 
     for (const entry of entries) {

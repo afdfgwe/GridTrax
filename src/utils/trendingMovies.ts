@@ -29,6 +29,7 @@ export function toTrendingRows(entries: (TrendingMovie | TrendingTVShow)[]): Hot
 
 /** 类型、地区按原始顺序显示名称；未知地区保留代码，缺失资料不占行。 */
 export function getTrendingInfo(movie?: TrendingMovie, genres: readonly TMDBGenre[] = [], countries: readonly TMDBCountry[] = []) {
+    // 字典查找只做展示转换，不改写原始条目的数字类型 ID 与地区代码。
     const names = new Map(genres.map(genre => {
         const name = genre.name.trim();
         return [genre.id, genreTranslations[name] ?? name];

@@ -25,6 +25,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
+  // 配置、共享服务端逻辑和 Pages 入口都参与构建前的类型检查。
   "include": [
     "vite.config.ts",
     "server",

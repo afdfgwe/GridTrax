@@ -22,6 +22,7 @@ interface WatchedTimelineProps {
 export default function WatchedTimeline({records, scores, years, headerActions}: WatchedTimelineProps) {
     const theme = useTheme();
     const primary = theme.palette.primary.main;
+    // 分组依据每条记录最后一次操作时间，并非影片上映时间或逐次观影日志。
     const months = useMemo(() => groupWatchedTimeline(records), [records]);
     const count = months.reduce((total, month) => total + month.count, 0);
 

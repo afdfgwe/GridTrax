@@ -1,6 +1,7 @@
 {
   // 浏览器应用的类型检查配置；实际打包和文件输出由 Vite 完成。
   "compilerOptions": {
+    // 增量类型检查信息属于本地缓存，不是应用源码或部署资源。
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",
     "useDefineForClassFields": true,

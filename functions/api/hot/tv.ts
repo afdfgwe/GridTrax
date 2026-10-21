@@ -1,5 +1,6 @@
 import {createHotHandler} from '../../../server/hotMovies';
 
+// 模块级处理器复用电视剧榜的内存缓存，不能放到每次请求内部重新创建。
 const handle = createHotHandler('tv');
 
 interface EdgeCache {
@@ -12,10 +13,12 @@ interface EdgeCache {
 export async function onRequest(context: { request: Request; waitUntil(promise: Promise<unknown>): void }) {
     if (context.request.method !== 'GET') return handle(context.request);
     const key = new Request(new URL('/api/hot/tv', context.request.url));
+    // 兼容没有 Cloudflare Cache API 的运行环境，缓存缺失时仍可正常请求上游。
     const cache = (globalThis as unknown as { caches?: { default?: EdgeCache } }).caches?.default;
     const cached = await cache?.match(key).catch(() => undefined);
     if (cached) return cached;
     const response = await handle(context.request);
+    // 仅缓存成功响应；克隆响应体并交给 waitUntil，不阻塞当前响应返回。
     if (response.ok && cache) context.waitUntil(cache.put(key, response.clone()).catch(() => undefined));
     return response;
 }

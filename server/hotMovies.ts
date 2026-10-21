@@ -11,6 +11,7 @@ function object(value: unknown): Record<string, unknown> {
 }
 
 function text(value: unknown): string {
+    // 去掉上游偶尔夹带的不可见格式字符，避免标题匹配和页面对齐受到干扰。
     return typeof value === 'string' ? value.replace(/\p{Cf}/gu, '').trim() : '';
 }
 
@@ -49,6 +50,7 @@ export const parseHotMovies = (data: unknown) => parseHotItems(data, 'movie');
 export function createHotHandler(kind: HotKind, fetcher: typeof fetch = fetch, now = Date.now) {
     const collection = COLLECTIONS[kind];
     const upstream = `https://m.douban.com/rexxar/api/v2/subject_collection/${collection}/items?type=${kind}&start=0&count=10&for_mobile=1`;
+    // 缓存和进行中的请求属于当前处理器实例，电影与电视剧分别创建实例。
     let cached: { feed: HotFeed; expires: number } | undefined;
     let pending: Promise<HotFeed> | undefined;
 
@@ -78,6 +80,7 @@ export function createHotHandler(kind: HotKind, fetcher: typeof fetch = fetch, n
                 : await (pending ??= load().finally(() => {
                     pending = undefined;
                 }));
+            // 边缘缓存只继承剩余有效期，命中内存缓存不能重新延长五分钟。
             const ttl = Math.max(0, Math.floor(((cached?.expires ?? now()) - now()) / 1000));
             return Response.json(feed, {
                 headers: {

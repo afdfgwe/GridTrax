@@ -81,6 +81,7 @@ function cleanProgress(value: unknown): ProgressData {
 /** 支持旧版原始记录对象，以及带 metadata 的第 2 至第 4 版备份；校验失败则抛错。 */
 export function parseBackup(json: string): ProgressData {
     const parsed = object(JSON.parse(json));
+    // 新版读取带版本信息的外层，旧版直接读取记录；两条路径最终使用同一字段白名单。
     if ('progressData' in parsed) {
         const version = number(object(parsed.metadata).version, true);
         if (version < 2 || version > 4) throw new Error('Unsupported backup version');

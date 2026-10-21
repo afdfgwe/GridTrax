@@ -6,6 +6,7 @@ export const createAppTheme = (config: BaseThemeConfig, mode?: PaletteMode): The
     // 显式参数优先，其次使用预设模式；旧配置未声明模式时按深色处理。
     const paletteMode = mode ?? config.mode ?? 'dark';
 
+    // themes.ts 仅维护配色预设；组件默认样式在此统一应用，避免每个主题重复定义。
     return createTheme({
         palette: {
             mode: paletteMode,

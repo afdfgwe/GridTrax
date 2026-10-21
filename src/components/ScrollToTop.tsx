@@ -9,6 +9,7 @@ const ScrollToTop = () => {
 
     useLayoutEffect(() => {
         const previous = history.scrollRestoration;
+        // 关闭浏览器默认恢复，避免它和异步内容加载后的自定义恢复相互抢占。
         history.scrollRestoration = 'manual';
         const target = navigationType === 'POP' ? navigationMemory.get(key)?.scroll ?? 0 : 0;
         let lastScroll = target;
@@ -41,6 +42,7 @@ const ScrollToTop = () => {
             timeout = window.setTimeout(stop, 16_000);
         }
         window.addEventListener('scroll', remember, {passive: true});
+        // 一旦用户主动操作，就不再把页面拉回历史位置。
         window.addEventListener('wheel', stop, {passive: true});
         window.addEventListener('touchstart', stop, {passive: true});
         window.addEventListener('pointerdown', stop, {passive: true});

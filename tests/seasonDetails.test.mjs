@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {getSeasonOverview, getSeasonTitle} from '../src/utils/seasonDetails.ts';
 
+// 常规季名可规范化，自定义篇章名必须保留；两者都不应改写接口原数据。
 test('常规季名不重复季号，支持中英文占位名称和缺失名称', () => {
     for (const name of ['第 1 季', '第1季', '第一季', 'Season 1', '', undefined]) {
         assert.equal(getSeasonTitle({season_number: 1, name}), '第 1 季');

@@ -39,6 +39,7 @@ const EpisodeGrid: React.FC<EpisodeGridProps> = ({
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     // 标题列表仅在移动端启用，桌面端保持方块与悬停短标题的交互。
+    // 单集详情优先于标题列表；切换视图只改变排版，下面的存储动作保持一致。
     const titleView = !showDetails && isMobile && showTitles;
     const toggleEpisodeWatched = useProgressStore((state) => state.toggleEpisodeWatched);
     const watchUpToEpisode = useProgressStore((state) => state.watchUpToEpisode);

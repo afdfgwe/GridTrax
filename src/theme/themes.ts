@@ -13,6 +13,7 @@ export interface BaseThemeConfig {
 }
 
 // 预设名称是界面展示数据，保留原有命名；数组首项同时作为默认与失效标识的兜底。
+// 新增预设时需同时提供前景、背景和强调色；仅改主色无法形成完整的明暗主题。
 export const PREDEFINED_THEMES: BaseThemeConfig[] = [
     {
         id: 'ocean',

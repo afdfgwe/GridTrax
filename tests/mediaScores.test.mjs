@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {getMediaScore, getMediaScores} from '../src/utils/mediaScores.ts';
 
+// 展示与排序共用同一取分规则，覆盖单季整剧分、多季本季分及无效评分回退。
+
 const seasonRecord = (season_number, extra = {}) => ({type: 'tv_season', tmdb_id: 10, season_number, ...extra});
 
 test('只有一季时使用整部剧评分，不使用本季评分，也不修改接口数据', () => {

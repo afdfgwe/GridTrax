@@ -154,6 +154,7 @@ export default function DataBackupPanel() {
                                 try {
                                     const snapshot = progressStorage.recovery();
                                     if (!snapshot) throw new Error('Missing recovery');
+                                    // 恢复快照采用本地持久化结构，提取数据后仍走与文件导入相同的校验和确认流程。
                                     const stored = JSON.parse(snapshot.value);
                                     setPending(parseBackup(JSON.stringify(stored.state.data)));
                                     setRestoring(true);

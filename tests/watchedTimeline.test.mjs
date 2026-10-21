@@ -6,6 +6,7 @@ const movie = (id, last_interacted, extra = {}) => ({
     type: 'movie', tmdb_id: id, name: `影片 ${id}`, global_status: 'Collect',
     rating: 0, global_comment: '', last_interacted, ...extra,
 });
+// 用本地日历构造时间，与分组函数保持同一时区语义，避免测试受运行机器时区影响。
 const timestamp = (year, month, day, hour = 12, minute = 0) => new Date(year, month - 1, day, hour, minute).getTime();
 const flatten = months => months.flatMap(month => month.days.flatMap(day => day.entries));
 

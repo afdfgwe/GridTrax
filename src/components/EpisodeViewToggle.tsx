@@ -17,6 +17,7 @@ export default function EpisodeViewToggle({episodes, showTitles, onChange}: Epis
     const theme = useTheme();
     const primary = theme.palette.primary.main;
     if (!episodes.some((episode) => getEpisodeTitle(episode))) return null;
+    // 按钮图标和提示表达“点击后的目标视图”，按下状态表达当前是否启用标题列表。
     const label = showTitles ? '切换为集数方块视图' : '切换为标题列表视图';
 
     return (

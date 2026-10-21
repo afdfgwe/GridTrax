@@ -3,5 +3,6 @@
     "name": "gridtrax",
     "compatibility_date": "2024-03-01",
     // Pages 发布 Vite 的产物目录；TMDB 令牌应在构建环境设置，不写入此文件。
+    // 该目录由 npm run build 生成，Pages 同时从 functions 目录发现服务端入口。
     "pages_build_output_dir": "dist"
 }

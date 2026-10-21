@@ -147,6 +147,7 @@ const MovieDetailPage: React.FC = () => {
                                             size="small"
                                             sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
                                         />
+                                        {/* 先得到布尔值，避免 runtime 为 0 时被 React 当作文字直接渲染。 */}
                                         {(movie.runtime ?? 0) > 0 && (
                                             <Chip
                                                 label={`${movie.runtime} 分钟`}

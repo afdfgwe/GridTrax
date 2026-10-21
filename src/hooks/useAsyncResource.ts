@@ -14,6 +14,7 @@ export function useAsyncResource<T>(key: string, loader: (signal: AbortSignal) =
         });
         return () => controller.abort();
     }, [key, attempt, loader]);
+    // 渲染时校验结果归属，新资源首帧即可进入加载态，无需在副作用里同步清空旧状态。
     const current = result?.key === key && result.attempt === attempt ? result : undefined;
     return {
         data: current?.data,

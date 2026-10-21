@@ -4,6 +4,7 @@ import {createProgressStorage, PROGRESS_STORAGE_KEY as key} from '../src/utils/p
 
 const value = id => JSON.stringify({state: {data: {user_id: id, last_sync: 0, records: {}}}, version: 0});
 
+// 用内存 Map 替代浏览器存储，并按键注入写入失败，分别模拟主记录与恢复快照的配额异常。
 function fixture() {
     const map = new Map([[key, value('original')]]);
     let error = null;

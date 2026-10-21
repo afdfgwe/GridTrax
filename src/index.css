@@ -1,3 +1,4 @@
+/* 外部字体异步加载，加载期间使用下方备用字体；依赖文字尺寸的组件需在字体就绪后重新测量。 */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap");
 
 /* 统一盒模型，保证声明的尺寸包含内边距和边框。 */

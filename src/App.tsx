@@ -33,6 +33,7 @@ const App: React.FC = () => {
         <ThemeProvider theme={theme}>
             <CssBaseline/>
             <BrowserRouter>
+                {/* 滚动恢复置于路由内、懒加载边界外，可在详情尚未加载时开始等待页面高度。 */}
                 <ScrollToTop/>
                 <Layout>
                     <Suspense fallback={<LoadingFallback/>}>

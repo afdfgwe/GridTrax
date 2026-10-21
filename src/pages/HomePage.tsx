@@ -285,6 +285,7 @@ const HomePage: React.FC = () => {
     };
     const watchedViewToggle = <WatchedViewToggle view={watchedView} onChange={handleWatchedViewChange}/>;
 
+    // 排序或类型变化后仅重置当前板块页码，其他板块的浏览位置保持不变。
     const handleSortChange = useCallback((status: WatchStatus, mode: SortMode) => {
         setSortModes((prev) => ({...prev, [status]: mode}));
         setSectionPages((prev) => ({...prev, [status]: 0}));
@@ -318,6 +319,7 @@ const HomePage: React.FC = () => {
         return groups;
     }, [trackedItems, sortModes, scores]);
 
+    // 网格数据先按状态分组和排序，再做类型筛选；分页在渲染各板块时处理。
     const visibleItemsByStatus = useMemo(() => {
         const groups = {...itemsByStatus};
         for (const status of ALL_STATUSES) {

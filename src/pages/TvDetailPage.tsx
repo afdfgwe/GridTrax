@@ -23,10 +23,11 @@ import {useAsyncResource} from '../hooks/useAsyncResource';
 const TvDetailPage: React.FC = () => {
     const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
+    // 详情请求使用共享缓存；页面切换后由 Hook 忽略旧结果，不中断其他组件复用的请求。
     const load = useCallback(() => getTVShow(Number(id)), [id]);
     const {data: show, loading, error, retry} = useAsyncResource(`tv:${id}`, load);
 
-    // 按路由编号加载整剧详情；路由切换或卸载后忽略旧请求的结果。
+    // 将已取得的整剧海报补回已有本地记录，不因浏览详情创建各季的观看记录。
     useEffect(() => {
         // 仅补齐已有记录的海报，不改变观看状态或最近互动时间。
         if (show) useProgressStore.getState().fillMissingPosters('tv_season', show.id, show.poster_path);

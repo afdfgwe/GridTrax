@@ -4,6 +4,7 @@ export const PROGRESS_STORAGE_KEY = 'gridtrax-progress';
 const RECOVERY_KEY = 'gridtrax-progress-before-import';
 type StorageAccess = Pick<Storage, 'getItem' | 'setItem'>;
 
+// Zustand 的持久化外层是 state.data，复用备份校验规则检查内部记录是否可安全恢复。
 function validateStored(value: string) {
     const persisted = JSON.parse(value);
     parseBackup(JSON.stringify(persisted.state.data));
@@ -12,6 +13,7 @@ function validateStored(value: string) {
 
 /** 日常保存失败保留内存数据；整体导入须先保存快照和新数据，成功后再更新内存。 */
 export function createProgressStorage(access: () => StorageAccess, notify: (message: string | null) => void) {
+    // 读取失败后锁住自动保存，防止初始化得到的空状态反过来覆盖损坏但可能可恢复的原文。
     let readFailed = false;
     return {
         getItem(name: string): string | null {
@@ -59,6 +61,7 @@ export function createProgressStorage(access: () => StorageAccess, notify: (mess
     };
 }
 
+// 独立订阅保存错误，不让错误提示自身的更新再次触发观影数据持久化。
 let storageError: string | null = null;
 const listeners = new Set<() => void>();
 export const subscribeStorageError = (listener: () => void) => {

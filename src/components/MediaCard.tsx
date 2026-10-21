@@ -20,6 +20,7 @@ interface MediaCardProps {
 
 /** 搜索结果卡片，不读取本地进度；名称、类型、年份和评分均来自搜索接口。 */
 const MediaCard: React.FC<MediaCardProps> = ({item, onClick}) => {
+    // 混合搜索的电视剧和电影使用不同字段命名，在展示层统一取标题与年份。
     const title = item.name ?? item.title ?? '未知作品';
     const year = (item.first_air_date ?? item.release_date ?? '').slice(0, 4);
     const score = item.vote_average?.toFixed(1) ?? '?';

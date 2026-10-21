@@ -35,6 +35,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
 
     // 手势过程使用引用保存中间状态，跨事件读取且不为每次指针移动触发渲染。
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // 长按和右键都可能随后触发抬起事件，用独立标志阻止同一次手势又切换已看状态。
     const didLongPress = useRef(false);
     const didContextMenu = useRef(false);
     // 记录触摸起点，以位移区分点击和页面滚动。
@@ -180,6 +181,7 @@ const EpisodeCell: React.FC<EpisodeCellProps> = ({
     const primary = theme.palette.primary.main;
     const primaryContrast = theme.palette.primary.contrastText;
     const episodeTitle = getEpisodeTitle(episode);
+    // 普通移动宫格保留 44 像素触摸区域，详情列表用紧凑按钮避免撑高每集内容。
     const numberSize = compact ? 36 : {xs: 44, sm: 36};
 
     return (

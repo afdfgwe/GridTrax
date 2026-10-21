@@ -4,6 +4,7 @@ import type {TMDBSeasonSummary} from '../types';
 export function getSeasonTitle(season: TMDBSeasonSummary): string {
     const name = season.name?.trim() || '';
     const label = `第 ${season.season_number} 季`;
+    // 只把纯季号名称视为默认名，带剧情含义的自定义季名不能被替换掉。
     const isDefaultName = /^第\s*[\d零〇一二三四五六七八九十百两]+\s*季$/.test(name)
         || /^season\s*\d+$/i.test(name);
     return !name || isDefaultName ? label : `${label} · ${name}`;

@@ -6,6 +6,7 @@ import {resolveHotMovie} from '../utils/hotMovieMatch';
 import {requestErrorMessage} from '../utils/requestError';
 import {toTrendingRows} from '../utils/trendingMovies';
 
+// 来源、类别、时间窗口和重试次数共同标识一次加载，异步回写必须匹配同一组条件。
 interface Result {
     source: HotSource;
     kind: HotKind;
@@ -90,6 +91,7 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWi
                 feed,
                 rows: feed.items.map(item => ({item, status: 'loading'}))
             });
+            // 五个工作循环共用下一个索引；每个循环完成一条后立即领取下一条，避免按批等待慢请求。
             let next = 0;
 
             async function worker() {
@@ -117,6 +119,7 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWi
         void load();
         return () => controller.abort();
     }, [attempt, kind, source, timeWindow]);
+    // 切换选项后不展示上一组结果；榜单已返回但仍在补全资料时，用 matching 单独提示进度。
     const current = result?.source === source && result.kind === kind && result.timeWindow === timeWindow && result.attempt === attempt ? result : undefined;
     return {
         rows: current?.rows ?? [],

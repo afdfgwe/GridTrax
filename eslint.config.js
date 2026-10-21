@@ -14,6 +14,7 @@ export default defineConfig([
         extends: [
             js.configs.recommended,
             tseslint.configs.recommended,
+            // 检查 Hook 调用顺序、依赖和副作用，防止状态更新出现循环或使用过期闭包。
             reactHooks.configs.flat.recommended,
             reactRefresh.configs.vite,
         ],

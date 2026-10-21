@@ -57,6 +57,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
     const [loading, setLoading] = useState(defaultExpanded);
     const [seasonError, setSeasonError] = useState(false);
     const [expanded, setExpanded] = useState(defaultExpanded);
+    // 页码、排序和展示模式只属于当前折叠区，不写入观影记录或 JSON 备份。
     const [episodeOrder, setEpisodeOrder] = useState<'asc' | 'desc'>('asc');
     const [episodePage, setEpisodePage] = useState(0);
     const [showEpisodeTitles, setShowEpisodeTitles] = useState(false);
@@ -100,6 +101,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
     // 记录仅在用户主动选择状态或操作某一集时按需创建。
 
     // 仅统计接口实际返回的集数，避免旧记录中的无效集号影响当前季进度。
+    // 未展开时只掌握季摘要，不能把摘要集数直接当成已加载的单集进度。
     const watchedCount = season && record
         ? season.episodes.filter(
             (ep) => record.episodes[String(ep.episode_number)]?.watched ?? false

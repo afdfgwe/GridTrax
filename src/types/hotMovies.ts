@@ -1,3 +1,4 @@
+/** 热门榜的筛选维度；日期窗口仅用于 TMDB，豆瓣固定为实时榜。 */
 export type HotKind = 'movie' | 'tv';
 export type HotSource = 'douban' | 'tmdb';
 export type TrendingWindow = 'day' | 'week';
@@ -13,6 +14,7 @@ export interface HotItem {
     rating?: number;
 }
 
+/** fetchedAt 是本次抓取时间，不是豆瓣发布或更新榜单的时间。 */
 export interface HotFeed {
     items: HotItem[];
     fetchedAt: string;
@@ -42,6 +44,7 @@ export interface TrendingTVShow extends Omit<TrendingMovie, 'title' | 'original_
     first_air_date?: string;
 }
 
+/** 一行同时保存榜单原始资料与 TMDB 补全资料；未匹配和请求失败是两种不同状态。 */
 export interface HotRow {
     item: HotItem;
     movie?: TrendingMovie;

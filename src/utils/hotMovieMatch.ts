@@ -8,6 +8,7 @@ export function normalizeMovieTitle(title: string): string {
 /** 仅匹配片名相同且年份相符的唯一候选；允许不同地区上映年份相差一年。 */
 export function matchHotMovie(item: HotItem, results: HotSearchItem[]): HotSearchItem | undefined {
     const names = new Set([item.title, item.originalTitle].filter((name): name is string => !!name).map(normalizeMovieTitle));
+    // 中文名与原名搜索可能返回同一作品，先按 ID 去重，不能把重复结果误判为同名歧义。
     const unique = [...new Map(results.map(movie => [movie.id, movie])).values()];
     const candidates = unique.filter(movie => Number.isInteger(movie.id) && movie.id > 0
         && [movie.title, movie.original_title].some(name => !!name && names.has(normalizeMovieTitle(name))));

@@ -25,6 +25,7 @@ import type {TMDBCountry, TMDBGenre} from '../types';
 import {parseHotMovieInfo} from '../utils/hotMovieInfo';
 import {getTrendingInfo} from '../utils/trendingMovies';
 
+/** 两个榜单来源使用不同的数据适配器，最终统一成“标签 + 内容”的展示结构。 */
 function HotInfo({
                      row,
                      source,
@@ -57,6 +58,7 @@ function HotInfo({
     );
 }
 
+// 两个来源的评分独立判断，不能把某一来源的分数当成另一来源的缺省值。
 function Scores({row}: { row: HotRow }) {
     const {item, movie} = row;
     const douban = typeof item.rating === 'number' && Number.isFinite(item.rating) && item.rating > 0;
@@ -90,6 +92,7 @@ function MovieRow({
                       countries
                   }: { row: HotRow; kind: HotKind; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[] }) {
     const {item, movie, status} = row;
+    // 豆瓣条目未匹配到 TMDB 时进入站内搜索，不拼接无效详情地址。
     const destination = movie ? `/${kind}/${movie.id}` : `/search?q=${encodeURIComponent(item.title)}`;
     const showPoster = source === 'douban' || Boolean(movie?.poster_path);
     const originalTitle = source === 'tmdb' ? movie?.original_title?.trim() : undefined;
