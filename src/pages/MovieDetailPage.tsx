@@ -15,6 +15,7 @@ import React, {useCallback, useEffect} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getMovie, getPosterUrl} from '../api/tmdb';
 import GlobalStatusPicker from '../components/GlobalStatusPicker';
+import ExpandableOverview from '../components/ExpandableOverview';
 import {useProgressStore} from '../store/useProgressStore';
 import type {MovieRecord, WatchStatus} from '../types';
 import {useAsyncResource} from '../hooks/useAsyncResource';
@@ -167,9 +168,7 @@ const MovieDetailPage: React.FC = () => {
                                             />
                                         ))}
                                     </Box>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {movie.overview || '暂无简介'}
-                                    </Typography>
+                                    <ExpandableOverview key={movie.id} text={movie.overview || '暂无简介'} collapsedLines={10}/>
                                 </Box>
                             </Box>
 

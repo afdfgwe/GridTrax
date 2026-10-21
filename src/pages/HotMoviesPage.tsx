@@ -169,7 +169,7 @@ function MovieRow({
                     <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
             </Box>
             {status !== 'loading' && overview && <Box sx={{gridColumn: showPoster ? {xs: '1 / -1', sm: '2'} : '1'}}>
-                <ExpandableOverview text={overview} collapsedLines={4} expandLabel="展开全部"/>
+                <ExpandableOverview text={overview} collapsedLines={4}/>
             </Box>}
         </Box>
     );

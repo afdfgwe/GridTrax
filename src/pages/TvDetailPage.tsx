@@ -178,7 +178,7 @@ const TvDetailPage: React.FC = () => {
                                             />
                                         ))}
                                     </Box>
-                                    <ExpandableOverview key={show.id} text={show.overview || '暂无简介'}/>
+                                    <ExpandableOverview key={show.id} text={show.overview || '暂无简介'} collapsedLines={10}/>
                                 </Box>
                             </Box>
 
