@@ -7,6 +7,7 @@ import type {
     TMDBCountry,
     TMDBGenre,
     TMDBMovie,
+    TMDBMovieRecommendations,
     TMDBCredits,
     TMDBSearchResult,
     TMDBSeason,
@@ -37,6 +38,8 @@ const genresCache = createRequestCache<TMDBGenre[]>(2, 24 * 60 * 60_000);
 const countriesCache = createRequestCache<TMDBCountry[]>(1, 24 * 60 * 60_000);
 const creditsCache = createRequestCache<TMDBCredits>(40);
 const recommendationsCache = createRequestCache<TMDBTVRecommendations>(40);
+const movieRecommendationsCache = createRequestCache<TMDBMovieRecommendations>(40);
+const movieSimilarCache = createRequestCache<TMDBMovieRecommendations>(40);
 const similarCache = createRequestCache<TMDBTVRecommendations>(40);
 
 // 请求路径含作品类型、作品 ID 和季号，可直接作为详情缓存键，避免不同资源相互覆盖。
@@ -168,6 +171,28 @@ export async function getTVSeason(tvId: number, seasonNumber: number): Promise<T
 /** 电影详情，包含片名、上映日期、片长、类型及 TMDB 评分。 */
 export async function getMovie(movieId: number): Promise<TMDBMovie> {
     return getDetails<TMDBMovie>(`/movie/${movieId}`);
+}
+
+/** 电影推荐只请求中文第一页，独立缓存五分钟，展示层保留前十部。 */
+export function getMovieRecommendations(movieId: number): Promise<TMDBMovieRecommendations> {
+    return movieRecommendationsCache.load(`movie:${movieId}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<TMDBMovieRecommendations>(`/movie/${movieId}/recommendations`, {
+            params: {language: 'zh-CN', page: 1},
+        });
+        if (!Array.isArray(res.data.results)) throw new Error('推荐列表格式错误');
+        return res.data;
+    });
+}
+
+/** 电影相似列表独立缓存五分钟，仅请求中文第一页，与推荐列表互不影响。 */
+export function getMovieSimilar(movieId: number): Promise<TMDBMovieRecommendations> {
+    return movieSimilarCache.load(`movie:${movieId}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<TMDBMovieRecommendations>(`/movie/${movieId}/similar`, {
+            params: {language: 'zh-CN', page: 1},
+        });
+        if (!Array.isArray(res.data.results)) throw new Error('相似列表格式错误');
+        return res.data;
+    });
 }
 
 /** 演职员独立加载并缓存五分钟，失败不缓存，也不阻塞电影详情。 */

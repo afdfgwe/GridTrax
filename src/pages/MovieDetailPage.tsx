@@ -18,6 +18,7 @@ import GlobalStatusPicker from '../components/GlobalStatusPicker';
 import ExpandableOverview from '../components/ExpandableOverview';
 import ProductionInfo from '../components/ProductionInfo';
 import MediaCredits from '../components/MediaCredits';
+import MediaRecommendations from '../components/MediaRecommendations';
 import {useProgressStore} from '../store/useProgressStore';
 import type {MovieRecord, WatchStatus} from '../types';
 import {useAsyncResource} from '../hooks/useAsyncResource';
@@ -174,7 +175,8 @@ const MovieDetailPage: React.FC = () => {
                                                     spoken_languages={movie.spoken_languages}
                                                     production_countries={movie.production_countries}
                                                     production_companies={movie.production_companies}/>
-                                    <ExpandableOverview key={movie.id} text={movie.overview || '暂无简介'} collapsedLines={10}/>
+                                    <ExpandableOverview key={movie.id} text={movie.overview || '暂无简介'}
+                                                        collapsedLines={10}/>
                                 </Box>
                             </Box>
 
@@ -204,6 +206,10 @@ const MovieDetailPage: React.FC = () => {
                                     />
                                 )}
                             </Box>
+                            <MediaRecommendations key={`recommendations:${movie.id}`} mediaId={movie.id}
+                                                  mediaType="movie"/>
+                            <MediaRecommendations key={`similar:${movie.id}`} mediaId={movie.id} mediaType="movie"
+                                                  kind="similar"/>
                         </>
                     ) : null}
                 </Container>

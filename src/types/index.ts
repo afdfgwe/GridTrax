@@ -48,6 +48,23 @@ export interface TMDBTVRecommendations {
     total_results: number;
 }
 
+/** 电影推荐使用片名和上映日期，不能与电视剧的 name、first_air_date 混用。 */
+export interface TMDBMovieRecommendation {
+    id: number;
+    title: string;
+    original_title?: string;
+    poster_path?: string | null;
+    release_date?: string | null;
+    vote_average?: number;
+}
+
+export interface TMDBMovieRecommendations {
+    page: number;
+    results: TMDBMovieRecommendation[];
+    total_pages: number;
+    total_results: number;
+}
+
 /** 整部电视剧的详情，seasons 仅包含各季摘要，不包含每一集的完整信息。 */
 export interface TMDBTVShow {
     id: number;
@@ -184,11 +201,11 @@ export interface TMDBTVAggregateCredits {
     id: number;
     cast: Array<TMDBCreditPerson & {
         order?: number;
-        roles?: Array<{character?: string; credit_id?: string; episode_count?: number}> | null;
+        roles?: Array<{ character?: string; credit_id?: string; episode_count?: number }> | null;
     }>;
     crew: Array<TMDBCreditPerson & {
         department?: string;
-        jobs?: Array<{job: string; credit_id?: string; episode_count?: number}> | null;
+        jobs?: Array<{ job: string; credit_id?: string; episode_count?: number }> | null;
     }>;
 }
 

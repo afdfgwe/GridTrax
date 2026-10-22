@@ -18,7 +18,7 @@ import SeasonBlock from '../components/SeasonBlock';
 import ExpandableOverview from '../components/ExpandableOverview';
 import ProductionInfo from '../components/ProductionInfo';
 import MediaCredits from '../components/MediaCredits';
-import TVRecommendations from '../components/TVRecommendations';
+import MediaRecommendations from '../components/MediaRecommendations';
 import {useProgressStore} from '../store/useProgressStore';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 
@@ -186,7 +186,8 @@ const TvDetailPage: React.FC = () => {
                                                     production_countries={show.production_countries}
                                                     production_companies={show.production_companies}
                                                     networks={show.networks}/>
-                                    <ExpandableOverview key={show.id} text={show.overview || '暂无简介'} collapsedLines={10}/>
+                                    <ExpandableOverview key={show.id} text={show.overview || '暂无简介'}
+                                                        collapsedLines={10}/>
                                 </Box>
                             </Box>
 
@@ -208,8 +209,9 @@ const TvDetailPage: React.FC = () => {
                                     defaultExpanded={idx === 0}
                                 />
                             ))}
-                            <TVRecommendations key={`recommendations:${show.id}`} tvId={show.id}/>
-                            <TVRecommendations key={`similar:${show.id}`} tvId={show.id} kind="similar"/>
+                            <MediaRecommendations key={`recommendations:${show.id}`} mediaId={show.id} mediaType="tv"/>
+                            <MediaRecommendations key={`similar:${show.id}`} mediaId={show.id} mediaType="tv"
+                                                  kind="similar"/>
                         </>
                     ) : null}
                 </Container>
