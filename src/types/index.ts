@@ -83,6 +83,20 @@ export interface TMDBEpisode {
     vote_average?: number;
 }
 
+/** 电影的制片地区，中文名称通过 iso_3166_1 匹配地区字典。 */
+export interface TMDBProductionCountry {
+    iso_3166_1: string;
+    name: string;
+}
+
+/** 出品公司仅展示 Logo，名称用于图片描述与悬停提示。 */
+export interface TMDBProductionCompany {
+    id: number;
+    name: string;
+    logo_path?: string | null;
+    origin_country?: string;
+}
+
 /** 电影详情；release_date 提供年份，vote_average 是海报上展示的 TMDB 评分。 */
 export interface TMDBMovie {
     id: number;
@@ -96,6 +110,8 @@ export interface TMDBMovie {
     runtime?: number;
     genres: { id: number; name: string }[];
     status: string;
+    production_countries?: TMDBProductionCountry[] | null;
+    production_companies?: TMDBProductionCompany[] | null;
 }
 
 // 本地观影记录：状态代码也是备份文件的字段值，修改时需要考虑旧备份兼容性。

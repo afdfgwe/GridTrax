@@ -16,6 +16,7 @@ import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getMovie, getPosterUrl} from '../api/tmdb';
 import GlobalStatusPicker from '../components/GlobalStatusPicker';
 import ExpandableOverview from '../components/ExpandableOverview';
+import MovieProductionInfo from '../components/MovieProductionInfo';
 import {useProgressStore} from '../store/useProgressStore';
 import type {MovieRecord, WatchStatus} from '../types';
 import {useAsyncResource} from '../hooks/useAsyncResource';
@@ -122,7 +123,7 @@ const MovieDetailPage: React.FC = () => {
                                         zIndex: 2,
                                     }}
                                 />
-                                <Box sx={{flex: 1}}>
+                                <Box sx={{flex: 1, minWidth: 0, width: {xs: '100%', sm: 'auto'}}}>
                                     <Typography variant="h4" fontWeight={800} gutterBottom sx={{lineHeight: 1.2}}>
                                         {movie.title}
                                     </Typography>
@@ -168,6 +169,9 @@ const MovieDetailPage: React.FC = () => {
                                             />
                                         ))}
                                     </Box>
+                                    <MovieProductionInfo key={`production:${movie.id}`}
+                                                         production_countries={movie.production_countries}
+                                                         production_companies={movie.production_companies}/>
                                     <ExpandableOverview key={movie.id} text={movie.overview || '暂无简介'} collapsedLines={10}/>
                                 </Box>
                             </Box>
