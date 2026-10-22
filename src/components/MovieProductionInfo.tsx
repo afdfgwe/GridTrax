@@ -33,7 +33,7 @@ export default function MovieProductionInfo({production_countries, production_co
             {countryText && (
                 <Typography variant="body2" color="text.secondary" aria-label={`制片地区：${countryText}`}
                             sx={{
-                                maxWidth: '100%', minHeight: 26, px: 1, py: 0.25,
+                                maxWidth: '100%', minHeight: 24, px: 1, py: 0.125,
                                 border: '1px solid', borderColor: 'divider', borderRadius: 1,
                                 fontSize: '0.8125rem', lineHeight: '20px', overflowWrap: 'anywhere',
                             }}>
@@ -44,7 +44,7 @@ export default function MovieProductionInfo({production_countries, production_co
                 <Tooltip key={company.key} title={company.name} disableTouchListener>
                     <Box sx={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: 60, height: 26, flexShrink: 0, px: 0.5, py: 0.5,
+                        width: 56, height: 24, flexShrink: 0, px: 0.5, py: 0.5,
                         borderRadius: 1, backgroundColor: '#F5F6F7',
                     }}>
                         {/* 浅色底保持透明 Logo 可辨认；固定尺寸避免图片加载时挤动文字。 */}
