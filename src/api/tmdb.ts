@@ -37,6 +37,7 @@ const genresCache = createRequestCache<TMDBGenre[]>(2, 24 * 60 * 60_000);
 const countriesCache = createRequestCache<TMDBCountry[]>(1, 24 * 60 * 60_000);
 const creditsCache = createRequestCache<TMDBCredits>(40);
 const recommendationsCache = createRequestCache<TMDBTVRecommendations>(40);
+const similarCache = createRequestCache<TMDBTVRecommendations>(40);
 
 // 请求路径含作品类型、作品 ID 和季号，可直接作为详情缓存键，避免不同资源相互覆盖。
 function getDetails<T extends TMDBMovie | TMDBTVShow | TMDBSeason>(path: string): Promise<T> {
@@ -144,6 +145,17 @@ export function getTVRecommendations(tvId: number): Promise<TMDBTVRecommendation
             params: {language: 'zh-CN', page: 1},
         });
         if (!Array.isArray(res.data.results)) throw new Error('推荐列表格式错误');
+        return res.data;
+    });
+}
+
+/** 相似作品独立缓存五分钟，仅取第一页，与推荐列表互不影响。 */
+export function getTVSimilar(tvId: number): Promise<TMDBTVRecommendations> {
+    return similarCache.load(`tv:${tvId}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<TMDBTVRecommendations>(`/tv/${tvId}/similar`, {
+            params: {language: 'zh-CN', page: 1},
+        });
+        if (!Array.isArray(res.data.results)) throw new Error('相似列表格式错误');
         return res.data;
     });
 }

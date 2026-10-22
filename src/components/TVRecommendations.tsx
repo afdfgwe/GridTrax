@@ -3,7 +3,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {Alert, Box, Button, CardActionArea, IconButton, Skeleton, Tooltip, Typography} from '@mui/material';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
-import {getPosterUrl, getTVRecommendations} from '../api/tmdb';
+import {getPosterUrl, getTVRecommendations, getTVSimilar} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import type {TMDBTVRecommendation} from '../types';
 import CompactCardTitle from './CompactCardTitle';
@@ -30,10 +30,15 @@ function RecommendationCard({item}: {item: TMDBTVRecommendation}) {
     );
 }
 
-/** 仅显示推荐榜首屏的前十部，横向滚动与主要演员列表保持一致。 */
-export default function TVRecommendations({tvId}: {tvId: number}) {
-    const load = useCallback(() => getTVRecommendations(tvId), [tvId]);
-    const {data, loading, error, retry} = useAsyncResource(`tv-recommendations:${tvId}`, load);
+/** 推荐和相似各取前十部，复用演员式横向布局，独立维护请求与滚动状态。 */
+export default function TVRecommendations({tvId, kind = 'recommendations'}: {
+    tvId: number; kind?: 'recommendations' | 'similar';
+}) {
+    const title = kind === 'similar' ? '相似' : '猜你喜欢';
+    const label = kind === 'similar' ? '相似' : '推荐';
+    const headingId = `tv-${kind}-heading`;
+    const load = useCallback(() => kind === 'similar' ? getTVSimilar(tvId) : getTVRecommendations(tvId), [tvId, kind]);
+    const {data, loading, error, retry} = useAsyncResource(`tv-${kind}:${tvId}`, load);
     const results = data?.results.slice(0, 10) ?? [];
     const listRef = useRef<HTMLDivElement>(null);
     const [scroll, setScroll] = useState({previous: false, next: false});
@@ -62,19 +67,19 @@ export default function TVRecommendations({tvId}: {tvId: number}) {
     if (!loading && !error && results.length === 0) return null;
 
     return (
-        <Box component="section" aria-labelledby="tv-recommendations-heading" aria-busy={loading}
+        <Box component="section" aria-labelledby={headingId} aria-busy={loading}
              sx={{mt: 4, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
             <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
-                <Typography id="tv-recommendations-heading" component="h2" variant="h6" fontWeight={700}>猜你喜欢</Typography>
+                <Typography id={headingId} component="h2" variant="h6" fontWeight={700}>{title}</Typography>
                 {!loading && !error && (scroll.previous || scroll.next) && <Box sx={{display: {xs: 'none', sm: 'flex'}, gap: 0.5, flexShrink: 0}}>
-                    <Tooltip title="向左查看推荐"><span><IconButton size="small" aria-label="向左查看推荐"
+                    <Tooltip title={`向左查看${label}`}><span><IconButton size="small" aria-label={`向左查看${label}`}
                         disabled={!scroll.previous} onClick={() => move(-1)}><ChevronLeftIcon fontSize="small"/></IconButton></span></Tooltip>
-                    <Tooltip title="向右查看推荐"><span><IconButton size="small" aria-label="向右查看推荐"
+                    <Tooltip title={`向右查看${label}`}><span><IconButton size="small" aria-label={`向右查看${label}`}
                         disabled={!scroll.next} onClick={() => move(1)}><ChevronRightIcon fontSize="small"/></IconButton></span></Tooltip>
                 </Box>}
             </Box>
             {loading ? (
-                <Box aria-label="正在加载推荐" sx={{display: 'flex', gap: 1.5, overflow: 'hidden'}}>
+                <Box aria-label={`正在加载${label}`} sx={{display: 'flex', gap: 1.5, overflow: 'hidden'}}>
                     {Array.from({length: 6}, (_, index) => (
                         <Box key={index} sx={{width: {xs: 96, sm: 112}, flexShrink: 0}}>
                             <Skeleton variant="rounded" sx={{aspectRatio: '2 / 3', height: 'auto', borderRadius: 1}}/>
@@ -83,9 +88,9 @@ export default function TVRecommendations({tvId}: {tvId: number}) {
                     ))}
                 </Box>
             ) : error ? (
-                <Alert severity="warning" action={<Button color="inherit" size="small" onClick={retry}>重试</Button>}>推荐加载失败：{error}</Alert>
+                <Alert severity="warning" action={<Button color="inherit" size="small" onClick={retry}>重试</Button>}>{label}加载失败：{error}</Alert>
             ) : (
-                <Box ref={listRef} onScroll={updateScroll} tabIndex={0} role="region" aria-label="推荐电视剧列表"
+                <Box ref={listRef} onScroll={updateScroll} tabIndex={0} role="region" aria-label={`${label}电视剧列表`}
                      sx={{overflowX: 'auto', overscrollBehaviorX: 'contain', scrollbarWidth: 'thin', pb: 1,
                          '&:focus-visible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 3}}}>
                     <Box component="ul" sx={{m: 0, p: 0, listStyle: 'none', display: 'flex', gap: 1.5, width: 'max-content',

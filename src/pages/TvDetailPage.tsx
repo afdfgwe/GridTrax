@@ -209,6 +209,7 @@ const TvDetailPage: React.FC = () => {
                                 />
                             ))}
                             <TVRecommendations key={`recommendations:${show.id}`} tvId={show.id}/>
+                            <TVRecommendations key={`similar:${show.id}`} tvId={show.id} kind="similar"/>
                         </>
                     ) : null}
                 </Container>

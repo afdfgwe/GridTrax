@@ -30,7 +30,7 @@ export interface TMDBSearchResult {
     genre_ids?: number[];
 }
 
-/** 电视剧推荐条目，直接使用推荐接口的资料，无需逐部请求详情。 */
+/** 推荐和相似电视剧共用条目字段，无需逐部请求详情。 */
 export interface TMDBTVRecommendation {
     id: number;
     name: string;
@@ -40,6 +40,7 @@ export interface TMDBTVRecommendation {
     vote_average?: number;
 }
 
+/** 推荐和相似接口均返回分页结构，页面只展示第一页的前十部。 */
 export interface TMDBTVRecommendations {
     page: number;
     results: TMDBTVRecommendation[];
