@@ -29,17 +29,20 @@ function PersonPortrait({person}: {person: TMDBCreditPerson}) {
     );
 }
 
-function ActorItem({person}: {person: TMDBCastMember}) {
+function ActorItem({person, fullText = false}: {person: TMDBCastMember; fullText?: boolean}) {
     return (
         <Box component="li" sx={{listStyle: 'none', minWidth: 0}}>
             <PersonPortrait key={person.profile_path} person={person}/>
             <Typography title={person.name} sx={{fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.5,
-                mt: 0.75, height: '3em', overflow: 'hidden', display: '-webkit-box',
-                WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflowWrap: 'anywhere'}}>
+                mt: 0.75, minHeight: '1.5em',
+                ...(fullText ? {whiteSpace: 'normal', overflowWrap: 'anywhere'} :
+                    {whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'})}}>
                 {person.name}
             </Typography>
             <Typography title={person.character || undefined} color="text.secondary"
-                        sx={{fontSize: '0.75rem', lineHeight: 1.5, height: '1.5em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                        sx={{fontSize: '0.75rem', lineHeight: 1.5, minHeight: '1.5em',
+                            ...(fullText ? {whiteSpace: 'normal', overflowWrap: 'anywhere'} :
+                                {whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'})}}>
                 {person.character ? `饰 ${person.character}` : ''}
             </Typography>
         </Box>
@@ -71,7 +74,7 @@ function CreditsDialog({cast, crew, onClose}: {cast: TMDBCastMember[]; crew: Cre
                     {tab === 'cast' ? (cast.length ? (
                         <Box component="ul" sx={{display: 'grid', gridTemplateColumns: {xs: 'repeat(3, minmax(0, 1fr))',
                             sm: 'repeat(5, minmax(0, 1fr))', md: 'repeat(6, minmax(0, 1fr))'}, gap: {xs: 1.5, sm: 2}, m: 0, p: 0}}>
-                            {cast.map(person => <ActorItem key={person.id} person={person}/>)}
+                            {cast.map(person => <ActorItem key={person.id} person={person} fullText/>)}
                         </Box>
                     ) : <Typography color="text.secondary">暂无演员信息</Typography>) : (
                         crew.length ? crew.map(group => (

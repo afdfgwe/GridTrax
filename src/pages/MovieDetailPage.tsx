@@ -178,6 +178,8 @@ const MovieDetailPage: React.FC = () => {
                                 </Box>
                             </Box>
 
+                            <MovieCredits key={movie.id} movieId={movie.id}/>
+
                             {/* 默认显示“想看”不代表已保存；明确选择状态后才进入追踪列表。 */}
                             <Box
                                 sx={{
@@ -185,6 +187,7 @@ const MovieDetailPage: React.FC = () => {
                                     borderRadius: 2,
                                     backgroundColor: alpha(primary, 0.06),
                                     border: `1px solid ${alpha(primary, 0.15)}`,
+                                    mt: 3,
                                     mb: 2,
                                 }}
                             >
@@ -201,7 +204,6 @@ const MovieDetailPage: React.FC = () => {
                                     />
                                 )}
                             </Box>
-                            <MovieCredits key={movie.id} movieId={movie.id}/>
                         </>
                     ) : null}
                 </Container>
