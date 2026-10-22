@@ -16,6 +16,7 @@ import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getPosterUrl, getTVShow} from '../api/tmdb';
 import SeasonBlock from '../components/SeasonBlock';
 import ExpandableOverview from '../components/ExpandableOverview';
+import ProductionInfo from '../components/ProductionInfo';
 import {useProgressStore} from '../store/useProgressStore';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 
@@ -135,7 +136,7 @@ const TvDetailPage: React.FC = () => {
                                     }}
                                 />
                                 {/* 剧名、首播日期、评分、类型和简介均取自整剧详情接口。 */}
-                                <Box sx={{flex: 1, pt: {xs: 0, sm: 1}}}>
+                                <Box sx={{flex: 1, minWidth: 0, width: {xs: '100%', sm: 'auto'}, pt: {xs: 0, sm: 1}}}>
                                     <Typography variant="h4" fontWeight={800} gutterBottom sx={{lineHeight: 1.2}}>
                                         {show.name}
                                     </Typography>
@@ -178,6 +179,9 @@ const TvDetailPage: React.FC = () => {
                                             />
                                         ))}
                                     </Box>
+                                    <ProductionInfo key={`production:${show.id}`}
+                                                    production_countries={show.production_countries}
+                                                    production_companies={show.production_companies}/>
                                     <ExpandableOverview key={show.id} text={show.overview || '暂无简介'} collapsedLines={10}/>
                                 </Box>
                             </Box>

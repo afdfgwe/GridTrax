@@ -2,13 +2,16 @@ import {Box, Tooltip, Typography} from '@mui/material';
 import {useCallback, useState} from 'react';
 import {getCountries, getPosterUrl} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
-import type {TMDBCountry, TMDBMovie} from '../types';
+import type {TMDBCountry, TMDBProductionCompany, TMDBProductionCountry} from '../types';
 import {getProductionCountriesText} from '../utils/movieProduction';
 
-/** 地区与公司 Logo 共用一行，窄屏自然换行，不展示额外标题或公司名称。 */
-export default function MovieProductionInfo({production_countries, production_companies}: Pick<
-    TMDBMovie, 'production_countries' | 'production_companies'
->) {
+interface ProductionInfoProps {
+    production_countries?: readonly TMDBProductionCountry[] | null;
+    production_companies?: readonly TMDBProductionCompany[] | null;
+}
+
+/** 电影、电视剧共用制片信息；地区与公司 Logo 同行，窄屏自然换行。 */
+export default function ProductionInfo({production_countries, production_companies}: ProductionInfoProps) {
     const hasCountryCodes = production_countries?.some(country => country.iso_3166_1.trim()) ?? false;
     const loadCountries = useCallback(
         () => hasCountryCodes ? getCountries() : Promise.resolve<TMDBCountry[]>([]),

@@ -13,6 +13,12 @@ const dictionary = [
     {iso_3166_1: 'FR', english_name: 'France', native_name: '法国'},
 ];
 
+test('电视剧使用相同字段将制片地区转换成中文', () => {
+    assert.equal(getProductionCountriesText([{iso_3166_1: 'CN', name: 'China'}], [
+        {iso_3166_1: 'CN', english_name: 'China', native_name: '中国'},
+    ]), '中国');
+});
+
 test('制片地区按接口顺序显示中文，不修改原始数据', () => {
     const before = structuredClone(countries);
     assert.equal(getProductionCountriesText(countries, dictionary), '美国、德国、法国');

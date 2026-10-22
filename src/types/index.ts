@@ -45,6 +45,8 @@ export interface TMDBTVShow {
     seasons: TMDBSeasonSummary[];
     genres: { id: number; name: string }[];
     status: string;
+    production_countries?: TMDBProductionCountry[] | null;
+    production_companies?: TMDBProductionCompany[] | null;
 }
 
 /** 电视剧详情中的季摘要，用于本季介绍、海报、首播日期和评分展示。 */
@@ -83,7 +85,7 @@ export interface TMDBEpisode {
     vote_average?: number;
 }
 
-/** 电影的制片地区，中文名称通过 iso_3166_1 匹配地区字典。 */
+/** 电影、电视剧的制片地区，中文名称通过 iso_3166_1 匹配地区字典。 */
 export interface TMDBProductionCountry {
     iso_3166_1: string;
     name: string;
