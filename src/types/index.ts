@@ -45,6 +45,7 @@ export interface TMDBTVShow {
     seasons: TMDBSeasonSummary[];
     genres: { id: number; name: string }[];
     status: string;
+    spoken_languages?: TMDBSpokenLanguage[] | null;
     production_countries?: TMDBProductionCountry[] | null;
     production_companies?: TMDBProductionCompany[] | null;
     networks?: TMDBNetwork[] | null;
@@ -86,6 +87,13 @@ export interface TMDBEpisode {
     vote_average?: number;
 }
 
+/** 电影、电视剧使用的语言，优先展示接口提供的本地名称。 */
+export interface TMDBSpokenLanguage {
+    english_name: string;
+    iso_639_1: string;
+    name: string;
+}
+
 /** 电影、电视剧的制片地区，中文名称通过 iso_3166_1 匹配地区字典。 */
 export interface TMDBProductionCountry {
     iso_3166_1: string;
@@ -121,6 +129,7 @@ export interface TMDBMovie {
     runtime?: number;
     genres: { id: number; name: string }[];
     status: string;
+    spoken_languages?: TMDBSpokenLanguage[] | null;
     production_countries?: TMDBProductionCountry[] | null;
     production_companies?: TMDBProductionCompany[] | null;
 }

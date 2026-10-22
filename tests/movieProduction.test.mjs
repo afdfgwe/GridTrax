@@ -1,6 +1,27 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getProductionCountriesText} from '../src/utils/movieProduction.ts';
+import {getProductionCountriesText, getSpokenLanguagesText} from '../src/utils/movieProduction.ts';
+
+test('语言优先展示本地名称，按接口顺序去重且不修改数据', () => {
+    const languages = [
+        {english_name: 'Mandarin', iso_639_1: 'zh', name: ' 普通话 '},
+        {english_name: 'English', iso_639_1: 'en', name: 'English'},
+        {english_name: 'Mandarin', iso_639_1: 'zh', name: '普通话'},
+    ];
+    const before = structuredClone(languages);
+    assert.equal(getSpokenLanguagesText(languages), '普通话、English');
+    assert.deepEqual(languages, before);
+});
+
+test('语言名称缺失时回退英文名或代码，空数据不显示', () => {
+    assert.equal(getSpokenLanguagesText([
+        {english_name: ' Mandarin ', iso_639_1: 'zh', name: ' '},
+        {english_name: ' ', iso_639_1: ' en ', name: ''},
+    ]), 'Mandarin、en');
+    for (const value of [undefined, null, [], [{english_name: '', iso_639_1: ' ', name: ''}]]) {
+        assert.equal(getSpokenLanguagesText(value), '');
+    }
+});
 
 const countries = [
     {iso_3166_1: 'US', name: 'United States of America'},

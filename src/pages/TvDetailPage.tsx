@@ -180,6 +180,7 @@ const TvDetailPage: React.FC = () => {
                                         ))}
                                     </Box>
                                     <ProductionInfo key={`production:${show.id}`}
+                                                    spoken_languages={show.spoken_languages}
                                                     production_countries={show.production_countries}
                                                     production_companies={show.production_companies}
                                                     networks={show.networks}/>

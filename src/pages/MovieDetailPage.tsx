@@ -170,6 +170,7 @@ const MovieDetailPage: React.FC = () => {
                                         ))}
                                     </Box>
                                     <ProductionInfo key={`production:${movie.id}`}
+                                                    spoken_languages={movie.spoken_languages}
                                                     production_countries={movie.production_countries}
                                                     production_companies={movie.production_companies}/>
                                     <ExpandableOverview key={movie.id} text={movie.overview || '暂无简介'} collapsedLines={10}/>
