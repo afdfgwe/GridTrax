@@ -47,6 +47,7 @@ export interface TMDBTVShow {
     status: string;
     production_countries?: TMDBProductionCountry[] | null;
     production_companies?: TMDBProductionCompany[] | null;
+    networks?: TMDBNetwork[] | null;
 }
 
 /** 电视剧详情中的季摘要，用于本季介绍、海报、首播日期和评分展示。 */
@@ -93,6 +94,14 @@ export interface TMDBProductionCountry {
 
 /** 出品公司仅展示 Logo，名称用于图片描述与悬停提示。 */
 export interface TMDBProductionCompany {
+    id: number;
+    name: string;
+    logo_path?: string | null;
+    origin_country?: string;
+}
+
+/** 电视剧的播出平台，Logo 接在出品公司之后，名称用于图片描述与悬停提示。 */
+export interface TMDBNetwork {
     id: number;
     name: string;
     logo_path?: string | null;

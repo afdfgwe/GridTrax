@@ -2,16 +2,17 @@ import {Box, Tooltip, Typography} from '@mui/material';
 import {useCallback, useState} from 'react';
 import {getCountries, getPosterUrl} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
-import type {TMDBCountry, TMDBProductionCompany, TMDBProductionCountry} from '../types';
+import type {TMDBCountry, TMDBNetwork, TMDBProductionCompany, TMDBProductionCountry} from '../types';
 import {getProductionCountriesText} from '../utils/movieProduction';
 
 interface ProductionInfoProps {
     production_countries?: readonly TMDBProductionCountry[] | null;
     production_companies?: readonly TMDBProductionCompany[] | null;
+    networks?: readonly TMDBNetwork[] | null;
 }
 
-/** 电影、电视剧共用制片信息；地区与公司 Logo 同行，窄屏自然换行。 */
-export default function ProductionInfo({production_countries, production_companies}: ProductionInfoProps) {
+/** 电影、电视剧共用制片信息；地区、公司和播出平台 Logo 依次排列，窄屏自然换行。 */
+export default function ProductionInfo({production_countries, production_companies, networks}: ProductionInfoProps) {
     const hasCountryCodes = production_countries?.some(country => country.iso_3166_1.trim()) ?? false;
     const loadCountries = useCallback(
         () => hasCountryCodes ? getCountries() : Promise.resolve<TMDBCountry[]>([]),
@@ -20,16 +21,21 @@ export default function ProductionInfo({production_countries, production_compani
     const {data: countries} = useAsyncResource('production-countries:zh-CN', loadCountries);
     const [failedLogos, setFailedLogos] = useState<ReadonlySet<string>>(() => new Set());
     const countryText = getProductionCountriesText(production_countries, countries);
-    const logos = (production_companies ?? []).flatMap(company => {
+    // 公司与平台的 ID 可能相同，用来源前缀区分，避免加载失败状态相互影响。
+    const logoSources = [
+        ...(production_companies ?? []).map(company => ({...company, source: 'company'})),
+        ...(networks ?? []).map(network => ({...network, source: 'network'})),
+    ];
+    const logos = logoSources.flatMap(company => {
         const path = company.logo_path?.trim();
-        const key = `${company.id}:${path}`;
+        const key = `${company.source}:${company.id}:${path}`;
         return path && !failedLogos.has(key) ? [{...company, path, key}] : [];
     });
 
     if (!countryText && !logos.length) return null;
 
     return (
-        <Box role="group" aria-label="制片地区与出品公司" sx={{
+        <Box role="group" aria-label={networks?.length ? '制片地区、出品公司与播出平台' : '制片地区与出品公司'} sx={{
             display: 'flex', flexWrap: 'wrap', alignItems: 'center',
             columnGap: 1, rowGap: 0.75, mb: 1.5,
         }}>

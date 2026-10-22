@@ -181,7 +181,8 @@ const TvDetailPage: React.FC = () => {
                                     </Box>
                                     <ProductionInfo key={`production:${show.id}`}
                                                     production_countries={show.production_countries}
-                                                    production_companies={show.production_companies}/>
+                                                    production_companies={show.production_companies}
+                                                    networks={show.networks}/>
                                     <ExpandableOverview key={show.id} text={show.overview || '暂无简介'} collapsedLines={10}/>
                                 </Box>
                             </Box>
