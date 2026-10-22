@@ -154,11 +154,24 @@ export interface TMDBCrewMember extends TMDBCreditPerson {
     credit_id?: string;
 }
 
-/** 独立的电影演职员接口响应，不写入本地观影记录。 */
-export interface TMDBMovieCredits {
+/** 电影和电视剧共用的演职员展示数据，不写入本地观影记录。 */
+export interface TMDBCredits {
     id: number;
     cast: TMDBCastMember[];
     crew: TMDBCrewMember[];
+}
+
+/** 电视剧整剧汇总接口，同一人物可能拥有多个角色或幕后职务。 */
+export interface TMDBTVAggregateCredits {
+    id: number;
+    cast: Array<TMDBCreditPerson & {
+        order?: number;
+        roles?: Array<{character?: string; credit_id?: string; episode_count?: number}> | null;
+    }>;
+    crew: Array<TMDBCreditPerson & {
+        department?: string;
+        jobs?: Array<{job: string; credit_id?: string; episode_count?: number}> | null;
+    }>;
 }
 
 // 本地观影记录：状态代码也是备份文件的字段值，修改时需要考虑旧备份兼容性。

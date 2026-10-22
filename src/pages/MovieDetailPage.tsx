@@ -17,7 +17,7 @@ import {getBackdropUrl, getMovie, getPosterUrl} from '../api/tmdb';
 import GlobalStatusPicker from '../components/GlobalStatusPicker';
 import ExpandableOverview from '../components/ExpandableOverview';
 import ProductionInfo from '../components/ProductionInfo';
-import MovieCredits from '../components/MovieCredits';
+import MediaCredits from '../components/MediaCredits';
 import {useProgressStore} from '../store/useProgressStore';
 import type {MovieRecord, WatchStatus} from '../types';
 import {useAsyncResource} from '../hooks/useAsyncResource';
@@ -178,7 +178,7 @@ const MovieDetailPage: React.FC = () => {
                                 </Box>
                             </Box>
 
-                            <MovieCredits key={movie.id} movieId={movie.id}/>
+                            <MediaCredits key={movie.id} mediaId={movie.id} mediaType="movie"/>
 
                             {/* 默认显示“想看”不代表已保存；明确选择状态后才进入追踪列表。 */}
                             <Box

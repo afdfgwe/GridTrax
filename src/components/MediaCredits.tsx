@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {getMovieCredits, getPosterUrl} from '../api/tmdb';
+import {getMovieCredits, getPosterUrl, getTVAggregateCredits} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import type {TMDBCastMember, TMDBCreditPerson} from '../types';
 import {getCrewGroups, getOrderedCast, MAIN_CREW_LABELS} from '../utils/movieCredits';
@@ -56,8 +56,8 @@ function CreditsDialog({cast, crew, onClose}: {cast: TMDBCastMember[]; crew: Cre
     const contentRef = useRef<HTMLDivElement>(null);
     return (
         <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="md"
-                aria-labelledby="movie-credits-title" slotProps={{paper: {sx: {borderRadius: fullScreen ? 0 : 2}}}}>
-            <DialogTitle id="movie-credits-title" sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1,
+                aria-labelledby="media-credits-title" slotProps={{paper: {sx: {borderRadius: fullScreen ? 0 : 2}}}}>
+            <DialogTitle id="media-credits-title" sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1,
                 pt: fullScreen ? 'max(16px, env(safe-area-inset-top))' : 2}}>
                 <Typography component="span" fontWeight={700}>演职人员</Typography>
                 <Tooltip title="关闭"><IconButton aria-label="关闭演职人员" onClick={onClose}><CloseIcon/></IconButton></Tooltip>
@@ -97,10 +97,10 @@ function CreditsDialog({cast, crew, onClose}: {cast: TMDBCastMember[]; crew: Cre
     );
 }
 
-/** 共享缓存只负责演职员请求，电影简介和本地观看状态不依赖其加载结果。 */
-export default function MovieCredits({movieId}: {movieId: number}) {
-    const load = useCallback(() => getMovieCredits(movieId), [movieId]);
-    const {data, loading, error, retry} = useAsyncResource(`movie-credits:${movieId}`, load);
+/** 电影和整剧共用演职员布局，独立加载，不影响简介、集数或本地观看状态。 */
+export default function MediaCredits({mediaId, mediaType}: {mediaId: number; mediaType: 'movie' | 'tv'}) {
+    const load = useCallback(() => mediaType === 'tv' ? getTVAggregateCredits(mediaId) : getMovieCredits(mediaId), [mediaId, mediaType]);
+    const {data, loading, error, retry} = useAsyncResource(`${mediaType}-credits:${mediaId}`, load);
     const [open, setOpen] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
     const [scroll, setScroll] = useState({previous: false, next: false});
@@ -131,9 +131,9 @@ export default function MovieCredits({movieId}: {movieId: number}) {
     if (!loading && !error && !cast.length && !crew.length) return null;
 
     return (
-        <Box component="section" aria-labelledby="movie-credits-heading" sx={{mt: 3, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
+        <Box component="section" aria-labelledby="media-credits-heading" sx={{mt: 3, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
             <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
-                <Typography id="movie-credits-heading" component="h2" variant="h6" fontWeight={700}>演职人员</Typography>
+                <Typography id="media-credits-heading" component="h2" variant="h6" fontWeight={700}>演职人员</Typography>
                 {!loading && !error && <Button size="small" color="inherit" endIcon={<ChevronRightIcon/>} onClick={() => setOpen(true)}
                     sx={{flexShrink: 0, color: 'text.secondary'}}>查看全部</Button>}
             </Box>

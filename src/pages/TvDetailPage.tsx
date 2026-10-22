@@ -17,6 +17,7 @@ import {getBackdropUrl, getPosterUrl, getTVShow} from '../api/tmdb';
 import SeasonBlock from '../components/SeasonBlock';
 import ExpandableOverview from '../components/ExpandableOverview';
 import ProductionInfo from '../components/ProductionInfo';
+import MediaCredits from '../components/MediaCredits';
 import {useProgressStore} from '../store/useProgressStore';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 
@@ -188,8 +189,10 @@ const TvDetailPage: React.FC = () => {
                                 </Box>
                             </Box>
 
+                            <MediaCredits key={show.id} mediaId={show.id} mediaType="tv"/>
+
                             {/* 每季独立管理展开和加载状态，默认展开第一项。 */}
-                            <Typography variant="h6" fontWeight={700} sx={{mb: 2, color: primary}}>
+                            <Typography variant="h6" fontWeight={700} sx={{mt: 3, mb: 2, color: primary}}>
                                 全部季数
                             </Typography>
                             {regularSeasons.map((season, idx) => (

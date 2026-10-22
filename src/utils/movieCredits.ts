@@ -1,4 +1,17 @@
-import type {TMDBCastMember, TMDBCrewMember} from '../types/index.ts';
+import type {TMDBCastMember, TMDBCredits, TMDBCrewMember, TMDBTVAggregateCredits} from '../types/index.ts';
+
+/** 整剧角色合并展示，幕后按实际职务展开，复用电影的排序、去重和分组规则。 */
+export function normalizeTVAggregateCredits(data: TMDBTVAggregateCredits): TMDBCredits {
+    return {
+        id: data.id,
+        cast: data.cast.map(({roles, ...person}) => ({
+            ...person,
+            character: [...new Set((roles ?? []).map(role => role.character?.trim()).filter(Boolean))].join(' / '),
+        })),
+        crew: data.crew.flatMap(({jobs, ...person}) =>
+            (jobs ?? []).map(({job, credit_id}) => ({...person, job, credit_id}))),
+    };
+}
 
 export const MAIN_CREW_LABELS = ['导演', '编剧', '制片', '执行制片'] as const;
 
