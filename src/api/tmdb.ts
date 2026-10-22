@@ -12,6 +12,7 @@ import type {
     TMDBSeason,
     TMDBTVShow,
     TMDBTVAggregateCredits,
+    TMDBTVRecommendations,
 } from '../types';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -35,6 +36,7 @@ const detailsCache = createRequestCache<TMDBMovie | TMDBTVShow | TMDBSeason>();
 const genresCache = createRequestCache<TMDBGenre[]>(2, 24 * 60 * 60_000);
 const countriesCache = createRequestCache<TMDBCountry[]>(1, 24 * 60 * 60_000);
 const creditsCache = createRequestCache<TMDBCredits>(40);
+const recommendationsCache = createRequestCache<TMDBTVRecommendations>(40);
 
 // 请求路径含作品类型、作品 ID 和季号，可直接作为详情缓存键，避免不同资源相互覆盖。
 function getDetails<T extends TMDBMovie | TMDBTVShow | TMDBSeason>(path: string): Promise<T> {
@@ -133,6 +135,17 @@ export async function searchTV(query: string, signal?: AbortSignal): Promise<Hot
 /** 整部电视剧详情，包含剧名、首播日期、评分和 seasons 季摘要。 */
 export async function getTVShow(tvId: number): Promise<TMDBTVShow> {
     return getDetails<TMDBTVShow>(`/tv/${tvId}`);
+}
+
+/** 推荐按电视剧和页码独立缓存五分钟，失败不缓存，不额外请求条目详情。 */
+export function getTVRecommendations(tvId: number, page = 1): Promise<TMDBTVRecommendations> {
+    return recommendationsCache.load(`tv:${tvId}:${page}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<TMDBTVRecommendations>(`/tv/${tvId}/recommendations`, {
+            params: {language: 'zh-CN', page},
+        });
+        if (!Array.isArray(res.data.results)) throw new Error('推荐列表格式错误');
+        return res.data;
+    });
 }
 
 /** 单季详情，包含 episodes 数组，供集数标题、排序和观看进度使用。 */

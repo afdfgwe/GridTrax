@@ -30,6 +30,23 @@ export interface TMDBSearchResult {
     genre_ids?: number[];
 }
 
+/** 电视剧推荐条目，直接使用推荐接口的资料，无需逐部请求详情。 */
+export interface TMDBTVRecommendation {
+    id: number;
+    name: string;
+    original_name?: string;
+    poster_path?: string | null;
+    first_air_date?: string | null;
+    vote_average?: number;
+}
+
+export interface TMDBTVRecommendations {
+    page: number;
+    results: TMDBTVRecommendation[];
+    total_pages: number;
+    total_results: number;
+}
+
 /** 整部电视剧的详情，seasons 仅包含各季摘要，不包含每一集的完整信息。 */
 export interface TMDBTVShow {
     id: number;

@@ -18,6 +18,7 @@ import SeasonBlock from '../components/SeasonBlock';
 import ExpandableOverview from '../components/ExpandableOverview';
 import ProductionInfo from '../components/ProductionInfo';
 import MediaCredits from '../components/MediaCredits';
+import TVRecommendations from '../components/TVRecommendations';
 import {useProgressStore} from '../store/useProgressStore';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 
@@ -207,6 +208,7 @@ const TvDetailPage: React.FC = () => {
                                     defaultExpanded={idx === 0}
                                 />
                             ))}
+                            <TVRecommendations key={`recommendations:${show.id}`} tvId={show.id}/>
                         </>
                     ) : null}
                 </Container>
