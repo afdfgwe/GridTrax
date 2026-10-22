@@ -64,14 +64,15 @@ export default function TVRecommendations({tvId, kind = 'recommendations'}: {
             behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
     };
 
-    if (!loading && !error && results.length === 0) return null;
+    // 相似接口可能没有匹配作品，保留标题和空态，避免被误认为功能未加载。
+    if (kind === 'recommendations' && !loading && !error && results.length === 0) return null;
 
     return (
         <Box component="section" aria-labelledby={headingId} aria-busy={loading}
-             sx={{mt: 4, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
+             sx={{mt: kind === 'similar' ? 1.5 : 4, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
             <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
                 <Typography id={headingId} component="h2" variant="h6" fontWeight={700}>{title}</Typography>
-                {!loading && !error && (scroll.previous || scroll.next) && <Box sx={{display: {xs: 'none', sm: 'flex'}, gap: 0.5, flexShrink: 0}}>
+                {!loading && !error && results.length > 0 && (scroll.previous || scroll.next) && <Box sx={{display: {xs: 'none', sm: 'flex'}, gap: 0.5, flexShrink: 0}}>
                     <Tooltip title={`向左查看${label}`}><span><IconButton size="small" aria-label={`向左查看${label}`}
                         disabled={!scroll.previous} onClick={() => move(-1)}><ChevronLeftIcon fontSize="small"/></IconButton></span></Tooltip>
                     <Tooltip title={`向右查看${label}`}><span><IconButton size="small" aria-label={`向右查看${label}`}
@@ -89,6 +90,8 @@ export default function TVRecommendations({tvId, kind = 'recommendations'}: {
                 </Box>
             ) : error ? (
                 <Alert severity="warning" action={<Button color="inherit" size="small" onClick={retry}>重试</Button>}>{label}加载失败：{error}</Alert>
+            ) : results.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">暂无相似电视剧</Typography>
             ) : (
                 <Box ref={listRef} onScroll={updateScroll} tabIndex={0} role="region" aria-label={`${label}电视剧列表`}
                      sx={{overflowX: 'auto', overscrollBehaviorX: 'contain', scrollbarWidth: 'thin', pb: 1,
