@@ -17,6 +17,7 @@ import {getBackdropUrl, getMovie, getPosterUrl} from '../api/tmdb';
 import GlobalStatusPicker from '../components/GlobalStatusPicker';
 import ExpandableOverview from '../components/ExpandableOverview';
 import ProductionInfo from '../components/ProductionInfo';
+import MovieCredits from '../components/MovieCredits';
 import {useProgressStore} from '../store/useProgressStore';
 import type {MovieRecord, WatchStatus} from '../types';
 import {useAsyncResource} from '../hooks/useAsyncResource';
@@ -200,7 +201,7 @@ const MovieDetailPage: React.FC = () => {
                                     />
                                 )}
                             </Box>
-
+                            <MovieCredits key={movie.id} movieId={movie.id}/>
                         </>
                     ) : null}
                 </Container>

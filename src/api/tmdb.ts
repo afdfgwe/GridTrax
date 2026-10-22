@@ -6,6 +6,7 @@ import type {
     TMDBCountry,
     TMDBGenre,
     TMDBMovie,
+    TMDBMovieCredits,
     TMDBSearchResult,
     TMDBSeason,
     TMDBTVShow,
@@ -31,6 +32,7 @@ const detailsCache = createRequestCache<TMDBMovie | TMDBTVShow | TMDBSeason>();
 // 类型字典变更较少，缓存一天并共享进行中的请求，不随单个榜单的取消而中断。
 const genresCache = createRequestCache<TMDBGenre[]>(2, 24 * 60 * 60_000);
 const countriesCache = createRequestCache<TMDBCountry[]>(1, 24 * 60 * 60_000);
+const creditsCache = createRequestCache<TMDBMovieCredits>(40);
 
 // 请求路径含作品类型、作品 ID 和季号，可直接作为详情缓存键，避免不同资源相互覆盖。
 function getDetails<T extends TMDBMovie | TMDBTVShow | TMDBSeason>(path: string): Promise<T> {
@@ -139,4 +141,17 @@ export async function getTVSeason(tvId: number, seasonNumber: number): Promise<T
 /** 电影详情，包含片名、上映日期、片长、类型及 TMDB 评分。 */
 export async function getMovie(movieId: number): Promise<TMDBMovie> {
     return getDetails<TMDBMovie>(`/movie/${movieId}`);
+}
+
+/** 演职员独立加载并缓存五分钟，失败不缓存，也不阻塞电影详情。 */
+export function getMovieCredits(movieId: number): Promise<TMDBMovieCredits> {
+    return creditsCache.load(`movie:${movieId}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<TMDBMovieCredits>(`/movie/${movieId}/credits`, {
+            params: {language: 'zh-CN'},
+        });
+        if (!Array.isArray(res.data.cast) || !Array.isArray(res.data.crew)) {
+            throw new Error('演职员列表格式错误');
+        }
+        return res.data;
+    });
 }

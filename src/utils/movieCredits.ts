@@ -1,0 +1,59 @@
+import type {TMDBCastMember, TMDBCrewMember} from '../types/index.ts';
+
+export const MAIN_CREW_LABELS = ['导演', '编剧', '制片', '执行制片'] as const;
+
+const JOB_LABELS: Record<string, string> = {
+    Director: '导演', Writer: '编剧', Screenplay: '编剧', Producer: '制片',
+    'Executive Producer': '执行制片', 'Co-Producer': '联合制片',
+    'Associate Producer': '协同制片', 'Action Director': '动作导演',
+    'Director of Photography': '摄影指导', 'Original Music Composer': '原创配乐',
+    Editor: '剪辑', 'Art Direction': '美术指导', 'Production Design': '制作设计',
+    'Costume Design': '服装设计', Casting: '选角', Story: '故事',
+};
+
+/** 按演职员表顺序展示；同一演员的多个角色合并，不改变接口数组。 */
+export function getOrderedCast(cast: readonly TMDBCastMember[] = []): TMDBCastMember[] {
+    const people = new Map<number, TMDBCastMember>();
+    const characters = new Map<number, Set<string>>();
+    const ordered = [...cast].sort((a, b) =>
+        (Number.isFinite(a.order) ? a.order! : Infinity) - (Number.isFinite(b.order) ? b.order! : Infinity));
+    for (const member of ordered) {
+        const name = member.name?.trim() || member.original_name?.trim();
+        if (!name) continue;
+        const previous = people.get(member.id);
+        const roles = characters.get(member.id) ?? new Set<string>();
+        const character = member.character?.trim();
+        if (character) roles.add(character);
+        characters.set(member.id, roles);
+        people.set(member.id, {
+            ...member, ...previous, name,
+            profile_path: previous?.profile_path || member.profile_path,
+            character: [...roles].join(' / '),
+        });
+    }
+    return [...people.values()];
+}
+
+export interface CrewGroup {
+    label: string;
+    members: TMDBCrewMember[];
+}
+
+/** 使用本片 job 而非人物擅长领域分组，未识别的职务保留原文。 */
+export function getCrewGroups(crew: readonly TMDBCrewMember[] = []): CrewGroup[] {
+    const groups = new Map<string, Map<number, TMDBCrewMember>>();
+    for (const member of crew) {
+        const name = member.name?.trim() || member.original_name?.trim();
+        if (!name) continue;
+        const job = member.job?.trim();
+        const label = JOB_LABELS[job] || job || '其他幕后';
+        const members = groups.get(label) ?? new Map<number, TMDBCrewMember>();
+        if (!members.has(member.id)) members.set(member.id, {...member, name});
+        groups.set(label, members);
+    }
+    const labels = [...new Set([...MAIN_CREW_LABELS, ...groups.keys()])];
+    return labels.flatMap(label => {
+        const members = groups.get(label);
+        return members ? [{label, members: [...members.values()]}] : [];
+    });
+}

@@ -134,6 +134,33 @@ export interface TMDBMovie {
     production_companies?: TMDBProductionCompany[] | null;
 }
 
+/** 演职员的公共人物资料；头像缺失时使用人物占位图标。 */
+export interface TMDBCreditPerson {
+    id: number;
+    name: string;
+    original_name?: string;
+    profile_path?: string | null;
+}
+
+export interface TMDBCastMember extends TMDBCreditPerson {
+    character?: string;
+    order?: number;
+    credit_id?: string;
+}
+
+export interface TMDBCrewMember extends TMDBCreditPerson {
+    job: string;
+    department?: string;
+    credit_id?: string;
+}
+
+/** 独立的电影演职员接口响应，不写入本地观影记录。 */
+export interface TMDBMovieCredits {
+    id: number;
+    cast: TMDBCastMember[];
+    crew: TMDBCrewMember[];
+}
+
 // 本地观影记录：状态代码也是备份文件的字段值，修改时需要考虑旧备份兼容性。
 // 依次对应想看、在看、看过、搁置、抛弃，界面文案统一取下方 STATUS_LABELS。
 export type WatchStatus = 'Wish' | 'Do' | 'Collect' | 'OnHold' | 'Dropped';
