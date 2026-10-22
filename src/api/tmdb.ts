@@ -137,11 +137,11 @@ export async function getTVShow(tvId: number): Promise<TMDBTVShow> {
     return getDetails<TMDBTVShow>(`/tv/${tvId}`);
 }
 
-/** 推荐按电视剧和页码独立缓存五分钟，失败不缓存，不额外请求条目详情。 */
-export function getTVRecommendations(tvId: number, page = 1): Promise<TMDBTVRecommendations> {
-    return recommendationsCache.load(`tv:${tvId}:${page}:zh-CN`, async () => {
+/** 推荐仅请求第一页并缓存五分钟，前十部由展示层截取，不额外请求条目详情。 */
+export function getTVRecommendations(tvId: number): Promise<TMDBTVRecommendations> {
+    return recommendationsCache.load(`tv:${tvId}:zh-CN`, async () => {
         const res = await tmdbAxios.get<TMDBTVRecommendations>(`/tv/${tvId}/recommendations`, {
-            params: {language: 'zh-CN', page},
+            params: {language: 'zh-CN', page: 1},
         });
         if (!Array.isArray(res.data.results)) throw new Error('推荐列表格式错误');
         return res.data;

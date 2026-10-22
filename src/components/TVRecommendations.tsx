@@ -1,7 +1,7 @@
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {Alert, Box, Button, CardActionArea, IconButton, Skeleton, Tooltip, Typography} from '@mui/material';
-import {useCallback, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {getPosterUrl, getTVRecommendations} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
@@ -30,52 +30,70 @@ function RecommendationCard({item}: {item: TMDBTVRecommendation}) {
     );
 }
 
-/** 独立加载推荐；父级以电视剧 ID 作为 key，切换作品时分页及失败状态一并重置。 */
+/** 仅显示推荐榜首屏的前十部，横向滚动与主要演员列表保持一致。 */
 export default function TVRecommendations({tvId}: {tvId: number}) {
-    const [page, setPage] = useState(1);
-    const [knownTotal, setKnownTotal] = useState<number>();
-    const load = useCallback(async (signal: AbortSignal) => {
-        const result = await getTVRecommendations(tvId, page);
-        // 翻页期间保留已知总页数，忽略卸载或旧页请求，避免页码闪动或串数据。
-        if (!signal.aborted) setKnownTotal(result.total_pages);
-        return result;
-    }, [tvId, page]);
-    const {data, loading, error, retry} = useAsyncResource(`tv-recommendations:${tvId}:${page}`, load);
-    const totalPages = data?.total_pages ?? knownTotal;
-    const results = data?.results ?? [];
+    const load = useCallback(() => getTVRecommendations(tvId), [tvId]);
+    const {data, loading, error, retry} = useAsyncResource(`tv-recommendations:${tvId}`, load);
+    const results = data?.results.slice(0, 10) ?? [];
+    const listRef = useRef<HTMLDivElement>(null);
+    const [scroll, setScroll] = useState({previous: false, next: false});
+    const updateScroll = useCallback(() => {
+        const element = listRef.current;
+        if (element) setScroll({previous: element.scrollLeft > 1,
+            next: element.scrollLeft + element.clientWidth < element.scrollWidth - 1});
+    }, []);
 
-    if (!loading && !error && page === 1 && results.length === 0) return null;
+    useEffect(() => {
+        const element = listRef.current;
+        if (!element) return;
+        // 同时观察可视区域和内容宽度，屏幕旋转或窗口缩放后重新判断箭头状态。
+        const observer = new ResizeObserver(updateScroll);
+        observer.observe(element);
+        if (element.firstElementChild) observer.observe(element.firstElementChild);
+        return () => observer.disconnect();
+    }, [data, updateScroll]);
+
+    const move = (direction: number) => {
+        const element = listRef.current;
+        element?.scrollBy({left: direction * element.clientWidth * 0.8,
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+    };
+
+    if (!loading && !error && results.length === 0) return null;
 
     return (
         <Box component="section" aria-labelledby="tv-recommendations-heading" aria-busy={loading}
              sx={{mt: 4, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
             <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
                 <Typography id="tv-recommendations-heading" component="h2" variant="h6" fontWeight={700}>猜你喜欢</Typography>
-                {((totalPages ?? 0) > 1 || page > 1) && <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0}}>
-                    <Tooltip title="上一页"><span><IconButton size="small" aria-label="推荐上一页"
-                        disabled={loading || page <= 1} onClick={() => setPage(value => value - 1)}><ChevronLeftIcon fontSize="small"/></IconButton></span></Tooltip>
-                    <Typography variant="caption" aria-label="推荐页码" sx={{minWidth: '7ch', textAlign: 'center', whiteSpace: 'nowrap'}}>
-                        {page} / {totalPages}
-                    </Typography>
-                    <Tooltip title="下一页"><span><IconButton size="small" aria-label="推荐下一页"
-                        disabled={loading || !data || page >= data.total_pages} onClick={() => setPage(value => value + 1)}><ChevronRightIcon fontSize="small"/></IconButton></span></Tooltip>
+                {!loading && !error && (scroll.previous || scroll.next) && <Box sx={{display: {xs: 'none', sm: 'flex'}, gap: 0.5, flexShrink: 0}}>
+                    <Tooltip title="向左查看推荐"><span><IconButton size="small" aria-label="向左查看推荐"
+                        disabled={!scroll.previous} onClick={() => move(-1)}><ChevronLeftIcon fontSize="small"/></IconButton></span></Tooltip>
+                    <Tooltip title="向右查看推荐"><span><IconButton size="small" aria-label="向右查看推荐"
+                        disabled={!scroll.next} onClick={() => move(1)}><ChevronRightIcon fontSize="small"/></IconButton></span></Tooltip>
                 </Box>}
             </Box>
-            {error ? (
-                <Alert severity="warning" action={<Button color="inherit" size="small" onClick={retry}>重试</Button>}>推荐加载失败：{error}</Alert>
-            ) : (
-                <Box component="ul" aria-label="推荐电视剧列表" sx={{m: 0, p: 0, listStyle: 'none', display: 'grid',
-                    gridTemplateColumns: {xs: 'repeat(3, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))', md: 'repeat(5, minmax(0, 1fr))'},
-                    gap: {xs: 1.25, sm: 2}}}>
-                    {loading ? Array.from({length: 20}, (_, index) => (
-                        <Box component="li" key={index}>
+            {loading ? (
+                <Box aria-label="正在加载推荐" sx={{display: 'flex', gap: 1.5, overflow: 'hidden'}}>
+                    {Array.from({length: 6}, (_, index) => (
+                        <Box key={index} sx={{width: {xs: 96, sm: 112}, flexShrink: 0}}>
                             <Skeleton variant="rounded" sx={{aspectRatio: '2 / 3', height: 'auto', borderRadius: 1}}/>
                             <Skeleton variant="text" sx={{mt: 0.75}}/>
                         </Box>
-                    )) : results.map(item => <Box component="li" key={item.id} sx={{minWidth: 0}}><RecommendationCard item={item}/></Box>)}
+                    ))}
+                </Box>
+            ) : error ? (
+                <Alert severity="warning" action={<Button color="inherit" size="small" onClick={retry}>重试</Button>}>推荐加载失败：{error}</Alert>
+            ) : (
+                <Box ref={listRef} onScroll={updateScroll} tabIndex={0} role="region" aria-label="推荐电视剧列表"
+                     sx={{overflowX: 'auto', overscrollBehaviorX: 'contain', scrollbarWidth: 'thin', pb: 1,
+                         '&:focus-visible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 3}}}>
+                    <Box component="ul" sx={{m: 0, p: 0, listStyle: 'none', display: 'flex', gap: 1.5, width: 'max-content',
+                        '& > li': {width: {xs: 96, sm: 112}, flexShrink: 0, minWidth: 0}}}>
+                        {results.map(item => <Box component="li" key={item.id}><RecommendationCard item={item}/></Box>)}
+                    </Box>
                 </Box>
             )}
-            {!loading && !error && results.length === 0 && <Typography variant="body2" color="text.secondary">本页暂无推荐</Typography>}
         </Box>
     );
 }
