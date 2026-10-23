@@ -118,10 +118,10 @@ export default function PersonDetailPage() {
                         {profile.aliases.length > 0 && <Box sx={{gridColumn: '1 / -1', minWidth: 0}}>
                             <Typography component="dt" variant="caption" color="text.secondary"
                                         sx={{mb: 0.5}}>又名</Typography>
-                            <Typography component="dd" variant="body2"
-                                        sx={{m: 0, overflowWrap: 'anywhere', lineHeight: 1.8}}>
-                                {profile.aliases.join('、')}
-                            </Typography>
+                            <Box component="dd" sx={{m: 0, '& p': {color: 'text.primary', lineHeight: 1.8}}}>
+                                <ExpandableOverview key={person.id} text={profile.aliases.join('、')}
+                                                    collapsedLines={4} collapseLabel="收起"/>
+                            </Box>
                         </Box>}
                     </Box>
                 </Box>}

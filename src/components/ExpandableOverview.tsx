@@ -4,8 +4,8 @@ import {Box, Button, Typography} from '@mui/material';
 import {useEffect, useId, useRef, useState} from 'react';
 
 /** 简介仅在实际溢出时提供展开入口，并保留原始段落。 */
-export default function ExpandableOverview({text, indentFirstLine = false, collapsedLines = 3, expandLabel = '展开全文'}: {
-    text: string; indentFirstLine?: boolean; collapsedLines?: number; expandLabel?: string;
+export default function ExpandableOverview({text, indentFirstLine = false, collapsedLines = 3, expandLabel = '展开全文', collapseLabel = '收起简介'}: {
+    text: string; indentFirstLine?: boolean; collapsedLines?: number; expandLabel?: string; collapseLabel?: string;
 }) {
     const [expanded, setExpanded] = useState(false);
     const [canExpand, setCanExpand] = useState(false);
@@ -50,7 +50,7 @@ export default function ExpandableOverview({text, indentFirstLine = false, colla
                                   onClick={() => setExpanded(value => !value)}
                                   endIcon={expanded ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
                                   sx={{p: 0, mt: 0.5, minWidth: 0, fontSize: '0.75rem'}}>
-                {expanded ? '收起简介' : expandLabel}
+                {expanded ? collapseLabel : expandLabel}
             </Button>}
         </Box>
     );
