@@ -1,7 +1,7 @@
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import {Box, Card, CardContent, Chip, Link, Typography} from '@mui/material';
 import {alpha} from '@mui/material/styles';
-import {useState} from 'react';
+import {Fragment, useState} from 'react';
 import {Link as RouterLink} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import type {TMDBSearchResult} from '../types';
@@ -51,18 +51,20 @@ export default function PersonSearchCard({item}: {item: TMDBSearchResult}) {
                                            title={DEPARTMENTS[department] ?? department}>
                     {DEPARTMENTS[department] ?? department}
                 </Typography>}
-                {works.length > 0 && <Box sx={{mt: 1}}>
-                    <Typography variant="caption" color="text.secondary" component="div">代表作品</Typography>
-                    {works.map(work => {
+                {works.length > 0 && <Typography component="div" variant="caption" color="text.secondary"
+                                                sx={{mt: 1, lineHeight: 1.6, overflowWrap: 'anywhere'}}>
+                    {works.map((work, index) => {
                         const title = work.title?.trim() || work.name!.trim();
-                        return <Link key={`${work.media_type}-${work.id}`} component={RouterLink}
+                        return <Fragment key={`${work.media_type}-${work.id}`}>
+                            {index > 0 && '，'}
+                            <Link component={RouterLink}
                                      to={`/${work.media_type}/${work.id}`} title={title} underline="hover"
-                                     sx={{display: 'block', py: 0.5, fontSize: '0.75rem', lineHeight: 1.5,
-                                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                            {title}
-                        </Link>;
+                                     sx={{fontSize: 'inherit', lineHeight: 'inherit'}}>
+                                {title}
+                            </Link>
+                        </Fragment>;
                     })}
-                </Box>}
+                </Typography>}
             </CardContent>
         </Card>
     );
