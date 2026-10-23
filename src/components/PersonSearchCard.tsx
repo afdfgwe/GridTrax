@@ -14,7 +14,7 @@ const DEPARTMENTS: Record<string, string> = {
 };
 
 /** 人物只展示搜索接口已有资料；详情页接入前，只有代表作品提供跳转。 */
-export default function PersonSearchCard({item}: {item: TMDBSearchResult}) {
+export default function PersonSearchCard({item}: { item: TMDBSearchResult }) {
     const name = item.name?.trim() || item.original_name?.trim() || '未知人物';
     const department = item.known_for_department?.trim();
     const [failedPath, setFailedPath] = useState<string>();
@@ -46,20 +46,25 @@ export default function PersonSearchCard({item}: {item: TMDBSearchResult}) {
                 }}/>
             </Box>
             <CardContent sx={{flex: 1, minWidth: 0, pb: '12px !important'}}>
-                <Typography variant="body2" fontWeight={700} noWrap title={name}>{name}</Typography>
-                {department && <Typography variant="caption" color="text.secondary" component="div" noWrap
-                                           title={DEPARTMENTS[department] ?? department}>
-                    {DEPARTMENTS[department] ?? department}
-                </Typography>}
+                <Box sx={{overflowWrap: 'anywhere'}}>
+                    <Typography variant="body2" fontWeight={700} component="span" title={name}>
+                        {name}
+                    </Typography>
+                    {department && <Typography variant="caption" color="text.secondary" component="span"
+                                               sx={{ml: 0.75}}
+                                               title={DEPARTMENTS[department] ?? department}>
+                        {DEPARTMENTS[department] ?? department}
+                    </Typography>}
+                </Box>
                 {works.length > 0 && <Typography component="div" variant="caption" color="text.secondary"
-                                                sx={{mt: 1, lineHeight: 1.6, overflowWrap: 'anywhere'}}>
+                                                 sx={{mt: 1, lineHeight: 1.6, overflowWrap: 'anywhere'}}>
                     {works.map((work, index) => {
                         const title = work.title?.trim() || work.name!.trim();
                         return <Fragment key={`${work.media_type}-${work.id}`}>
                             {index > 0 && '，'}
                             <Link component={RouterLink}
-                                     to={`/${work.media_type}/${work.id}`} title={title} underline="hover"
-                                     sx={{fontSize: 'inherit', lineHeight: 'inherit'}}>
+                                  to={`/${work.media_type}/${work.id}`} title={title} underline="hover"
+                                  sx={{fontSize: 'inherit', lineHeight: 'inherit'}}>
                                 {title}
                             </Link>
                         </Fragment>;
