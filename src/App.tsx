@@ -13,6 +13,7 @@ const SearchPage = React.lazy(() => import('./pages/SearchPage'));
 const HotMoviesPage = React.lazy(() => import('./pages/HotMoviesPage'));
 const TvDetailPage = React.lazy(() => import('./pages/TvDetailPage'));
 const MovieDetailPage = React.lazy(() => import('./pages/MovieDetailPage'));
+const PersonDetailPage = React.lazy(() => import('./pages/PersonDetailPage'));
 
 const LoadingFallback = () => (
     <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
@@ -37,13 +38,14 @@ const App: React.FC = () => {
                 <ScrollToTop/>
                 <Layout>
                     <Suspense fallback={<LoadingFallback/>}>
-                        {/* 首页为追踪面板；详情路由中的 id 均为 TMDB 作品编号。 */}
+                        {/* 首页为追踪面板；作品与人物编号使用不同路由，避免相同编号串数据。 */}
                         <Routes>
                             <Route path="/" element={<HomePage/>}/>
                             <Route path="/search" element={<SearchPage/>}/>
                             <Route path="/hot" element={<HotMoviesPage/>}/>
                             <Route path="/tv/:id" element={<TvDetailPage/>}/>
                             <Route path="/movie/:id" element={<MovieDetailPage/>}/>
+                            <Route path="/person/:id" element={<PersonDetailPage/>}/>
                         </Routes>
                     </Suspense>
                 </Layout>

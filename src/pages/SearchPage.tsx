@@ -31,7 +31,7 @@ const SearchPage: React.FC = () => {
     const totalPages = data?.total_pages ?? (pagination?.query === query ? pagination.totalPages : undefined);
     const changePage = (next: number) => setSearchParams({q: query, page: String(next)});
 
-    // 人物尚无详情页，不将人物编号当作电影编号；代表作品使用各自的影视路由。
+    // 电影与电视剧使用各自的详情路由，人物卡片单独提供个人资料入口。
     const handleCardClick = useCallback(
         (item: TMDBSearchResult) => {
             if (item.media_type === 'tv') {

@@ -5,18 +5,12 @@ import {Fragment, useState} from 'react';
 import {Link as RouterLink} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import type {TMDBSearchResult} from '../types';
+import {getPersonDepartment} from '../utils/personProfile';
 
-const DEPARTMENTS: Record<string, string> = {
-    Acting: '演员', Directing: '导演', Writing: '编剧', Production: '制片',
-    Camera: '摄影', Editing: '剪辑', Sound: '声音', Art: '美术',
-    'Costume & Make-Up': '服装与化妆', 'Visual Effects': '视觉特效',
-    Crew: '剧组', Lighting: '灯光', Creator: '创作者',
-};
-
-/** 人物只展示搜索接口已有资料；详情页接入前，只有代表作品提供跳转。 */
+/** 人物头像和姓名进入个人资料；代表作品仍直接进入对应的影视详情。 */
 export default function PersonSearchCard({item}: { item: TMDBSearchResult }) {
     const name = item.name?.trim() || item.original_name?.trim() || '未知人物';
-    const department = item.known_for_department?.trim();
+    const department = getPersonDepartment(item.known_for_department);
     const [failedPath, setFailedPath] = useState<string>();
     const showPortrait = Boolean(item.profile_path && item.profile_path !== failedPath);
     // 只链接有效的电影和电视剧，避免异常条目被误当作电影打开。
@@ -29,7 +23,12 @@ export default function PersonSearchCard({item}: { item: TMDBSearchResult }) {
 
     return (
         <Card sx={{height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper'}}>
-            <Box sx={{position: 'relative', aspectRatio: '2/3', overflow: 'hidden', bgcolor: 'action.hover'}}>
+            <Box component={RouterLink} to={`/person/${item.id}`} aria-label={`查看${name}的个人资料`}
+                 sx={{
+                     position: 'relative', display: 'block', aspectRatio: '2/3', overflow: 'hidden',
+                     bgcolor: 'action.hover', color: 'inherit',
+                     '&:focus-visible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2}
+                 }}>
                 {showPortrait ? (
                     <Box component="img" loading="lazy" src={getPosterUrl(item.profile_path!, 'w342')}
                          alt={name} onError={() => setFailedPath(item.profile_path ?? undefined)}
@@ -47,13 +46,19 @@ export default function PersonSearchCard({item}: { item: TMDBSearchResult }) {
             </Box>
             <CardContent sx={{flex: 1, minWidth: 0, pb: '12px !important'}}>
                 <Box sx={{overflowWrap: 'anywhere'}}>
-                    <Typography variant="body2" fontWeight={700} component="span" title={name}>
+                    <Typography variant="body2" fontWeight={700} component={RouterLink}
+                                to={`/person/${item.id}`} title={name}
+                                sx={{
+                                    color: 'text.primary',
+                                    textDecoration: 'none',
+                                    '&:hover': {color: 'primary.main'}
+                                }}>
                         {name}
                     </Typography>
                     {department && <Typography variant="caption" color="text.secondary" component="span"
                                                sx={{ml: 0.75}}
-                                               title={DEPARTMENTS[department] ?? department}>
-                        {DEPARTMENTS[department] ?? department}
+                                               title={department}>
+                        {department}
                     </Typography>}
                 </Box>
                 {works.length > 0 && <Typography component="div" variant="caption" color="text.secondary"

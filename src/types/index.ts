@@ -39,6 +39,24 @@ export interface TMDBSearchResult {
     }[];
 }
 
+/** 人物个人资料；未知日期、出生地和外链常以 null 或空字符串返回。 */
+export interface TMDBPerson {
+    id: number;
+    name: string;
+    adult?: boolean;
+    also_known_as?: string[] | null;
+    biography?: string | null;
+    birthday?: string | null;
+    deathday?: string | null;
+    gender?: number;
+    homepage?: string | null;
+    imdb_id?: string | null;
+    known_for_department?: string | null;
+    place_of_birth?: string | null;
+    popularity?: number;
+    profile_path?: string | null;
+}
+
 /** 推荐和相似电视剧共用条目字段，无需逐部请求详情。 */
 export interface TMDBTVRecommendation {
     id: number;

@@ -7,6 +7,7 @@ import type {
     TMDBCountry,
     TMDBGenre,
     TMDBMovie,
+    TMDBPerson,
     TMDBMovieRecommendations,
     TMDBCredits,
     TMDBSearchResult,
@@ -37,6 +38,8 @@ const detailsCache = createRequestCache<TMDBMovie | TMDBTVShow | TMDBSeason>();
 const genresCache = createRequestCache<TMDBGenre[]>(2, 24 * 60 * 60_000);
 const countriesCache = createRequestCache<TMDBCountry[]>(1, 24 * 60 * 60_000);
 const creditsCache = createRequestCache<TMDBCredits>(40);
+// 人物资料与作品分开缓存，不占用观影记录空间，也不会因相同编号覆盖作品详情。
+const personCache = createRequestCache<TMDBPerson>(40);
 const recommendationsCache = createRequestCache<TMDBTVRecommendations>(40);
 const movieRecommendationsCache = createRequestCache<TMDBMovieRecommendations>(40);
 const movieSimilarCache = createRequestCache<TMDBMovieRecommendations>(40);
@@ -71,6 +74,15 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
         total_pages: Math.min(res.data.total_pages, 500),
         results: res.data.results as TMDBSearchResult[],
     };
+}
+
+/** 人物资料使用中文版本，缓存五分钟；失败请求不保留，页面可直接重试。 */
+export function getPerson(personId: number): Promise<TMDBPerson> {
+    if (!Number.isSafeInteger(personId) || personId <= 0) return Promise.reject(new Error('人物编号无效'));
+    return personCache.load(`person:${personId}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<TMDBPerson>(`/person/${personId}`, {params: {language: 'zh-CN'}});
+        return res.data;
+    });
 }
 
 /** 电影、电视剧分别获取并缓存中文类型，失败结果不缓存，刷新榜单时可重试。 */
