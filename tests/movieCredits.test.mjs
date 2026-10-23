@@ -53,7 +53,7 @@ test('幕后保留未知职务和非主要职务，空姓名不展示', () => {
         {id: 2, name: '配乐', job: 'Original Music Composer'},
         {id: 3, name: '', job: 'Director'},
     ]);
-    assert.deepEqual(groups.map(group => group.label), ['Presenter', '原创配乐']);
+    assert.deepEqual(groups.map(group => group.label), ['出品人', '原创配乐']);
     assert.equal(groups[0].members[0].name, 'Original');
 });
 

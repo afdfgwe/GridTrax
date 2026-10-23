@@ -57,6 +57,28 @@ export interface TMDBPerson {
     profile_path?: string | null;
 }
 
+/** 人物影视履历共用作品字段，电影与电视剧分别使用自己的片名和日期。 */
+export interface TMDBPersonCredit {
+    id: number;
+    media_type: 'movie' | 'tv';
+    title?: string;
+    original_title?: string;
+    name?: string;
+    original_name?: string;
+    poster_path?: string | null;
+    release_date?: string | null;
+    first_air_date?: string | null;
+    vote_average?: number;
+    credit_id?: string;
+}
+
+/** 同一作品可能既有出演记录，也有多条幕后职务，展示时按类型和编号合并。 */
+export interface TMDBPersonCombinedCredits {
+    id: number;
+    cast: Array<TMDBPersonCredit & {character?: string | null}>;
+    crew: Array<TMDBPersonCredit & {job?: string | null; department?: string | null}>;
+}
+
 /** 推荐和相似电视剧共用条目字段，无需逐部请求详情。 */
 export interface TMDBTVRecommendation {
     id: number;

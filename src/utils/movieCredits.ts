@@ -22,7 +22,17 @@ const JOB_LABELS: Record<string, string> = {
     'Director of Photography': '摄影指导', 'Original Music Composer': '原创配乐',
     Editor: '剪辑', 'Art Direction': '美术指导', 'Production Design': '制作设计',
     'Costume Design': '服装设计', Casting: '选角', Story: '故事',
+    'Assistant Director': '副导演', Choreographer: '编舞', 'Fight Choreographer': '动作编排',
+    'Martial Arts Choreographer': '武术指导', Presenter: '出品人', 'Production Manager': '制片主任',
+    'Stunt Coordinator': '特技指导', Stunts: '特技演员', Thanks: '鸣谢',
+    'Theme Song Performance': '主题曲演唱', Creator: '创作者',
 };
+
+/** 影片演职员与人物影视履历共用职务译名，未知职务保留接口原文。 */
+export function getCreditJobLabel(value?: string | null): string {
+    const job = value?.trim();
+    return job ? JOB_LABELS[job] || job : '其他幕后';
+}
 
 /** 按演职员表顺序展示；同一演员的多个角色合并，不改变接口数组。 */
 export function getOrderedCast(cast: readonly TMDBCastMember[] = []): TMDBCastMember[] {
@@ -58,8 +68,7 @@ export function getCrewGroups(crew: readonly TMDBCrewMember[] = []): CrewGroup[]
     for (const member of crew) {
         const name = member.name?.trim() || member.original_name?.trim();
         if (!name) continue;
-        const job = member.job?.trim();
-        const label = JOB_LABELS[job] || job || '其他幕后';
+        const label = getCreditJobLabel(member.job);
         const members = groups.get(label) ?? new Map<number, TMDBCrewMember>();
         if (!members.has(member.id)) members.set(member.id, {...member, name});
         groups.set(label, members);

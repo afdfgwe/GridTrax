@@ -7,6 +7,7 @@ import {useCallback, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getPerson, getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
+import PersonFilmography from '../components/PersonFilmography';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {getPersonProfile} from '../utils/personProfile';
 
@@ -27,7 +28,7 @@ function Portrait({path, name}: { path?: string | null; name: string }) {
     </Box>;
 }
 
-/** 人物资料为只读页面，不调用观影进度仓库，也不额外请求作品列表。 */
+/** 人物资料和影视履历均为只读展示，不调用观影进度仓库。 */
 export default function PersonDetailPage() {
     const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -132,5 +133,6 @@ export default function PersonDetailPage() {
                 <ExpandableOverview key={person.id} text={profile.biography} collapsedLines={10} indentFirstLine/>
             </Box>}
         </>}
+        {validId && !error && <PersonFilmography key={personId} personId={personId}/>}
     </Container>;
 }

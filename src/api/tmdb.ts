@@ -3,11 +3,13 @@ import axios from 'axios';
 import type {HotKind, HotSearchItem, TrendingMovie, TrendingTVShow, TrendingWindow} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import {normalizeTVAggregateCredits} from '../utils/movieCredits';
+import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
 import type {
     TMDBCountry,
     TMDBGenre,
     TMDBMovie,
     TMDBPerson,
+    TMDBPersonCombinedCredits,
     TMDBMovieRecommendations,
     TMDBCredits,
     TMDBSearchResult,
@@ -40,6 +42,7 @@ const countriesCache = createRequestCache<TMDBCountry[]>(1, 24 * 60 * 60_000);
 const creditsCache = createRequestCache<TMDBCredits>(40);
 // 人物资料与作品分开缓存，不占用观影记录空间，也不会因相同编号覆盖作品详情。
 const personCache = createRequestCache<TMDBPerson>(40);
+const personCreditsCache = createRequestCache<PersonWork[]>(20);
 const recommendationsCache = createRequestCache<TMDBTVRecommendations>(40);
 const movieRecommendationsCache = createRequestCache<TMDBMovieRecommendations>(40);
 const movieSimilarCache = createRequestCache<TMDBMovieRecommendations>(40);
@@ -82,6 +85,20 @@ export function getPerson(personId: number): Promise<TMDBPerson> {
     return personCache.load(`person:${personId}:zh-CN`, async () => {
         const res = await tmdbAxios.get<TMDBPerson>(`/person/${personId}`, {params: {language: 'zh-CN'}});
         return res.data;
+    });
+}
+
+/** 影视履历独立加载并缓存五分钟，只请求一次汇总接口，不逐部请求影片详情。 */
+export function getPersonCombinedCredits(personId: number): Promise<PersonWork[]> {
+    if (!Number.isSafeInteger(personId) || personId <= 0) return Promise.reject(new Error('人物编号无效'));
+    return personCreditsCache.load(`person-credits:${personId}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<TMDBPersonCombinedCredits>(`/person/${personId}/combined_credits`, {
+            params: {language: 'zh-CN'},
+        });
+        if (!Array.isArray(res.data.cast) || !Array.isArray(res.data.crew)) {
+            throw new Error('人物影视履历格式错误');
+        }
+        return normalizePersonCredits(res.data);
     });
 }
 
