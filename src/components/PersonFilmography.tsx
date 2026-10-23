@@ -17,7 +17,7 @@ function WorkRow({work}: { work: PersonWork }) {
     return <Box component={Link} to={`/${work.mediaType}/${work.id}`} aria-label={`查看${work.title}详情`}
                 sx={{
                     display: 'flex', gap: 1.5, minWidth: 0, py: 1.75, px: 0.5,
-                    textDecoration: 'none', color: 'text.primary', borderBottom: 1, borderColor: 'divider',
+                    textDecoration: 'none', color: 'text.primary',
                     borderRadius: 1, transition: 'background-color 150ms',
                     '&:hover': {bgcolor: 'action.hover'},
                     '&:focus-visible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2},

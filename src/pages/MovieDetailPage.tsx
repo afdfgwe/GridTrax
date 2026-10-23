@@ -42,6 +42,7 @@ const MovieDetailPage: React.FC = () => {
     }, [movie, ensureMovieRecord]);
 
     const primary = theme.palette.primary.main;
+    const releaseYear = movie?.release_date?.trim().slice(0, 4);
 
     // 接口评分与年份等信息来自 movie，观看状态来自浏览器中的 record。
 
@@ -148,11 +149,13 @@ const MovieDetailPage: React.FC = () => {
                                                 }}
                                             />
                                         )}
-                                        <Chip
-                                            label={movie.release_date?.slice(0, 4)}
-                                            size="small"
-                                            sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
-                                        />
+                                        {releaseYear && (
+                                            <Chip
+                                                label={releaseYear}
+                                                size="small"
+                                                sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
+                                            />
+                                        )}
                                         {/* 先得到布尔值，避免 runtime 为 0 时被 React 当作文字直接渲染。 */}
                                         {(movie.runtime ?? 0) > 0 && (
                                             <Chip

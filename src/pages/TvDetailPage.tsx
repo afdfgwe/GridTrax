@@ -38,6 +38,7 @@ const TvDetailPage: React.FC = () => {
 
     const theme = useTheme();
     const primary = theme.palette.primary.main;
+    const releaseYear = show?.first_air_date?.trim().slice(0, 4);
 
     const backdropUrl = show?.backdrop_path ? getBackdropUrl(show.backdrop_path) : '';
 
@@ -161,11 +162,13 @@ const TvDetailPage: React.FC = () => {
                                                 }}
                                             />
                                         )}
-                                        <Chip
-                                            label={show.first_air_date?.slice(0, 4)}
-                                            size="small"
-                                            sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
-                                        />
+                                        {releaseYear && (
+                                            <Chip
+                                                label={releaseYear}
+                                                size="small"
+                                                sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
+                                            />
+                                        )}
                                         <Chip
                                             label={`${show.number_of_seasons} 季 · ${show.number_of_episodes} 集`}
                                             size="small"
