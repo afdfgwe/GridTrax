@@ -15,7 +15,7 @@ export interface TMDBCountry {
     native_name?: string;
 }
 
-// TMDB 多类型搜索结果：电视剧使用 name，电影使用 title。
+// TMDB 多类型搜索结果：电视剧、人物使用 name，电影使用 title。
 export interface TMDBSearchResult {
     id: number;
     media_type: 'tv' | 'movie' | 'person';
@@ -28,6 +28,15 @@ export interface TMDBSearchResult {
     release_date?: string;
     vote_average?: number;
     genre_ids?: number[];
+    original_name?: string;
+    profile_path?: string | null;
+    known_for_department?: string;
+    known_for?: {
+        id: number;
+        media_type: 'movie' | 'tv';
+        title?: string;
+        name?: string;
+    }[];
 }
 
 /** 推荐和相似电视剧共用条目字段，无需逐部请求详情。 */

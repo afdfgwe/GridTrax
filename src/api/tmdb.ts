@@ -57,7 +57,7 @@ export const getPosterUrl = (path?: string, size = 'w342') =>
 export const getBackdropUrl = (path?: string, size = 'w1280') =>
     path ? `${IMAGE_BASE}${size}${path}` : '';
 
-/** 多类型搜索；接口还可能返回人物，此封装只向页面返回电影和电视剧。 */
+/** 综合搜索保留电影、电视剧及人物，由展示层分别处理卡片与跳转。 */
 export async function searchMulti(query: string, page = 1, signal?: AbortSignal): Promise<{
     results: TMDBSearchResult[]; total_pages: number; page: number;
 }> {
@@ -69,9 +69,7 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
         page: res.data.page,
         // 搜索接口最多允许访问前 500 页，分页控件与接口限制保持一致。
         total_pages: Math.min(res.data.total_pages, 500),
-        results: (res.data.results as TMDBSearchResult[]).filter(
-            (r) => r.media_type === 'tv' || r.media_type === 'movie'
-        ),
+        results: res.data.results as TMDBSearchResult[],
     };
 }
 

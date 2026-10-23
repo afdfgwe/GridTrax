@@ -5,6 +5,7 @@ import React, {useCallback, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {searchMulti} from '../api/tmdb';
 import MediaCard from '../components/MediaCard';
+import PersonSearchCard from '../components/PersonSearchCard';
 import type {TMDBSearchResult} from '../types';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 
@@ -30,12 +31,12 @@ const SearchPage: React.FC = () => {
     const totalPages = data?.total_pages ?? (pagination?.query === query ? pagination.totalPages : undefined);
     const changePage = (next: number) => setSearchParams({q: query, page: String(next)});
 
-    // 混合搜索的电影与电视剧使用不同详情路由，编号本身不能区分作品类型。
+    // 人物尚无详情页，不将人物编号当作电影编号；代表作品使用各自的影视路由。
     const handleCardClick = useCallback(
         (item: TMDBSearchResult) => {
             if (item.media_type === 'tv') {
                 navigate(`/tv/${item.id}`);
-            } else {
+            } else if (item.media_type === 'movie') {
                 navigate(`/movie/${item.id}`);
             }
         },
@@ -78,7 +79,7 @@ const SearchPage: React.FC = () => {
                 {!loading && results.length === 0 && query && !error && (
                     <Box sx={{textAlign: 'center', py: 8}}>
                         <Typography variant="h6" color="text.secondary">
-                            没有找到「{query}」相关的影视作品
+                            没有找到「{query}」相关的影视作品或人物
                         </Typography>
                     </Box>
                 )}
@@ -97,7 +98,9 @@ const SearchPage: React.FC = () => {
                     <Grid container spacing={2}>
                         {results.map((item) => (
                             <Grid key={`${item.media_type}-${item.id}`} size={{xs: 6, sm: 4, md: 3, lg: 2}}>
-                                <MediaCard item={item} onClick={handleCardClick}/>
+                                {item.media_type === 'person'
+                                    ? <PersonSearchCard item={item}/>
+                                    : <MediaCard item={item} onClick={handleCardClick}/>}
                             </Grid>
                         ))}
                     </Grid>
