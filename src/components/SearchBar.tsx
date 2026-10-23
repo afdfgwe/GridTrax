@@ -44,10 +44,11 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
             onSubmit={handleSearch}
             elevation={expanded ? 4 : 0}
             sx={{
-                p: '2px 4px',
+                p: expanded ? '2px 4px' : 0,
                 display: 'flex',
                 alignItems: 'center',
-                width: expanded ? {xs: '100%', sm: 300, md: 400} : 48,
+                width: expanded ? {xs: '100%', sm: 300, md: 400} : 40,
+                flexShrink: expanded ? 1 : 0,
                 minWidth: 0,
                 transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s',
                 backgroundColor: expanded ? 'background.paper' : 'transparent',
@@ -59,7 +60,8 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
         >
             <IconButton
                 type={expanded ? "submit" : "button"}
-                sx={{p: '10px', color: expanded ? 'primary.main' : 'text.secondary'}}
+                sx={{p: expanded ? '10px' : '8px', flexShrink: 0,
+                    color: expanded ? 'primary.main' : 'text.secondary'}}
                 aria-label="search"
                 onClick={expanded ? handleSearch : handleExpand}
             >
@@ -68,6 +70,7 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
             <InputBase
                 inputRef={inputRef}
                 sx={{
+                    display: expanded ? 'flex' : 'none',
                     ml: 1,
                     flex: 1,
                     minWidth: 0,
