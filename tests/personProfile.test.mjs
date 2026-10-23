@@ -14,8 +14,7 @@ test('人物资料映射职业并保留简介、日期和别名，不修改接�
     assert.equal(profile.department, '创作者');
     assert.equal(profile.biography, '简介\n第二段');
     assert.deepEqual(profile.aliases, ['Yanqiu Qian']);
-    assert.deepEqual(profile.facts, [{label: '性别', value: '男'}, {label: '出生日期', value: '1968-09-30'},
-        {label: 'TMDB 热度', value: '1.0'}]);
+    assert.deepEqual(profile.facts, [{label: '性别', value: '男'}, {label: '出生日期', value: '1968-09-30'}]);
     assert.deepEqual(person, before);
 });
 
@@ -32,7 +31,7 @@ test('缺失资料、未知性别和非法日期不提供占位值，长姓名�
     assert.equal(getPersonDepartment(null), '');
 });
 
-test('人物日期校验保留闰日与逝世日期，性别和零热度不混同评分', () => {
+test('人物日期校验保留闰日、逝世日期与性别，不展示热度', () => {
     const profile = getPersonProfile({
         id: 1, name: '甲', gender: 3, birthday: '2000-02-29',
         deathday: '2020-03-01', popularity: 0

@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import {useCallback, useEffect, useRef, useState} from 'react';
+import {Link as RouterLink} from 'react-router-dom';
 import {getMovieCredits, getPosterUrl, getTVAggregateCredits} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import type {TMDBCastMember, TMDBCreditPerson} from '../types';
@@ -32,19 +33,24 @@ function PersonPortrait({person}: {person: TMDBCreditPerson}) {
 function ActorItem({person, fullText = false}: {person: TMDBCastMember; fullText?: boolean}) {
     return (
         <Box component="li" sx={{listStyle: 'none', minWidth: 0}}>
-            <PersonPortrait key={person.profile_path} person={person}/>
-            <Typography title={person.name} sx={{fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.5,
-                mt: 0.75, minHeight: '1.5em',
-                ...(fullText ? {whiteSpace: 'normal', overflowWrap: 'anywhere'} :
-                    {whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'})}}>
-                {person.name}
-            </Typography>
-            <Typography title={person.character || undefined} color="text.secondary"
-                        sx={{fontSize: '0.75rem', lineHeight: 1.5, minHeight: '1.5em',
-                            ...(fullText ? {whiteSpace: 'normal', overflowWrap: 'anywhere'} :
-                                {whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'})}}>
-                {person.character ? `饰 ${person.character}` : ''}
-            </Typography>
+            <Box component={RouterLink} to={`/person/${person.id}`} aria-label={`查看${person.name}的个人资料`}
+                 sx={{display: 'block', minWidth: 0, color: 'text.primary', textDecoration: 'none', borderRadius: 1,
+                     '&:hover': {color: 'primary.main'},
+                     '&:focus-visible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2}}}>
+                <PersonPortrait key={person.profile_path} person={person}/>
+                <Typography title={person.name} sx={{fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.5,
+                    mt: 0.75, minHeight: '1.5em',
+                    ...(fullText ? {whiteSpace: 'normal', overflowWrap: 'anywhere'} :
+                        {whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'})}}>
+                    {person.name}
+                </Typography>
+                <Typography title={person.character || undefined} color="text.secondary"
+                            sx={{fontSize: '0.75rem', lineHeight: 1.5, minHeight: '1.5em',
+                                ...(fullText ? {whiteSpace: 'normal', overflowWrap: 'anywhere'} :
+                                    {whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'})}}>
+                    {person.character ? `饰 ${person.character}` : ''}
+                </Typography>
+            </Box>
         </Box>
     );
 }

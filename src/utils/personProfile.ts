@@ -34,9 +34,6 @@ export function getPersonProfile(person: TMDBPerson) {
     if (deathday) facts.push({label: '逝世日期', value: deathday});
     const birthplace = person.place_of_birth?.trim();
     if (birthplace) facts.push({label: '出生地', value: birthplace});
-    if (Number.isFinite(person.popularity) && person.popularity! > 0) {
-        facts.push({label: 'TMDB 热度', value: person.popularity!.toFixed(1)});
-    }
     const links: { label: string; href: string }[] = [];
     if (person.homepage?.trim()) {
         try {
