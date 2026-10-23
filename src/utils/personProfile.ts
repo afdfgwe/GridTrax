@@ -21,7 +21,7 @@ function validDate(value?: string | null): string {
 }
 
 /** 整理可展示资料，不伪造未知性别、日期或别名；外链只允许 HTTP(S)。 */
-export function getPersonProfile(person: TMDBPerson) {
+export function getPersonProfile(person: TMDBPerson, now = new Date()) {
     const name = person.name?.trim() || '未知人物';
     const aliases = [...new Set((person.also_known_as ?? []).map(alias => alias.trim()))]
         .filter(alias => alias && alias !== name);
@@ -31,6 +31,16 @@ export function getPersonProfile(person: TMDBPerson) {
     const birthday = validDate(person.birthday);
     const deathday = validDate(person.deathday);
     if (birthday) facts.push({label: '出生日期', value: birthday});
+    // 使用本地日历计算周岁；已故人物以逝世日期为准，异常日期不推算年龄。
+    const today = validDate([String(now.getFullYear()).padStart(4, '0'),
+        String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-'));
+    const endDate = deathday || today;
+    if (birthday && today && endDate && birthday <= endDate && endDate <= today
+        && (!person.deathday?.trim() || deathday)) {
+        const age = Number(endDate.slice(0, 4)) - Number(birthday.slice(0, 4))
+            - (endDate.slice(5) < birthday.slice(5) ? 1 : 0);
+        facts.push({label: deathday ? '享年' : '年龄', value: `${age} 岁`});
+    }
     if (deathday) facts.push({label: '逝世日期', value: deathday});
     const birthplace = person.place_of_birth?.trim();
     if (birthplace) facts.push({label: '出生地', value: birthplace});
