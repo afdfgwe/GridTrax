@@ -60,8 +60,10 @@ const SearchBar: React.FC<{ onExpandChange?: (expanded: boolean) => void }> = ({
         >
             <IconButton
                 type={expanded ? "submit" : "button"}
-                sx={{p: expanded ? '10px' : '8px', flexShrink: 0,
-                    color: expanded ? 'primary.main' : 'text.secondary'}}
+                sx={{
+                    p: expanded ? '10px' : '8px', flexShrink: 0,
+                    color: expanded ? 'primary.main' : 'text.secondary'
+                }}
                 aria-label="search"
                 onClick={expanded ? handleSearch : handleExpand}
             >
