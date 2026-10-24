@@ -163,6 +163,39 @@
 | 代码检查与测试 | ESLint 9 + TypeScript + Node.js 内置测试；`npm run test` 运行回归测试，`npm run check` 执行检查、测试和构建 |
 | 部署平台 | Cloudflare Pages |
 
+## 项目结构
+
+```text
+GridTrax/
+├─ functions/          Cloudflare Pages Functions，仅承载榜单接口
+│  └─ api/hot/         movies.ts（电影榜单）、tv.ts（电视剧榜单）
+├─ server/             hotMovies.ts，榜单抓取与解析的共享逻辑，供 Functions 与 Vite 开发服务器复用
+├─ public/             静态资源，_routes.json 限定只有榜单接口走 Functions
+├─ src/
+│  ├─ api/             tmdb.ts，TMDB 请求封装
+│  ├─ components/      UI 组件（PascalCase），如 MediaCard、EpisodeGrid、MediaCredits；episodeTitle.ts 为集名工具
+│  ├─ hooks/           复用逻辑：异步资源、榜单、首页资料补全、视口可见性
+│  ├─ pages/           路由页面：HomePage、HotMoviesPage、SearchPage、MovieDetailPage、TvDetailPage、PersonDetailPage
+│  ├─ store/           Zustand 状态：useProgressStore（观看进度）、useThemeStore（主题）
+│  ├─ theme/           MUI 主题与多套配色定义
+│  ├─ types/           数据类型定义：index.ts（业务模型）、hotMovies.ts（榜单模型）
+│  ├─ utils/           纯函数工具（camelCase）：缓存、榜单匹配、进度存储、备份、资料归一化等
+│  ├─ App.tsx          路由与布局装配
+│  ├─ main.tsx         应用入口
+│  └─ index.css        全局样式
+├─ tests/              Node.js 内置测试的回归用例，与 src/utils 下的工具模块一一对应
+├─ vite.config.ts      开发与构建配置
+├─ eslint.config.js    ESLint 配置
+├─ tsconfig.json       TypeScript 配置（含 tsconfig.app.json、tsconfig.node.json）
+├─ wrangler.jsonc      Cloudflare Pages 配置，输出目录指向 dist
+└─ index.html          SPA 入口页面
+```
+
+说明：
+
+- `src/` 为纯前端代码，只依赖 TMDB。榜单是唯一需要服务端参与的部分：`server/hotMovies.ts` 存放抓取与解析逻辑，`functions/api/hot/*.ts` 将其暴露为 `/api/hot/movies`、`/api/hot/tv`，Vite 开发服务器也复用同一份逻辑，因此本地 `npm run dev` 与线上行为一致。
+- `src/utils/` 下的模块保持无副作用、不依赖 React，便于被 `tests/` 直接导入测试，无需构建或浏览器环境。
+
 ## 部署
 
 项目使用 Cloudflare Pages 部署：React SPA 提供界面，仓库内的 Pages Functions 转发豆瓣榜单，无需单独部署后端。
