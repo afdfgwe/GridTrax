@@ -13,6 +13,7 @@ export function normalizeTVAggregateCredits(data: TMDBTVAggregateCredits): TMDBC
     };
 }
 
+// 常见主创职务，分组时始终排在最前，其余职务按接口顺序追加。
 export const MAIN_CREW_LABELS = ['导演', '编剧', '制片', '执行制片'] as const;
 
 const JOB_LABELS: Record<string, string> = {

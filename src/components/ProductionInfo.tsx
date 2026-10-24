@@ -14,6 +14,7 @@ interface ProductionInfoProps {
 
 /** 电影、电视剧共用制片信息；语言、地区、公司和播出平台 Logo 依次排列，窄屏自然换行。 */
 export default function ProductionInfo({spoken_languages, production_countries, production_companies, networks}: ProductionInfoProps) {
+    // 只有存在地区代码时才请求国家列表，用本地化名称替代 ISO 代码。
     const hasCountryCodes = production_countries?.some(country => country.iso_3166_1.trim()) ?? false;
     const loadCountries = useCallback(
         () => hasCountryCodes ? getCountries() : Promise.resolve<TMDBCountry[]>([]),

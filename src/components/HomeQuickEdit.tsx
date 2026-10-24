@@ -29,6 +29,7 @@ interface HomeQuickEditProps {
 }
 
 
+// 可切换的观看状态，顺序与全局状态选择器保持一致。
 const STATUSES: WatchStatus[] = ['Wish', 'Do', 'Collect', 'OnHold', 'Dropped'];
 
 /** 首页卡片的轻量编辑弹窗：切换观看状态或删除当前电影／当前季记录。 */

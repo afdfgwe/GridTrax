@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {getCrewGroups, getOrderedCast, normalizeTVAggregateCredits} from '../src/utils/movieCredits.ts';
 
+// 覆盖影视演职员表归一化：演员按 order 排序并合并角色，幕后按本片职务分组，以及整剧聚合演出/幕后数据的展开。
 test('演员按 order 排列，同一演员合并角色且不修改接口数据', () => {
     const cast = [
         {id: 2, name: '乙', order: 2, character: '角色乙'},

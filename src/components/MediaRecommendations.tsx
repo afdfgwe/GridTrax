@@ -79,6 +79,7 @@ export default function MediaRecommendations({
     const results = data?.results.slice(0, 10) ?? [];
     const listRef = useRef<HTMLDivElement>(null);
     const [scroll, setScroll] = useState({previous: false, next: false});
+    // 留 1px 容差判断轨道两端是否还有内容，控制左右箭头可用状态。
     const updateScroll = useCallback(() => {
         const element = listRef.current;
         if (element) setScroll({

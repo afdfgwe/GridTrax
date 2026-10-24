@@ -4,6 +4,7 @@ import {useCallback, useEffect, useRef} from 'react';
 export function useMediaVisibility() {
     const containerRef = useRef<HTMLDivElement>(null);
     const visible = useRef(new Map<Element, string>());
+    // 同一作品可能对应多张卡片（如多季），按媒体键去重后作为加载优先级。
     const getPriorityKeys = useCallback(() => [...new Set(visible.current.values())], []);
 
     useEffect(() => {

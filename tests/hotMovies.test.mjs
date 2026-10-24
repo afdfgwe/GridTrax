@@ -4,6 +4,8 @@ import {createHotHandler, createHotMoviesHandler, parseHotItems, parseHotMovies}
 import {matchHotMovie, normalizeMovieTitle, resolveHotMovie} from '../src/utils/hotMovieMatch.ts';
 import {parseHotMovieInfo} from '../src/utils/hotMovieInfo.ts';
 
+// 覆盖豆瓣实时榜单：服务端处理器的解析/字段过滤/固定上游/并发缓存/错误码，以及同名影片匹配与搜索回退。
+
 test('榜单 info 按地区、类型、导演和演员分组，缺项不占位置', () => {
     assert.deepEqual(parseHotMovieInfo('中国大陆 / 剧情 爱情 古装 / 杨龙 / 田曦薇 闫桉'), [
         {label: '地区', value: '中国大陆'},

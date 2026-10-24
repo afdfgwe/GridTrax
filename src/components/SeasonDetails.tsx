@@ -14,6 +14,7 @@ interface SeasonDetailsProps {
 export default function SeasonDetails({summary, showOverview, isOnlySeason}: SeasonDetailsProps) {
     // 单季剧若本季简介与整剧重复则省略，多季剧保留各季独立简介。
     const overview = getSeasonOverview(summary.overview, showOverview, isOnlySeason);
+    // 仅接受完整日期；缺失或只精确到年／月时按无日期处理。
     const date = summary.air_date && /^\d{4}-\d{2}-\d{2}$/.test(summary.air_date) ? summary.air_date : '';
     const score = summary.vote_average;
     const hasScore = typeof score === 'number' && Number.isFinite(score) && score > 0;

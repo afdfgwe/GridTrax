@@ -146,6 +146,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                         <Box component="li" key={`${key}-${isTv ? record.season_number : ''}`} data-media-key={key} sx={{
                                             position: 'relative',
                                             minWidth: 0,
+                                            // 每天的第一条记录在时间轴上标出一个节点圆点。
                                             ...(index === 0 ? {
                                                 '&::before': {
                                                     content: '""',

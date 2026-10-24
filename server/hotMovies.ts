@@ -100,4 +100,5 @@ export function createHotHandler(kind: HotKind, fetcher: typeof fetch = fetch, n
     };
 }
 
+/** 电影榜单处理器：与电视剧各自持有独立的上游地址与缓存实例。 */
 export const createHotMoviesHandler = (fetcher: typeof fetch = fetch, now = Date.now) => createHotHandler('movie', fetcher, now);

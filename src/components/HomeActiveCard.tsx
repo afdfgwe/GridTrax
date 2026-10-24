@@ -93,6 +93,7 @@ const HomeActiveCard: React.FC<HomeActiveCardProps> = ({
     const titleText = showName || name || `剧集 ID: ${tvId}`;
     const tagText = name || `第 ${seasonNumber} 季`;
     const poster = posterPath ? getPosterUrl(posterPath, 'w154') : undefined;
+    // 写入记录时携带的作品元数据，供快捷编辑与集数操作持久化。
     const meta = {name, show_name: showName, poster_path: posterPath, episode_count: episodeCount};
     // 完整集数优先取季详情；加载前使用存储的总集数作为兜底。
     // 整季进度独立于当前页，旧备份中的多余记录不能使进度超过 100%。

@@ -3,6 +3,7 @@ import {createHotHandler} from '../../../server/hotMovies';
 // 模块级处理器复用电视剧榜的内存缓存，不能放到每次请求内部重新创建。
 const handle = createHotHandler('tv');
 
+// 用最小结构描述运行时缓存，不给前端引入 Worker 专属全局类型。
 interface EdgeCache {
     match(request: Request): Promise<Response | undefined>;
 

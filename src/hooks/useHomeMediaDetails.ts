@@ -15,6 +15,7 @@ export function useHomeMediaDetails(records: ProgressRecord[], getPriorityKeys: 
     }));
     const snapshot = useSyncExternalStore(loader.subscribe, loader.getSnapshot);
 
+    // 记录集合或视口优先级来源变化时刷新队列；已缓存资料直接复用，仅补齐缺失或过期的条目。
     useEffect(() => {
         loader.update(records, getPriorityKeys);
     }, [loader, records, getPriorityKeys]);

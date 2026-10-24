@@ -76,13 +76,14 @@ export default function PersonFilmography({personId}: { personId: number }) {
     const [year, setYear] = useState('');
     const groups = useMemo(() => groupPersonWorks(data ?? [], {mediaType, job, year}), [data, mediaType, job, year]);
     const availableYears = useMemo(() => groupPersonWorks(data ?? [], {mediaType, job})
-        .map(group => group.year), [data, mediaType, job]);
+        .map(group => group.year), [data, mediaType, job]); // 年份选项不叠加年份筛选，切换年份时下拉不会自身收缩。
+    // 职务选项随作品类型变化；存在出演记录时补充合并的“出演”项，幕后职务再去重。
     const jobs = useMemo(() => {
         const works = (data ?? []).filter(work => mediaType === 'all' || work.mediaType === mediaType);
         return [...(works.some(work => work.cast) ? ['出演'] : []),
             ...new Set(works.flatMap(work => work.jobs))];
     }, [data, mediaType]);
-    const count = groups.reduce((total, group) => total + group.works.length, 0);
+    const count = groups.reduce((total, group) => total + group.works.length, 0); // 当前筛选条件下命中的作品总数。
 
     return <Box component="section" aria-labelledby="person-filmography" aria-busy={loading}
                 sx={{mt: {xs: 3, sm: 4}, pt: {xs: 2.5, sm: 3}, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
@@ -107,6 +108,7 @@ export default function PersonFilmography({personId}: { personId: number }) {
                     <ToggleButtonGroup size="small" exclusive value={mediaType} aria-label="作品类型"
                                        onChange={(_, value: 'all' | 'movie' | 'tv' | null) => {
                                            if (value) {
+                                               // 切换作品类型会改变可选项，清空受其约束的职务与年份筛选。
                                                setMediaType(value);
                                                setJob('');
                                                setYear('');

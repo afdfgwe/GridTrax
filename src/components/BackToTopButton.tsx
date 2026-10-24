@@ -3,6 +3,7 @@ import {Box, Fab, Fade, Tooltip, useMediaQuery, useScrollTrigger} from '@mui/mat
 
 /** 全站回顶入口，仅在向下滚动后显示，并遵循系统的减少动态效果偏好。 */
 export default function BackToTopButton() {
+    // 下滑超过 300px 后才出现，避免页面轻微滚动时按钮闪现。
     const visible = useScrollTrigger({disableHysteresis: true, threshold: 300});
     const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 

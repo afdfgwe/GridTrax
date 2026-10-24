@@ -3,6 +3,7 @@ import test from 'node:test';
 import {createMediaMetadataCache, MEDIA_METADATA_STORAGE_KEY, MEDIA_METADATA_TTL, toMediaMetadata} from '../src/utils/mediaMetadataCache.ts';
 import {createHomeMediaDetailsLoader} from '../src/utils/homeMediaDetailsLoader.ts';
 
+// 覆盖首页媒体资料缓存与后台补全加载器：缓存跨实例恢复/过期/容量淘汰、按可见性优先级并发补位、失败重试与订阅取消等边界。
 const movie = id => ({type: 'movie', tmdb_id: id, global_status: 'Collect', poster_path: '/saved.jpg'});
 const season = (id, season_number) => ({type: 'tv_season', tmdb_id: id, season_number, global_status: 'Do'});
 const detail = (id, vote_average = 8, release_date = '2020-01-01') => ({id, vote_average, release_date, poster_path: '/poster.jpg'});

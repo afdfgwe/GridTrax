@@ -126,6 +126,7 @@ function MovieRow({
                          '@media (prefers-reduced-motion: reduce)': {'& img': {transition: 'none'}}
                      }}>
                     {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> :
+                        // 前三名通常位于首屏，优先加载海报，其余懒加载。
                         <Box component="img" src={getPosterUrl(movie?.poster_path ?? undefined)} alt=""
                              loading={item.rank <= 3 ? 'eager' : 'lazy'}
                              onError={event => {

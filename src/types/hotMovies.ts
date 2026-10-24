@@ -10,8 +10,8 @@ export interface HotItem {
     title: string;
     originalTitle?: string;
     year?: string;
-    info?: string;
-    rating?: number;
+    info?: string; // 豆瓣 info 原文，依次为地区/类型/导演/演员，由 parseHotMovieInfo 拆分。
+    rating?: number; // 豆瓣评分（0 到 10），不是 TMDB 评分；0 值不展示。
 }
 
 /** fetchedAt 是本次抓取时间，不是豆瓣发布或更新榜单的时间。 */

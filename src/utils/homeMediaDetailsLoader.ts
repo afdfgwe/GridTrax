@@ -18,11 +18,11 @@ export function createHomeMediaDetailsLoader(initialRecords: ProgressRecord[], o
     let snapshot: Snapshot = {scores: {}, years: {}, failedCount: 0};
     let records = new Map<string, ProgressRecord>();
     let getPriorityKeys = (): string[] => [];
-    const pending = new Map<string, ProgressRecord>();
-    const inFlight = new Set<string>();
-    const attempted = new Set<string>();
-    const failures = new Set<string>();
-    const hydrated = new Set<string>();
+    const pending = new Map<string, ProgressRecord>(); // 待加载队列。
+    const inFlight = new Set<string>(); // 正在进行中的请求。
+    const attempted = new Set<string>(); // 本会话已尝试过的记录，避免重复补位。
+    const failures = new Set<string>(); // 加载失败的记录，可手动重试。
+    const hydrated = new Set<string>(); // 已把缓存值合入 snapshot 的记录，避免重复合并。
     const listeners = new Set<() => void>();
     let running = false;
 

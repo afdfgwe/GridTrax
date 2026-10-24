@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+// 覆盖观影状态 store：整季/单集状态变更、补海报与记录增删，并校验持久化结果。
+
 // 独立内存存储，测试永远不会读写用户浏览器中的实际观影记录。
 const values = new Map();
 globalThis.window = {

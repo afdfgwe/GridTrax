@@ -25,6 +25,7 @@ export function toMediaMetadata(detail: TMDBMovie | TMDBTVShow, now = Date.now()
     };
 }
 
+/** 校验缓存键与字段范围，剔除损坏的本地数据；电视剧季的评分/年份键需匹配所属整剧前缀。 */
 function validMetadata(key: string, value: unknown): value is MediaMetadata {
     if (!/^(movie|tv_season)-\d+$/.test(key) || !value || typeof value !== 'object') return false;
     const item = value as MediaMetadata;

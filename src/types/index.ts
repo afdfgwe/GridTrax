@@ -227,8 +227,8 @@ export interface TMDBCreditPerson {
 }
 
 export interface TMDBCastMember extends TMDBCreditPerson {
-    character?: string;
-    order?: number;
+    character?: string; // 角色名，同一演员的多个角色由展示层合并。
+    order?: number; // 演职员表排序，缺失时排在最后。
     credit_id?: string;
 }
 
@@ -279,7 +279,7 @@ export interface SeasonRecord {
     episode_count?: number;
     global_status?: WatchStatus; // 未设置状态的记录不会出现在追踪面板中。
     rating: number; // 历史用户评分（0 到 10），不是 TMDB 评分，保留用于备份兼容。
-    global_comment: string;
+    global_comment: string; // 历史吐槽字段，导入导出时仍保留。
     episodes: Record<string, EpisodeRecord>; // 键为集号字符串，不是 TMDB 单集 ID。
     /** 最近一次状态或集数操作的毫秒时间戳，不是完整操作历史。 */
     last_interacted?: number;

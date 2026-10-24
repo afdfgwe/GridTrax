@@ -2,20 +2,20 @@ import type {ProgressRecord} from '../types';
 
 export interface TimelineEntry {
     record: ProgressRecord;
-    timestamp: number | null;
+    timestamp: number | null; // 最近操作时间戳，null 表示旧备份没有有效时间。
 }
 
 interface TimelineDay {
-    key: string;
+    key: string; // 分组键，格式为 {年}-{月}-{日}，时间未知时为 'unknown'。
     day: string;
     weekday: string;
     entries: TimelineEntry[];
 }
 
 export interface TimelineMonth {
-    key: string;
+    key: string; // 分组键，格式为 {年}-{月}，时间未知时为 'unknown'。
     label: string;
-    count: number;
+    count: number; // 本月的记录总数。
     days: TimelineDay[];
 }
 

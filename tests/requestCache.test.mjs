@@ -3,6 +3,8 @@ import test from 'node:test';
 import {createRequestCache} from '../src/utils/requestCache.ts';
 import {requestErrorMessage} from '../src/utils/requestError.ts';
 
+// 覆盖请求缓存：并发去重、成功后才计时、失败立即淘汰、LRU 淘汰与竞态，以及网络错误提示文案。
+
 // 注入可控时钟和未完成的 Promise，精确验证有效期边界，无需真实等待网络或计时器。
 test('并发读取共用请求，成功后才开始计算有效期', async () => {
     let now = 0;
@@ -21,6 +23,7 @@ test('并发读取共用请求，成功后才开始计算有效期', async () =>
     now = 200;
     resolve({id: 1});
     await first;
+    // 有效期从请求成功（now=200）起算 100ms：299 仍命中，300 已过期。
     now = 299;
     assert.equal(first, cache.load('movie:1', loader));
     now = 300;

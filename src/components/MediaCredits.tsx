@@ -30,6 +30,7 @@ function PersonPortrait({person}: {person: TMDBCreditPerson}) {
     );
 }
 
+/** 演员条目：fullText 为 true（弹窗）时名称与角色完整换行，false（横向轨道）时单行截断。 */
 function ActorItem({person, fullText = false}: {person: TMDBCastMember; fullText?: boolean}) {
     return (
         <Box component="li" sx={{listStyle: 'none', minWidth: 0}}>
@@ -70,6 +71,7 @@ function CreditsDialog({cast, crew, onClose}: {cast: TMDBCastMember[]; crew: Cre
             </DialogTitle>
             <Tabs value={tab} onChange={(_, value: string) => {
                 setTab(value);
+                // 切换标签时置顶内容，避免沿用上一标签的滚动位置。
                 contentRef.current?.scrollTo({top: 0});
             }} aria-label="演职人员分类" sx={{px: {xs: 2, sm: 3}, borderBottom: 1, borderColor: 'divider', flexShrink: 0}}>
                 <Tab value="cast" id="credits-cast-tab" aria-controls="credits-cast-panel" label={`演员（${cast.length}）`}/>
@@ -122,6 +124,7 @@ export default function MediaCredits({mediaId, mediaType}: {mediaId: number; med
     useEffect(() => {
         const element = listRef.current;
         if (!element) return;
+        // 同时观察可视区域和内容宽度，屏幕旋转或窗口缩放后重新判断箭头状态。
         const observer = new ResizeObserver(updateScroll);
         observer.observe(element);
         if (element.firstElementChild) observer.observe(element.firstElementChild);

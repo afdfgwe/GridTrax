@@ -245,7 +245,8 @@ const SectionMediaFilterButton: React.FC<SectionMediaFilterButtonProps> = ({filt
     );
 };
 
-/** 看过可切换网格与时间线；时间线使用全部记录，网格沿用筛选和分页。 */
+/** 首页“正在追踪”面板：按观看状态分组展示本地记录，逐组支持排序、影片类型筛选与分页。
+ *  仅展示已明确选择状态的记录，浏览详情产生的纯元数据记录不进入面板；看过可在网格与时间线间切换。 */
 
 const HomePage: React.FC = () => {
     const theme = useTheme();

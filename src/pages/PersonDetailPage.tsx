@@ -75,6 +75,7 @@ export default function PersonDetailPage() {
                 pb: {xs: 3, sm: 4}, borderBottom: 1, borderColor: 'divider'
             }}>
                 <Box sx={{gridRow: {sm: '1 / span 2'}}}>
+                    {/* 头像路径变化时重建 Portrait，重置图片加载失败状态。 */}
                     <Portrait key={`${person.id}:${person.profile_path}`} path={person.profile_path}
                               name={profile.name}/>
                 </Box>

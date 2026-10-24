@@ -11,6 +11,7 @@ interface GlobalStatusPickerProps {
     onStatusChange: (status: WatchStatus) => void;
 }
 
+// 可切换的观看状态，顺序即界面展示顺序。
 const STATUSES: WatchStatus[] = ['Wish', 'Do', 'Collect', 'OnHold', 'Dropped'];
 
 // 各观看状态共用的图标：坐标范围为 24×24，默认以 14×14 像素渲染。

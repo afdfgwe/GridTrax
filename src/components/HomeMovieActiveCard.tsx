@@ -28,6 +28,7 @@ const HomeMovieActiveCard: React.FC<HomeMovieActiveCardProps> = ({
     const primary = theme.palette.primary.main;
     const titleText = name || `电影 ID: ${movieId}`;
     const poster = posterPath ? getPosterUrl(posterPath, 'w154') : undefined;
+    // 写入记录时携带的作品元数据；电影无季信息。
     const meta = {name, poster_path: posterPath};
 
     return (

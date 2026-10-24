@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createProgressStorage, PROGRESS_STORAGE_KEY as key} from '../src/utils/progressStorage.ts';
 
+// 覆盖持久化适配器容错：保存失败提示与重试、损坏数据保护、导入前快照与写入失败不覆盖现有数据。
+
 const value = id => JSON.stringify({state: {data: {user_id: id, last_sync: 0, records: {}}}, version: 0});
 
 // 用内存 Map 替代浏览器存储，并按键注入写入失败，分别模拟主记录与恢复快照的配额异常。

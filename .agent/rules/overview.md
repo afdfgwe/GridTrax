@@ -8,9 +8,9 @@
 
 ## 1. 项目概述 (Project Overview)
 
-本项目旨在开发一款纯前端（配合轻量级同步服务）的影视进度追踪 Web 应用。核心体验复刻 Bangumi (番组计划) 的“点格子”追番功能，但将数据源扩展至全量影视作品（依托 TMDB），并引入 Material You 现代设计语言、跨设备 WebDAV 同步以及与 Bangumi 官方系统的双向/单向状态同步。
+本项目旨在开发一款纯前端的影视进度追踪 Web 应用。核心体验复刻 Bangumi (番组计划) 的“点格子”追番功能，但将数据源扩展至全量影视作品（依托 TMDB），并引入 Material You 现代设计语言。
 
-这是一款高度追求个人数据主权、UI 交互爽感和强逻辑条理性的硬核工具。适合利用个人 NAS 提供的 WebDAV 服务作为后端存储。
+这是一款高度追求个人数据主权、UI 交互爽感和强逻辑条理性的硬核工具。
 
 ## 2. 核心功能需求 (Core Features)
 
@@ -31,22 +31,9 @@
 * 无格子阵列。
 * 仅保留全局状态标记：`想看` / `看过` / `在看` / `搁置` / `抛弃`，以及评分功能。
 
-### 2.3 评论与吐槽系统 (Review & Comments)
-
-* **单集吐槽**：点击或看完某集格子后，支持弹窗/侧边栏快速输入对该具体 Episode 的短评。
-* **总体评价**：支持在剧集 (Season) 或电影的主面板上，撰写针对整部作品的评价（长评/短评）。
-
-### 2.4 数据源与双向同步 (Data & Sync)
+### 2.3 数据源 (Data Source)
 
 * **元数据抓取 (TMDB)**：所有影视（动画、剧集、电影）的标题、集数、海报、简介等元数据均通过 TMDB API 实时获取。
-* **Bangumi 同步 (Bangumi API)**：
-* 提供映射机制：尝试通过别名、原名或年份搜索 Bangumi API，将 TMDB 条目与 Bangumi 条目 ID (Subject ID) 绑定。
-* 当在本项目中触发状态变更（点格子、改状态、打分）时，若存在 Bangumi ID 映射，通过 Bangumi API (OAuth / Token) 自动发送请求，同步更新 Bangumi 站内的数据。
-
-
-* **个人私有同步 (WebDAV)**：
-* 引入个人部署的 WebDAV 服务（如基于 NAS 搭建）作为进度数据的存储中心。
-* 定期或在每次操作后，将本地进度以 JSON 格式无缝推送到 WebDAV，实现桌面、平板、手机多端的无缝数据漫游。
 
 
 
@@ -58,7 +45,7 @@
 
 
 * **响应式适配 (Responsive Design)**：
-* **Desktop (桌面)**：多列网格布局，左侧海报与全局信息，右侧大面积展示格子阵列和吐槽信息流。
+* **Desktop (桌面)**：多列网格布局，左侧海报与全局信息，右侧大面积展示格子阵列。
 * **Tablet (平板)**：优化触摸响应，长按触发「看到这里」的批量操作。
 * **Mobile (移动端)**：单列瀑布流，格子阵列自动换行以适配窄屏，保证点击区域（Touch Target）不小于 48x48dp。
 
@@ -71,19 +58,18 @@
 * **核心框架**：React / Vue 3 (推荐使用 Vite 构建)
 * **UI 组件库**：Material Web Components (MWC) 或类似 Vuetify 3 / MUI v5 (需配置为 Material You 风格)。
 * **状态管理**：Zustand (React) 或 Pinia (Vue)，用于管理复杂的剧集观看进度缓存。
-* **持久化与同步**：
-* `webdav-client` (用于与 WebDAV 服务器交互读写 `progress.json`)
-* 本地使用 `IndexedDB` 或 `localStorage` 作为缓存层，实现 Local-first (离线可用，连网同步) 架构。
+* **持久化**：
+* 使用 `localStorage` 作为缓存层，实现本地优先 (Local-first)、离线可用的架构。
 
 
-* **API 交互**：Axios / Fetch，需处理跨域问题 (CORS) 及 Bangumi 接口的认证 Header。
+* **API 交互**：Axios / Fetch，需处理跨域问题 (CORS)。
 
 ## 5. 数据结构设计参考 (Data Models)
 
-*AI 请参考以下数据结构进行 Store 和 同步 JSON 文件的设计：*
+*AI 请参考以下数据结构进行 Store 和 本地 JSON 文件的设计：*
 
 ```json
-// WebDAV 中存储的用户进度文件示例 (progress.json)
+// 本地存储的用户进度文件示例
 {
   "user_id": "aronnax_local",
   "last_sync": 1718293847,
@@ -92,22 +78,19 @@
       "type": "tv_season",
       "tmdb_id": 12345,
       "season_number": 1,
-      "bangumi_subject_id": 364450, // 映射的 Bangumi ID，可为空
       "global_status": "Do", // Wish, Collect, Do, OnHold, Dropped
       "rating": 8,
-      "global_comment": "整体节奏很好，作画优秀。",
       "episodes": {
-        "1": { "watched": true, "comment": "第一集神级展开" },
-        "2": { "watched": true, "comment": "" },
-        "3": { "watched": false, "comment": "" }
+        "1": { "watched": true },
+        "2": { "watched": true },
+        "3": { "watched": false }
       }
     },
     "tmdb_movie_67890": {
       "type": "movie",
       "tmdb_id": 67890,
       "global_status": "Collect",
-      "rating": 9,
-      "global_comment": "经典重温。"
+      "rating": 9
     }
   }
 }
@@ -127,17 +110,5 @@
 * 引入本地状态管理，将点击格子的状态持久化到浏览器的 LocalStorage 中。
 
 
-3. **Phase 3: 评论与评分系统**
-* 在格子组件旁增加展开吐槽的按钮。
+3. **Phase 3: 状态与评分系统**
 * 实现全局状态选择器（想看/在看/等）和打分组件。
-
-
-4. **Phase 4: WebDAV 同步引擎**
-* 开发设置面板，允许用户输入 WebDAV 地址、账号、密码。
-* 实现 Local-first 同步策略：页面加载时拉取 WebDAV JSON 合并本地数据；数据变动时防抖推送到 WebDAV。
-
-
-5. **Phase 5: Bangumi API 联动 (最复杂环节)**
-* 实现 Bangumi 账号授权/Token 绑定。
-* 实现简易的搜索匹配策略（根据 TMDB 名称在 Bangumi 搜索）。
-* 拦截点格子/改状态的操作，并行发送请求至 Bangumi API `/v0/users/-/collections/{subject_id}` 和 `/v0/episodes/{episode_id}/status` 进行状态对齐。

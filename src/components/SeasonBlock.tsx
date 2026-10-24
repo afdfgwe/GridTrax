@@ -124,6 +124,7 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
     const progress = season?.episodes.length ? (watchedCount / season.episodes.length) * 100 : 0;
 
     const statusLabel = record?.global_status ? STATUS_LABELS[record.global_status] : null;
+    // 从首播日期中截取年份；缺失或格式异常时为空，不渲染年份前缀。
     const seasonYear = seasonSummary.air_date?.match(/^\d{4}/)?.[0];
 
     return (

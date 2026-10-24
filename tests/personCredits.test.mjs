@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {groupPersonWorks, normalizePersonCredits} from '../src/utils/personCredits.ts';
 
+// 覆盖人物作品列表（演员表与幕后）的归一化与分组筛选：合并同一作品的多角色/多职务、过滤无效数据、按年份分组并支持类型/职务/年份组合筛选。
 test('同一作品合并所有角色和幕后职务，不修改接口数据，电影和电视剧编号互不冲突', () => {
     const data = {id: 1, cast: [
         {id: 10, media_type: 'movie', title: ' 电影 ', release_date: '', character: ' 甲 ', vote_average: 0},

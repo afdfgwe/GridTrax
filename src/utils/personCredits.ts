@@ -2,17 +2,17 @@ import type {TMDBPersonCombinedCredits, TMDBPersonCredit} from '../types/index.t
 import {getCreditJobLabel} from './movieCredits.ts';
 
 export interface PersonWork {
-    key: string;
+    key: string; // 去重键，格式为 mediaType:id。
     id: number;
     mediaType: 'movie' | 'tv';
     title: string;
     posterPath?: string;
-    date: string;
-    year: string;
-    score?: number;
-    cast: boolean;
-    characters: string[];
-    jobs: string[];
+    date: string; // 上映/首播日期，缺失或异常时为空串。
+    year: string; // 取自 date 的四位年份，缺失时为空串。
+    score?: number; // 接口评分，仅用于展示，与用户评分无关。
+    cast: boolean; // 是否出演过该作品。
+    characters: string[]; // 出演的角色名，多个角色分别保存。
+    jobs: string[]; // 幕后职务的中文标签。
 }
 
 /** 仅接受真实日历日期，缺失或异常值统一归入未知年份，不推测上映时间。 */

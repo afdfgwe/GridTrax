@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {getPersonDepartment, getPersonProfile} from '../src/utils/personProfile.ts';
 
+// 覆盖人物资料的字段映射与展示规则：职业翻译、别名、出生/逝世日期校验、年龄与享年计算及外链白名单。
+
 test('人物资料映射职业并保留简介、日期和别名，不修改接口数据', () => {
     const person = {
         id: 1256179, name: ' 钱雁秋 ', known_for_department: 'Creator', gender: 2,
@@ -44,6 +46,7 @@ test('人物日期校验保留闰日、逝世日期与性别，不展示热度',
 
 test('年龄按周岁计算，生日前一天、当天和之后分别处理', () => {
     const person = {id: 1, name: '甲', birthday: '2000-10-23'};
+    // 生日为 10-23：前一天仍是 25 岁，当天及之后满 26 岁。
     for (const [day, age] of [[22, 25], [23, 26], [24, 26]]) {
         const profile = getPersonProfile(person, new Date(2026, 9, day));
         assert.deepEqual(profile.facts.find(fact => fact.label === '年龄'), {label: '年龄', value: `${age} 岁`});

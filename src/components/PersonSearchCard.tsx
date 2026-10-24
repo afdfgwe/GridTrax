@@ -14,6 +14,7 @@ export default function PersonSearchCard({item}: { item: TMDBSearchResult }) {
     const [failedPath, setFailedPath] = useState<string>();
     const showPortrait = Boolean(item.profile_path && item.profile_path !== failedPath);
     // 只链接有效的电影和电视剧，避免异常条目被误当作电影打开。
+    // 同一作品去重后最多展示 3 部代表作品。
     const works = (item.known_for ?? []).filter(work =>
         (work.media_type === 'movie' || work.media_type === 'tv') &&
         Number.isInteger(work.id) && work.id > 0 && (work.title?.trim() || work.name?.trim())
