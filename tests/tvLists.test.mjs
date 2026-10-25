@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {getTVListRequest, normalizeTVListResponse, resolveTVList, resolveTVListKind, resolveTVListPage, TV_LIST_LABELS} from '../src/utils/tvLists.ts';
+import {
+    getTVListRequest,
+    normalizeTVListResponse,
+    resolveTVList,
+    resolveTVListKind,
+    resolveTVListPage,
+    TV_LIST_LABELS
+} from '../src/utils/tvLists.ts';
 import {toTrendingRows} from '../src/utils/trendingMovies.ts';
 
 test('电视剧列表只接受四种接口，未知网址参数回到趋势榜', () => {
@@ -44,7 +51,12 @@ test('四个列表使用专用接口和中文参数，只有播出列表固定�
 });
 
 test('列表保留接口顺序和分页元数据，不通过当前页条数推算总页数', () => {
-    const response = {page: 2, results: [{id: 9, name: '第二页电视剧', first_air_date: '2020-01-01', vote_average: 8.5}], total_pages: 800, total_results: 16000};
+    const response = {
+        page: 2,
+        results: [{id: 9, name: '第二页电视剧', first_air_date: '2020-01-01', vote_average: 8.5}],
+        total_pages: 800,
+        total_results: 16000
+    };
     const before = structuredClone(response);
     const normalized = normalizeTVListResponse(response);
     assert.equal(normalized.total_pages, 500);

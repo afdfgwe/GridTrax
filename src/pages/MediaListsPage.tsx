@@ -37,12 +37,13 @@ export default function MediaListsPage() {
                 <Tooltip title="返回追踪"><IconButton component={Link} to="/" aria-label="返回追踪" size="small">
                     <ArrowBackIcon fontSize="small"/>
                 </IconButton></Tooltip>
-                <Typography component="h1" sx={{fontSize: {xs: 22, sm: 30}, fontWeight: 800, flex: 1, lineHeight: 1.25}}>
+                <Typography component="h1"
+                            sx={{fontSize: {xs: 22, sm: 30}, fontWeight: 800, flex: 1, lineHeight: 1.25}}>
                     影视列表
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>TMDB</Typography>
                 <Tooltip title="刷新列表"><span><IconButton aria-label="刷新列表" onClick={refresh}
-                                                       disabled={loading} size="small">
+                                                        disabled={loading} size="small">
                     <RefreshIcon fontSize="small"/>
                 </IconButton></span></Tooltip>
             </Box>
@@ -58,15 +59,16 @@ export default function MediaListsPage() {
                 </Select>
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto'}}>
                     <Tooltip title="上一页"><span><IconButton size="small" aria-label="电视剧列表上一页"
-                        disabled={loading || page <= 1} onClick={() => changePage(page - 1)}>
+                                                           disabled={loading || page <= 1}
+                                                           onClick={() => changePage(page - 1)}>
                         <ChevronLeftIcon fontSize="small"/>
                     </IconButton></span></Tooltip>
                     <Typography variant="caption" aria-label="电视剧列表页码" sx={{
                         minWidth: '6ch', textAlign: 'center', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
                     }}>{page} / {totalPages === undefined ? '…' : Math.max(1, totalPages)}</Typography>
                     <Tooltip title="下一页"><span><IconButton size="small" aria-label="电视剧列表下一页"
-                        disabled={loading || Boolean(error) || totalPages === undefined || page >= totalPages}
-                        onClick={() => changePage(page + 1)}>
+                                                           disabled={loading || Boolean(error) || totalPages === undefined || page >= totalPages}
+                                                           onClick={() => changePage(page + 1)}>
                         <ChevronRightIcon fontSize="small"/>
                     </IconButton></span></Tooltip>
                 </Box>
@@ -78,12 +80,13 @@ export default function MediaListsPage() {
                 {fetchedDate && Number.isFinite(fetchedDate.getTime()) &&
                     <Typography variant="caption" color="text.secondary" sx={{fontVariantNumeric: 'tabular-nums'}}>
                         更新于 {fetchedDate.toLocaleString('zh-CN', {
-                            month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                        })}
+                        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                    })}
                     </Typography>}
             </Box>
             {error && <Alert severity="warning" sx={{mb: 2}}
-                             action={<Button color="inherit" size="small" onClick={refresh}>重试</Button>}>{error}</Alert>}
+                             action={<Button color="inherit" size="small"
+                                             onClick={refresh}>重试</Button>}>{error}</Alert>}
             {genreError && <Alert severity="warning" sx={{mb: 2}}
                                   action={<Button color="inherit" size="small" onClick={refresh}>重试</Button>}>
                 电视剧列表已加载，类型名称暂时无法获取。{genreError}
@@ -107,9 +110,9 @@ export default function MediaListsPage() {
                 </Box>)}
             </Box>}
             {rows.length > 0 && <Box component="ol" aria-label={`TMDB电视剧${TV_LIST_LABELS[tvList]}列表`}
-                                    sx={{listStyle: 'none', p: 0, m: 0}}>
+                                     sx={{listStyle: 'none', p: 0, m: 0}}>
                 {rows.map(row => <RankingRow key={`${tvList}-${page}-${row.item.id}`} row={row}
-                                            kind="tv" source="tmdb" genres={genres} countries={countries}/>)}
+                                             kind="tv" source="tmdb" genres={genres} countries={countries}/>)}
             </Box>}
         </Container>
     );

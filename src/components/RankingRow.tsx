@@ -72,12 +72,12 @@ function Scores({row}: { row: HotRow }) {
 
 /** 热门榜与影视列表共用条目排版，保持详情链接与缺失资料的处理一致。 */
 export default function RankingRow({
-                      row,
-                      kind,
-                      source,
-                      genres,
-                      countries
-                  }: { row: HotRow; kind: HotCategory; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[] }) {
+                                       row,
+                                       kind,
+                                       source,
+                                       genres,
+                                       countries
+                                   }: { row: HotRow; kind: HotCategory; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[] }) {
     const {item, movie, person, status} = row;
     // 匹配结束后仍无 TMDB 资料时，使用豆瓣条目编号打开原始详情；加载中保留站内搜索。
     const openDouban = source === 'douban' && !movie && (status === 'unmatched' || status === 'error');
@@ -112,26 +112,33 @@ export default function RankingRow({
             {showPoster &&
                 <Box component={Link} {...linkProps}
                      sx={{
-                         position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
-                         gridRow: person ? 'auto' : {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 1.5, bgcolor: 'action.hover',
+                         position: 'relative',
+                         width: '100%',
+                         aspectRatio: '2 / 3',
+                         alignSelf: 'start',
+                         gridRow: person ? 'auto' : {sm: '1 / span 2'},
+                         overflow: 'hidden',
+                         borderRadius: 1.5,
+                         bgcolor: 'action.hover',
                          '&:hover img': {transform: 'scale(1.035)'},
                          '@media (prefers-reduced-motion: reduce)': {'& img': {transition: 'none'}}
                      }}>
-                    {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> : person && !imagePath ?
-                        <Box role="img" aria-label={`${item.title}暂无头像`} sx={{
-                            height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}><PersonOutlineIcon sx={{fontSize: 32, color: 'text.disabled'}}/></Box> :
-                        // 前三名通常位于首屏，优先加载海报，其余懒加载。
-                        <Box component="img" src={getPosterUrl(imagePath ?? undefined)} alt=""
-                             loading={item.rank <= 3 ? 'eager' : 'lazy'}
-                             onError={event => {
-                                 event.currentTarget.onerror = null;
-                                 event.currentTarget.src = '/placeholder-poster.svg';
-                             }}
-                             sx={{
-                                 display: 'block', width: '100%', height: '100%', objectFit: 'cover',
-                                 transition: 'transform 250ms ease'
-                             }}/>}
+                    {status === 'loading' ?
+                        <Skeleton variant="rectangular" width="100%" height="100%"/> : person && !imagePath ?
+                            <Box role="img" aria-label={`${item.title}暂无头像`} sx={{
+                                height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}><PersonOutlineIcon sx={{fontSize: 32, color: 'text.disabled'}}/></Box> :
+                            // 前三名通常位于首屏，优先加载海报，其余懒加载。
+                            <Box component="img" src={getPosterUrl(imagePath ?? undefined)} alt=""
+                                 loading={item.rank <= 3 ? 'eager' : 'lazy'}
+                                 onError={event => {
+                                     event.currentTarget.onerror = null;
+                                     event.currentTarget.src = '/placeholder-poster.svg';
+                                 }}
+                                 sx={{
+                                     display: 'block', width: '100%', height: '100%', objectFit: 'cover',
+                                     transition: 'transform 250ms ease'
+                                 }}/>}
                     <Box aria-hidden="true" sx={{
                         position: 'absolute', left: 0, top: 0, px: person ? 0.625 : 1, py: 0.25,
                         bgcolor: item.rank <= 3 ? 'primary.main' : 'rgba(12, 18, 22, 0.88)',
@@ -171,7 +178,12 @@ export default function RankingRow({
                     {originalTitle}
                 </Typography>}
                 {person ? works.length > 0 && <Typography component="div" variant="body2" color="text.secondary"
-                                                         sx={{mt: 0.5, fontSize: 13, lineHeight: 1.6, overflowWrap: 'anywhere'}}>
+                                                          sx={{
+                                                              mt: 0.5,
+                                                              fontSize: 13,
+                                                              lineHeight: 1.6,
+                                                              overflowWrap: 'anywhere'
+                                                          }}>
                     {works.map((work, index) => <Fragment key={`${work.kind}-${work.id}`}>
                         {index > 0 && '，'}
                         <Box component={Link} to={`/${work.kind}/${work.id}`} sx={{

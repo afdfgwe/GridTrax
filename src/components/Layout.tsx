@@ -120,14 +120,14 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                     <WhatshotOutlinedIcon/>
                                 </IconButton></Tooltip>
                                 <Tooltip title="影视列表"><IconButton component={Link} to="/lists" aria-label="影视列表"
-                                                                   aria-current={pathname === '/lists' ? 'page' : undefined}
-                                                                   sx={{
-                                                                       color: 'text.secondary',
-                                                                       display: {
-                                                                           xs: isSearchExpanded ? 'none' : 'inline-flex',
-                                                                           sm: 'inline-flex'
-                                                                       }
-                                                                   }}>
+                                                                  aria-current={pathname === '/lists' ? 'page' : undefined}
+                                                                  sx={{
+                                                                      color: 'text.secondary',
+                                                                      display: {
+                                                                          xs: isSearchExpanded ? 'none' : 'inline-flex',
+                                                                          sm: 'inline-flex'
+                                                                      }
+                                                                  }}>
                                     <ListAltOutlinedIcon/>
                                 </IconButton></Tooltip>
                                 <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 1}, flexShrink: 0}}>

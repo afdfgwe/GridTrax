@@ -121,7 +121,11 @@ export default function HotMoviesPage() {
                     <ToggleButton value="week"
                                   aria-label={`TMDB ${categoryLabels[kind]}周榜`}>周榜</ToggleButton>
                 </ToggleButtonGroup> : source === 'douban' && <Typography variant="caption" color="text.secondary"
-                                                   sx={{pb: 1.25, whiteSpace: 'nowrap', fontWeight: 700}}>豆瓣 TOP
+                                                                          sx={{
+                                                                              pb: 1.25,
+                                                                              whiteSpace: 'nowrap',
+                                                                              fontWeight: 700
+                                                                          }}>豆瓣 TOP
                     10</Typography>}
                 {(loading || matching) && <LinearProgress aria-label="加载热门榜"
                                                           sx={{
@@ -184,8 +188,10 @@ export default function HotMoviesPage() {
                          listStyle: 'none', p: 0, m: 0,
                          // 人物资料较少，宽屏双列、窄屏单列，不再沿用影视榜的大海报间距。
                          ...(activeKind === 'person' && {
-                             display: 'grid', gridTemplateColumns: {xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))'},
-                             columnGap: 3, alignItems: 'start'
+                             display: 'grid',
+                             gridTemplateColumns: {xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))'},
+                             columnGap: 3,
+                             alignItems: 'start'
                          })
                      }}>
                     {rows.map(row => <RankingRow
