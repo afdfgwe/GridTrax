@@ -1,6 +1,60 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {getTrendingInfo, toTrendingRows} from '../src/utils/trendingMovies.ts';
+import {getTrendingInfo, getTrendingPersonWorks, resolveHotCategory, toTrendingPersonRows, toTrendingRows} from '../src/utils/trendingMovies.ts';
+
+test('人物榜保留接口顺序、头像、职业和作品，不把热度或作品评分作为人物评分', () => {
+    const people = [
+        {id: 224513, name: ' 安娜 ', original_name: 'Ana de Armas', profile_path: '/portrait.jpg',
+            known_for_department: 'Acting', popularity: 349.766,
+            known_for: [{id: 335984, media_type: 'movie', title: '银翼杀手2049', vote_average: 7.531}]},
+        {id: 1158, name: '阿尔·帕西诺', original_name: 'Al Pacino'},
+    ];
+    const before = structuredClone(people);
+    const rows = toTrendingPersonRows(people);
+    assert.deepEqual(rows.map(row => row.item.rank), [1, 2]);
+    assert.deepEqual(rows.map(row => row.item.id), ['224513', '1158']);
+    assert.equal(rows[0].item.title, '安娜');
+    assert.equal(rows[0].person.profile_path, '/portrait.jpg');
+    assert.equal(rows[0].person.known_for_department, 'Acting');
+    assert.deepEqual(rows[0].person.known_for, people[0].known_for);
+    assert.ok(rows.every(row => row.status === 'matched' && !row.movie && row.item.rating === undefined && row.item.year === undefined));
+    assert.deepEqual(people, before);
+});
+
+test('人物空榜单或可选资料缺失时不伪造评分、年份或作品', () => {
+    assert.deepEqual(toTrendingPersonRows([]), []);
+    const rows = toTrendingPersonRows([{id: 1, name: ' ', original_name: ' Original '}, {id: 2, name: ''}]);
+    assert.equal(rows[0].item.title, 'Original');
+    assert.equal(rows[1].item.title, '未知人物');
+    assert.deepEqual(getTrendingPersonWorks(rows[1].person), []);
+});
+
+test('人物代表作品按类型和编号去重，过滤无效条目并保留正确详情类别', () => {
+    const person = {id: 1, name: '演员', known_for: [
+        {id: 10, media_type: 'movie', title: ' 电影 '},
+        {id: 10, media_type: 'tv', name: '电视剧'},
+        {id: 10, media_type: 'movie', title: '重复电影'},
+        {id: 11, media_type: 'person', name: '不应显示的人物'},
+        {id: 0, media_type: 'movie', title: '编号错误'},
+        {id: 12, media_type: 'tv', name: ' '},
+    ]};
+    const before = structuredClone(person);
+    assert.deepEqual(getTrendingPersonWorks(person), [
+        {id: 10, kind: 'movie', title: '电影'}, {id: 10, kind: 'tv', title: '电视剧'},
+    ]);
+    assert.deepEqual(person, before);
+});
+
+test('榜单网址只在 TMDB 下接受人物类别，豆瓣及无效参数安全回退', () => {
+    assert.equal(resolveHotCategory('person', 'tmdb'), 'person');
+    assert.equal(resolveHotCategory('person', 'douban'), 'movie');
+    for (const source of ['tmdb', 'douban']) {
+        assert.equal(resolveHotCategory('tv', source), 'tv');
+        assert.equal(resolveHotCategory('movie', source), 'movie');
+        assert.equal(resolveHotCategory(null, source), 'movie');
+        assert.equal(resolveHotCategory('invalid', source), 'movie');
+    }
+});
 
 // 只测试接口数据到统一榜单行的转换，榜单顺序与评分来源不能因复用豆瓣组件而改变。
 test('TMDB 日榜保留所有条目和接口顺序，直接使用影片 ID 且不混用豆瓣评分', () => {

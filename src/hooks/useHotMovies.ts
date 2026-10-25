@@ -1,15 +1,15 @@
 import {useEffect, useState} from 'react';
-import {getCountries, getGenres, getTrendingMovies, getTrendingTVShows, searchMovies, searchTV} from '../api/tmdb';
+import {getCountries, getGenres, getTrendingMovies, getTrendingPeople, getTrendingTVShows, searchMovies, searchTV} from '../api/tmdb';
 import type {TMDBCountry, TMDBGenre} from '../types';
-import type {HotRow, HotFeed, HotKind, HotSource, TrendingWindow} from '../types/hotMovies';
+import type {HotRow, HotFeed, HotCategory, HotSource, TrendingWindow} from '../types/hotMovies';
 import {resolveHotMovie} from '../utils/hotMovieMatch';
 import {requestErrorMessage} from '../utils/requestError';
-import {toTrendingRows} from '../utils/trendingMovies';
+import {resolveHotCategory, toTrendingPersonRows, toTrendingRows} from '../utils/trendingMovies';
 
 // 来源、类别、时间窗口和重试次数共同标识一次加载，异步回写必须匹配同一组条件。
 interface Result {
     source: HotSource;
-    kind: HotKind;
+    kind: HotCategory;
     timeWindow: TrendingWindow;
     attempt: number;
     feed?: HotFeed;
@@ -22,7 +22,8 @@ interface Result {
 }
 
 /** 豆瓣以五路并发补全资料，TMDB 直接展示日榜或周榜；切换或刷新时取消旧请求。 */
-export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWindow: TrendingWindow = 'day') {
+export function useHotMovies(category: HotCategory, source: HotSource = 'douban', timeWindow: TrendingWindow = 'day') {
+    const kind = resolveHotCategory(category, source);
     const [attempt, setAttempt] = useState(0);
     const [result, setResult] = useState<Result>();
     useEffect(() => {
@@ -31,20 +32,27 @@ export function useHotMovies(kind: HotKind, source: HotSource = 'douban', timeWi
 
         async function load() {
             if (source === 'tmdb') {
-                // 字典与榜单并行获取，分别处理失败；电影榜不额外请求电视剧使用的地区字典。
-                const genresRequest = getGenres(kind).then(
+                // 字典与影视榜单并行获取；人物不请求影视类型或地区字典。
+                const genresRequest = kind !== 'person' ? getGenres(kind).then(
                     genres => ({genres, genreError: undefined}),
                     error => ({genres: [], genreError: requestErrorMessage(error)}),
-                );
+                ) : Promise.resolve({genres: [], genreError: undefined});
                 const countriesRequest = kind === 'tv' ? getCountries().then(
                     countries => ({countries, countryError: undefined}),
                     error => ({countries: [], countryError: requestErrorMessage(error)}),
                 ) : Promise.resolve({countries: [], countryError: undefined});
                 try {
-                    const movies = await (kind === 'movie' ? getTrendingMovies : getTrendingTVShows)(timeWindow, signal);
-                    if (!Array.isArray(movies)) throw new Error('榜单格式错误');
+                    let rows: HotRow[];
+                    if (kind === 'person') {
+                        const people = await getTrendingPeople(timeWindow, signal);
+                        if (!Array.isArray(people)) throw new Error('榜单格式错误');
+                        rows = toTrendingPersonRows(people);
+                    } else {
+                        const movies = await (kind === 'movie' ? getTrendingMovies : getTrendingTVShows)(timeWindow, signal);
+                        if (!Array.isArray(movies)) throw new Error('榜单格式错误');
+                        rows = toTrendingRows(movies);
+                    }
                     if (signal.aborted) return;
-                    const rows = toTrendingRows(movies);
                     setResult({
                         source, kind, timeWindow, attempt, rows, feed: {
                             items: rows.map(row => row.item), fetchedAt: new Date().toISOString(),

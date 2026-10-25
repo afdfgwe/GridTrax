@@ -1,5 +1,8 @@
-/** 热门榜的筛选维度；日期窗口仅用于 TMDB，豆瓣固定为实时榜。 */
+import type {TMDBSearchResult} from './index.ts';
+
+/** 豆瓣与类型字典只使用影视类别；人物榜仅在 TMDB 来源下提供。 */
 export type HotKind = 'movie' | 'tv';
+export type HotCategory = HotKind | 'person';
 export type HotSource = 'douban' | 'tmdb';
 export type TrendingWindow = 'day' | 'week';
 
@@ -44,10 +47,21 @@ export interface TrendingTVShow extends Omit<TrendingMovie, 'title' | 'original_
     first_air_date?: string;
 }
 
+/** 人物趋势条目不含影片评分，代表作品仅用于展示和跳转，不逐项请求详情。 */
+export interface TrendingPerson {
+    id: number;
+    name: string;
+    original_name?: string;
+    profile_path?: string | null;
+    known_for_department?: string;
+    known_for?: TMDBSearchResult['known_for'];
+}
+
 /** 一行同时保存榜单原始资料与 TMDB 补全资料；未匹配和请求失败是两种不同状态。 */
 export interface HotRow {
     item: HotItem;
     movie?: TrendingMovie;
+    person?: TrendingPerson;
     status: 'loading' | 'matched' | 'unmatched' | 'error';
     error?: string;
 }

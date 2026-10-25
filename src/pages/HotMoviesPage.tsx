@@ -1,5 +1,6 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import {
     Alert,
     Box,
@@ -16,14 +17,18 @@ import {
     Typography
 } from '@mui/material';
 import {darken, lighten} from '@mui/material/styles';
+import {Fragment} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
-import type {HotKind, HotRow, HotSource, TrendingWindow} from '../types/hotMovies';
+import type {HotCategory, HotRow, HotSource, TrendingWindow} from '../types/hotMovies';
 import type {TMDBCountry, TMDBGenre} from '../types';
 import {parseHotMovieInfo} from '../utils/hotMovieInfo';
-import {getTrendingInfo} from '../utils/trendingMovies';
+import {getTrendingInfo, getTrendingPersonWorks, resolveHotCategory} from '../utils/trendingMovies';
+import {getPersonDepartment} from '../utils/personProfile';
+
+const categoryLabels: Record<HotCategory, string> = {movie: '电影', tv: '电视剧', person: '人物'};
 
 /** 两个榜单来源使用不同的数据适配器，最终统一成“标签 + 内容”的展示结构。 */
 function HotInfo({
@@ -84,28 +89,32 @@ function Scores({row}: { row: HotRow }) {
     );
 }
 
-function MovieRow({
+function RankingRow({
                       row,
                       kind,
                       source,
                       genres,
                       countries
-                  }: { row: HotRow; kind: HotKind; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[] }) {
-    const {item, movie, status} = row;
+                  }: { row: HotRow; kind: HotCategory; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[] }) {
+    const {item, movie, person, status} = row;
     // 匹配结束后仍无 TMDB 资料时，使用豆瓣条目编号打开原始详情；加载中保留站内搜索。
     const openDouban = source === 'douban' && !movie && (status === 'unmatched' || status === 'error');
     const linkProps = {
-        to: movie ? `/${kind}/${movie.id}` : openDouban
+        to: person ? `/person/${person.id}` : movie ? `/${kind}/${movie.id}` : openDouban
             ? `https://movie.douban.com/subject/${encodeURIComponent(item.id)}/`
             : `/search?q=${encodeURIComponent(item.title)}`,
         target: openDouban ? '_blank' : undefined,
         rel: openDouban ? 'noopener noreferrer' : undefined,
         'aria-label': openDouban ? `在豆瓣查看${item.title}详情（新标签页打开）`
-            : movie ? `查看${item.title}详情` : `搜索${item.title}`,
+            : person || movie ? `查看${item.title}详情` : `搜索${item.title}`,
     };
-    const showPoster = source === 'douban' || Boolean(movie?.poster_path);
-    const originalTitle = source === 'tmdb' ? movie?.original_title?.trim() : undefined;
-    const overview = source === 'tmdb' ? movie?.overview?.trim() : status === 'error' ? 'TMDB 资料加载失败' :
+    const showPoster = Boolean(person) || source === 'douban' || Boolean(movie?.poster_path);
+    const imagePath = person ? person.profile_path : movie?.poster_path;
+    const originalTitle = person ? (person.original_name?.trim() !== item.title ? person.original_name?.trim() : undefined)
+        : source === 'tmdb' ? movie?.original_title?.trim() : undefined;
+    const department = person ? getPersonDepartment(person.known_for_department) : '';
+    const works = person ? getTrendingPersonWorks(person) : [];
+    const overview = person ? undefined : source === 'tmdb' ? movie?.overview?.trim() : status === 'error' ? 'TMDB 资料加载失败' :
         status === 'unmatched' ? '暂未匹配到 TMDB 影片' : movie?.overview || '暂无简介';
     return (
         <Box component="li" sx={{
@@ -125,9 +134,12 @@ function MovieRow({
                          '&:hover img': {transform: 'scale(1.035)'},
                          '@media (prefers-reduced-motion: reduce)': {'& img': {transition: 'none'}}
                      }}>
-                    {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> :
+                    {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> : person && !imagePath ?
+                        <Box role="img" aria-label={`${item.title}暂无头像`} sx={{
+                            height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}><PersonOutlineIcon sx={{fontSize: 48, color: 'text.disabled'}}/></Box> :
                         // 前三名通常位于首屏，优先加载海报，其余懒加载。
-                        <Box component="img" src={getPosterUrl(movie?.poster_path ?? undefined)} alt=""
+                        <Box component="img" src={getPosterUrl(imagePath ?? undefined)} alt=""
                              loading={item.rank <= 3 ? 'eager' : 'lazy'}
                              onError={event => {
                                  event.currentTarget.onerror = null;
@@ -157,6 +169,8 @@ function MovieRow({
                     }}>
                         {item.title}
                     </Box>
+                    {department && <Typography component="span" color="text.secondary"
+                                               sx={{ml: 1, fontSize: 13, fontWeight: 400}}>{department}</Typography>}
                     {item.year && <Typography component="span" color="text.secondary"
                                               sx={{
                                                   display: 'inline-block', ml: 0.75, fontSize: {xs: 14, sm: 16},
@@ -173,8 +187,19 @@ function MovieRow({
                                               }}>
                     {originalTitle}
                 </Typography>}
-                <HotInfo row={row} source={source} genres={genres} countries={countries}/>
-                <Scores row={row}/>
+                {person ? works.length > 0 && <Typography component="div" variant="body2" color="text.secondary"
+                                                         sx={{mt: 1, lineHeight: 1.8, overflowWrap: 'anywhere'}}>
+                    {works.map((work, index) => <Fragment key={`${work.kind}-${work.id}`}>
+                        {index > 0 && '，'}
+                        <Box component={Link} to={`/${work.kind}/${work.id}`} sx={{
+                            color: 'text.primary', textDecoration: 'none',
+                            '&:hover, &:focus-visible': {color: 'primary.main', textDecoration: 'underline'}
+                        }}>{work.title}</Box>
+                    </Fragment>)}
+                </Typography> : <>
+                    <HotInfo row={row} source={source} genres={genres} countries={countries}/>
+                    <Scores row={row}/>
+                </>}
                 {status === 'loading' &&
                     <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
             </Box>
@@ -185,17 +210,19 @@ function MovieRow({
     );
 }
 
-/** 支持豆瓣电影、电视剧榜单和 TMDB 电影、电视剧日榜及周榜，切换不改动观看记录。 */
+/** 支持豆瓣影视榜及 TMDB 影视、人物日榜和周榜，切换不改动观看记录。 */
 export default function HotMoviesPage() {
     // 榜单选项随当前网址保留，详情返回或刷新时恢复，不额外增加切换历史。
     const [searchParams, setSearchParams] = useSearchParams();
     const source: HotSource = searchParams.get('source') === 'tmdb' ? 'tmdb' : 'douban';
-    const kind: HotKind = searchParams.get('kind') === 'tv' ? 'tv' : 'movie';
+    const kind = resolveHotCategory(searchParams.get('kind'), source);
     const timeWindow: TrendingWindow = searchParams.get('window') === 'week' ? 'week' : 'day';
-    const changeSelection = (key: 'source' | 'kind' | 'window', value: HotSource | HotKind | TrendingWindow) => {
+    const changeSelection = (key: 'source' | 'kind' | 'window', value: HotSource | HotCategory | TrendingWindow) => {
         setSearchParams(previous => {
             const next = new URLSearchParams(previous);
             next.set(key, value);
+            // 从人物榜切回豆瓣时同时修正网址，避免保留一个豆瓣不支持的类别。
+            if (key === 'source' && value === 'douban' && next.get('kind') === 'person') next.set('kind', 'movie');
             return next;
         }, {replace: true});
     };
@@ -247,18 +274,20 @@ export default function HotMoviesPage() {
                 position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1,
                 borderBottom: 1, borderColor: 'divider', mt: {xs: 2, sm: 3}
             }}>
-                <Tabs value={activeKind} onChange={(_, value: HotKind) => changeSelection('kind', value)}
+                <Tabs value={activeKind} onChange={(_, value: HotCategory) => changeSelection('kind', value)}
                       aria-label="热门榜类型"
                       sx={{
                           minHeight: 44,
+                          minWidth: 0,
                           '& .MuiTabs-indicator': {height: 2, visibility: loading || matching ? 'hidden' : 'visible'},
                           '& .MuiTab-root': {
-                              minHeight: 44, minWidth: 72, px: {xs: 1.5, sm: 2.5},
+                              minHeight: 44, minWidth: {xs: 64, sm: 72}, px: {xs: 1.5, sm: 2.5},
                               fontWeight: 700, fontSize: 15
                           }
                       }}>
                     <Tab value="movie" label="电影"/>
                     <Tab value="tv" label="电视剧"/>
+                    {source === 'tmdb' && <Tab value="person" label="人物"/>}
                 </Tabs>
                 {source === 'tmdb' ? <ToggleButtonGroup value={timeWindow} exclusive size="small" aria-label="TMDB 榜单周期"
                                                         onChange={(_, value: TrendingWindow | null) => {
@@ -274,9 +303,9 @@ export default function HotMoviesPage() {
                                                                 lineHeight: 1.5
                                                             }
                                                         }}>
-                    <ToggleButton value="day" aria-label={`TMDB ${kind === 'movie' ? '电影' : '电视剧'}日榜`}>日榜</ToggleButton>
+                    <ToggleButton value="day" aria-label={`TMDB ${categoryLabels[kind]}日榜`}>日榜</ToggleButton>
                     <ToggleButton value="week"
-                                  aria-label={`TMDB ${kind === 'movie' ? '电影' : '电视剧'}周榜`}>周榜</ToggleButton>
+                                  aria-label={`TMDB ${categoryLabels[kind]}周榜`}>周榜</ToggleButton>
                 </ToggleButtonGroup> : <Typography variant="caption" color="text.secondary"
                                                    sx={{pb: 1.25, whiteSpace: 'nowrap', fontWeight: 700}}>豆瓣 TOP
                     10</Typography>}
@@ -317,7 +346,7 @@ export default function HotMoviesPage() {
                 豆瓣榜单已加载，部分 TMDB 资料未能获取。{matchError}
             </Alert>}
             {!loading && !error && rows.length === 0 &&
-                <Typography color="text.secondary" sx={{py: 2}}>暂无热门影片</Typography>}
+                <Typography color="text.secondary" sx={{py: 2}}>{kind === 'person' ? '暂无热门人物' : '暂无热门影片'}</Typography>}
             {loading && <Box aria-label={`正在获取${sourceLabel}榜单`}>
                 {Array.from({length: 5}, (_, index) => <Box key={index} sx={{
                     display: 'flex', gap: 2, py: 3, borderBottom: 1, borderColor: 'divider',
@@ -329,9 +358,9 @@ export default function HotMoviesPage() {
                 </Box>)}
             </Box>}
             {rows.length > 0 &&
-                <Box component="ol" aria-label={`${sourceLabel}${activeKind === 'movie' ? '电影' : '电视剧'}实时热门榜`}
+                <Box component="ol" aria-label={`${sourceLabel}${categoryLabels[activeKind]}实时热门榜`}
                      sx={{listStyle: 'none', p: 0, m: 0}}>
-                    {rows.map(row => <MovieRow
+                    {rows.map(row => <RankingRow
                         key={`${source}-${activeKind}-${source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row}
                         kind={activeKind} source={source} genres={genres} countries={countries}/>)}
                 </Box>}

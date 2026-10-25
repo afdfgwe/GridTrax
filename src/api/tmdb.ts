@@ -1,6 +1,6 @@
 /** TMDB 请求和图片地址的统一入口，页面只调用封装函数，不自行拼接鉴权头。 */
 import axios from 'axios';
-import type {HotKind, HotSearchItem, TrendingMovie, TrendingTVShow, TrendingWindow} from '../types/hotMovies';
+import type {HotKind, HotSearchItem, TrendingMovie, TrendingPerson, TrendingTVShow, TrendingWindow} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import {normalizeTVAggregateCredits} from '../utils/movieCredits';
 import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
@@ -135,6 +135,14 @@ export async function getTrendingMovies(timeWindow: TrendingWindow = 'day', sign
 /** 电视剧日榜、周榜直接使用趋势接口，保留首播日期、原名和地区代码。 */
 export async function getTrendingTVShows(timeWindow: TrendingWindow = 'day', signal?: AbortSignal): Promise<TrendingTVShow[]> {
     const res = await tmdbAxios.get<{ results: TrendingTVShow[] }>(`/trending/tv/${timeWindow}`, {
+        params: {language: 'zh-CN', page: 1}, signal,
+    });
+    return res.data.results;
+}
+
+/** 人物日榜、周榜直接使用趋势条目中的头像、职业及代表作品，不额外请求人物详情。 */
+export async function getTrendingPeople(timeWindow: TrendingWindow = 'day', signal?: AbortSignal): Promise<TrendingPerson[]> {
+    const res = await tmdbAxios.get<{ results: TrendingPerson[] }>(`/trending/person/${timeWindow}`, {
         params: {language: 'zh-CN', page: 1}, signal,
     });
     return res.data.results;
