@@ -1,31 +1,59 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import {Alert, Box, Button, Container, IconButton, Link, Skeleton, Tooltip, Typography} from '@mui/material';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import {
+    Alert,
+    Box,
+    Button,
+    ButtonBase,
+    Container,
+    IconButton,
+    Link,
+    Skeleton,
+    Tooltip,
+    Typography
+} from '@mui/material';
 import {alpha} from '@mui/material/styles';
 import {useCallback, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getPerson, getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import PersonFilmography from '../components/PersonFilmography';
+import PersonPhotoGallery from '../components/PersonPhotoGallery';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {getPersonProfile} from '../utils/personProfile';
 
 /** 人物肖像保持固定比例；空头像或图片加载失败不影响资料展示。 */
-function Portrait({path, name}: { path?: string | null; name: string }) {
+function Portrait({path, name, personId}: { path?: string | null; name: string; personId: number }) {
     const [failed, setFailed] = useState(false);
-    return <Box sx={{
+    const [open, setOpen] = useState(false);
+    const usable = Boolean(path && !failed);
+    return <><Box sx={{
         aspectRatio: '2/3', overflow: 'hidden', borderRadius: '8px', bgcolor: 'action.hover',
         border: 1, borderColor: 'divider', boxShadow: theme => `0 12px 32px ${alpha(theme.palette.common.black, 0.12)}`
     }}>
-        {path && !failed ? <Box component="img" src={getPosterUrl(path, 'h632')} alt={name}
-                                onError={() => setFailed(true)}
-                                sx={{display: 'block', height: '100%', width: '100%', objectFit: 'cover'}}/>
+        {usable && path ? <Tooltip title="查看人物相册"><ButtonBase aria-label={`查看${name}的相册`}
+                                                              onClick={() => setOpen(true)} sx={{
+                display: 'block', width: '100%', height: '100%', position: 'relative',
+                '&:focus-visible': {outline: '3px solid', outlineColor: 'primary.main', outlineOffset: -3}
+            }}>
+                <Box component="img" src={getPosterUrl(path, 'h632')} alt={name}
+                     onError={() => setFailed(true)}
+                     sx={{display: 'block', height: '100%', width: '100%', objectFit: 'cover'}}/>
+                <Box sx={{
+                    position: 'absolute', right: 6, bottom: 6, width: 26, height: 26, borderRadius: 0.75,
+                    display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.55)', color: '#fff'
+                }}>
+                    <OpenInFullIcon sx={{fontSize: 16}}/>
+                </Box>
+            </ButtonBase></Tooltip>
             : <Box role="img" aria-label={`${name}暂无头像`}
                    sx={{height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 <PersonOutlineIcon sx={{fontSize: 72, color: 'text.disabled'}}/>
             </Box>}
-    </Box>;
+    </Box>{open && path &&
+        <PersonPhotoGallery personId={personId} name={name} portrait={path} onClose={() => setOpen(false)}/>}</>;
 }
 
 /** 人物资料和影视履历均为只读展示，不调用观影进度仓库。 */
@@ -77,7 +105,7 @@ export default function PersonDetailPage() {
                 <Box sx={{gridRow: {sm: '1 / span 2'}}}>
                     {/* 头像路径变化时重建 Portrait，重置图片加载失败状态。 */}
                     <Portrait key={`${person.id}:${person.profile_path}`} path={person.profile_path}
-                              name={profile.name}/>
+                              name={profile.name} personId={person.id}/>
                 </Box>
                 <Box sx={{minWidth: 0, alignSelf: {xs: 'center', sm: 'start'}}}>
                     {profile.department && <Typography variant="body2" color="primary.main"

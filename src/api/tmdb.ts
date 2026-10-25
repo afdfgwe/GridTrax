@@ -24,6 +24,7 @@ import type {
     TMDBGenre,
     TMDBMovie,
     TMDBPerson,
+    TMDBPersonImages,
     TMDBPersonCombinedCredits,
     TMDBMovieRecommendations,
     TMDBCredits,
@@ -58,6 +59,7 @@ const creditsCache = createRequestCache<TMDBCredits>(40);
 // 人物资料与作品分开缓存，不占用观影记录空间，也不会因相同编号覆盖作品详情。
 const personCache = createRequestCache<TMDBPerson>(40);
 const personCreditsCache = createRequestCache<PersonWork[]>(20);
+const personImagesCache = createRequestCache<TMDBPersonImages>(40);
 const recommendationsCache = createRequestCache<TMDBTVRecommendations>(40);
 const movieRecommendationsCache = createRequestCache<TMDBMovieRecommendations>(40);
 const movieSimilarCache = createRequestCache<TMDBMovieRecommendations>(40);
@@ -102,6 +104,16 @@ export function getPerson(personId: number): Promise<TMDBPerson> {
         const res = await tmdbAxios.get<TMDBPerson>(`/person/${personId}`, {params: {language}});
         return res.data;
     }));
+}
+
+/** 仅打开相册时调用，独立内存缓存五分钟；不传 language，以保留全部肖像。 */
+export function getPersonImages(personId: number): Promise<TMDBPersonImages> {
+    if (!Number.isSafeInteger(personId) || personId <= 0) return Promise.reject(new Error('人物编号无效'));
+    return personImagesCache.load(`person-images:${personId}`, async () => {
+        const res = await tmdbAxios.get<TMDBPersonImages>(`/person/${personId}/images`);
+        if (!Array.isArray(res.data.profiles)) throw new Error('人物相册格式错误');
+        return res.data;
+    });
 }
 
 /** 影视履历独立加载并缓存五分钟，只请求一次汇总接口，不逐部请求影片详情。 */

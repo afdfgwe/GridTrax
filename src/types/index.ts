@@ -57,6 +57,19 @@ export interface TMDBPerson {
     profile_path?: string | null;
 }
 
+/** 人物相册不按语言过滤，避免遗漏未标注语言的肖像。 */
+export interface TMDBPersonImage {
+    file_path: string;
+    width?: number;
+    height?: number;
+    aspect_ratio?: number;
+}
+
+export interface TMDBPersonImages {
+    id: number;
+    profiles: TMDBPersonImage[];
+}
+
 /** 人物影视履历共用作品字段，电影与电视剧分别使用自己的片名和日期。 */
 export interface TMDBPersonCredit {
     id: number;
