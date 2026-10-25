@@ -1,7 +1,25 @@
 import {useEffect, useState} from 'react';
-import {getCountries, getGenres, getTrendingMovies, getTrendingPeople, getTrendingTVShows, getTVList, searchMovies, searchTV} from '../api/tmdb';
+import {
+    getCountries,
+    getGenres,
+    getMovieList,
+    getTrendingMovies,
+    getTrendingPeople,
+    getTrendingTVShows,
+    getTVList,
+    searchMovies,
+    searchTV
+} from '../api/tmdb';
 import type {TMDBCountry, TMDBGenre} from '../types';
-import type {HotRow, HotFeed, HotCategory, HotSource, TrendingWindow, TVListSelection} from '../types/hotMovies';
+import type {
+    HotRow,
+    HotFeed,
+    HotCategory,
+    HotSource,
+    MovieListKind,
+    TrendingWindow,
+    TVListSelection
+} from '../types/hotMovies';
 import {resolveHotMovie} from '../utils/hotMovieMatch';
 import {requestErrorMessage} from '../utils/requestError';
 import {resolveHotCategory, toTrendingPersonRows, toTrendingRows} from '../utils/trendingMovies';
@@ -20,16 +38,17 @@ interface Result {
     error?: string;
 }
 
-/** 豆瓣五路并发补全；TMDB 趋势榜或电视剧列表直接展示，切换时取消旧请求。 */
+/** 豆瓣五路并发补全；TMDB 趋势榜或影视列表直接展示，切换时取消旧请求。 */
 export function useHotMovies(category: HotCategory, source: HotSource = 'douban', timeWindow: TrendingWindow = 'day',
-                             options: {tvList?: TVListSelection; page?: number} = {}) {
+                             options: { tvList?: TVListSelection; movieList?: MovieListKind; page?: number } = {}) {
     const kind = resolveHotCategory(category, source);
     const tvList = source === 'tmdb' && kind === 'tv' ? options.tvList ?? 'trending' : 'trending';
-    const page = tvList !== 'trending' ? resolveTVListPage(options.page ?? 1) : 1;
+    const movieList = source === 'tmdb' && kind === 'movie' ? options.movieList : undefined;
+    const page = tvList !== 'trending' || movieList ? resolveTVListPage(options.page ?? 1) : 1;
     const [attempt, setAttempt] = useState(0);
     const [result, setResult] = useState<Result>();
-    const [pagination, setPagination] = useState<{key: string; totalPages: number}>();
-    const paginationKey = `${source}:${kind}:${timeWindow}:${tvList}`;
+    const [pagination, setPagination] = useState<{ key: string; totalPages: number }>();
+    const paginationKey = `${source}:${kind}:${timeWindow}:${tvList}:${movieList ?? ''}`;
     const requestKey = `${paginationKey}:${page}:${attempt}`;
     useEffect(() => {
         const controller = new AbortController();
@@ -49,7 +68,11 @@ export function useHotMovies(category: HotCategory, source: HotSource = 'douban'
                 try {
                     let rows: HotRow[];
                     let totalPages: number | undefined;
-                    if (kind === 'tv' && tvList !== 'trending') {
+                    if (kind === 'movie' && movieList) {
+                        const list = await getMovieList(movieList, page, signal);
+                        rows = toTrendingRows(list.results, (list.page - 1) * 20);
+                        totalPages = list.total_pages;
+                    } else if (kind === 'tv' && tvList !== 'trending') {
                         const list = await getTVList(tvList, page, signal);
                         rows = toTrendingRows(list.results, (list.page - 1) * 20);
                         totalPages = list.total_pages;
@@ -130,7 +153,7 @@ export function useHotMovies(category: HotCategory, source: HotSource = 'douban'
 
         void load();
         return () => controller.abort();
-    }, [kind, source, timeWindow, tvList, page, paginationKey, requestKey]);
+    }, [kind, source, timeWindow, tvList, movieList, page, paginationKey, requestKey]);
     // 切换选项后不展示上一组结果；榜单已返回但仍在补全资料时，用 matching 单独提示进度。
     const current = result?.key === requestKey ? result : undefined;
     return {

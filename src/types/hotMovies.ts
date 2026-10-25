@@ -7,14 +7,18 @@ export type HotSource = 'douban' | 'tmdb';
 export type TrendingWindow = 'day' | 'week';
 export type TVListKind = 'airing_today' | 'on_the_air' | 'popular' | 'top_rated';
 export type TVListSelection = 'trending' | TVListKind;
+export type MovieListKind = 'now_playing' | 'popular' | 'top_rated' | 'upcoming';
 
-/** 四种电视剧列表共用分页结构；趋势榜仍保留原有日榜、周榜逻辑。 */
-export interface TVListResponse {
+/** 电影与电视剧列表共用分页元数据，但保留各自的标题和日期字段。 */
+export interface MediaListResponse<T> {
     page: number;
-    results: TrendingTVShow[];
+    results: T[];
     total_pages: number;
     total_results: number;
 }
+
+export type TVListResponse = MediaListResponse<TrendingTVShow>;
+export type MovieListResponse = MediaListResponse<TrendingMovie>;
 
 /** 榜单只保留作品资料，不转发豆瓣返回的用户、评论及追踪信息。 */
 export interface HotItem {
