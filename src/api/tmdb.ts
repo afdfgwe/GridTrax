@@ -18,6 +18,7 @@ import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
 import {loadPersonDetails} from './personDetails';
 import {getTVListRequest, normalizeTVListResponse} from '../utils/tvLists';
 import {getMovieListRequest, normalizeMovieListResponse} from '../utils/movieLists';
+import {getMovieDiscoveryRequest, type MovieDiscoveryFilters} from '../utils/movieDiscovery';
 import type {
     TMDBCountry,
     TMDBCollection,
@@ -65,6 +66,32 @@ const movieRecommendationsCache = createRequestCache<TMDBMovieRecommendations>(4
 const movieSimilarCache = createRequestCache<TMDBMovieRecommendations>(40);
 const collectionsCache = createRequestCache<TMDBCollection>(40);
 const similarCache = createRequestCache<TMDBTVRecommendations>(40);
+const discoveryCache = createRequestCache<MovieListResponse>(40);
+const languagesCache = createRequestCache<TMDBLanguage[]>(1, 24 * 60 * 60_000);
+
+/** 原始语言字典只加载一次，不影响其他页面的中文界面语言。 */
+export interface TMDBLanguage {
+    iso_639_1: string;
+    english_name: string;
+    name: string;
+}
+
+export function getLanguages(): Promise<TMDBLanguage[]> {
+    return languagesCache.load('languages', async () => {
+        const res = await tmdbAxios.get<TMDBLanguage[]>('/configuration/languages');
+        if (!Array.isArray(res.data)) throw new Error('语言列表格式错误');
+        return res.data;
+    });
+}
+
+/** 筛选结果有界缓存五分钟；共享请求不被页面卸载取消，过时结果由资源钩子忽略。 */
+export function discoverMovies(filters: MovieDiscoveryFilters, page = 1): Promise<MovieListResponse> {
+    const request = getMovieDiscoveryRequest(filters, page);
+    return discoveryCache.load(JSON.stringify(request.params), async () => {
+        const res = await tmdbAxios.get<MovieListResponse>(request.path, {params: request.params});
+        return normalizeMovieListResponse(res.data);
+    });
+}
 
 // 请求路径含作品类型、作品 ID 和季号，可直接作为详情缓存键，避免不同资源相互覆盖。
 function getDetails<T extends TMDBMovie | TMDBTVShow | TMDBSeason>(path: string): Promise<T> {

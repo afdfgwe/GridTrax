@@ -2,6 +2,7 @@ import MovieIcon from '@mui/icons-material/Movie';
 import WhatshotOutlinedIcon from '@mui/icons-material/WhatshotOutlined';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
+import TuneIcon from '@mui/icons-material/Tune';
 import {
     AppBar, Box, Container, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar, Tooltip, Typography,
     useMediaQuery, useScrollTrigger,
@@ -53,7 +54,7 @@ function BrowseMenu() {
     const {pathname} = useLocation();
 
     return <>
-        <Tooltip title="热门榜与影视列表"><IconButton
+        <Tooltip title="热门榜、影视列表与筛选找片"><IconButton
             id="browse-menu-button" aria-label="热门榜与影视列表"
             aria-haspopup="menu" aria-expanded={Boolean(anchor)}
             aria-controls={anchor ? 'browse-menu' : undefined}
@@ -73,6 +74,11 @@ function BrowseMenu() {
                       aria-current={pathname === '/lists' ? 'page' : undefined} onClick={() => setAnchor(null)}>
                 <ListItemIcon><ListAltOutlinedIcon fontSize="small"/></ListItemIcon>
                 <ListItemText>影视列表</ListItemText>
+            </MenuItem>
+            <MenuItem component={Link} to="/discover" selected={pathname === '/discover'}
+                      aria-current={pathname === '/discover' ? 'page' : undefined} onClick={() => setAnchor(null)}>
+                <ListItemIcon><TuneIcon fontSize="small"/></ListItemIcon>
+                <ListItemText>筛选找片</ListItemText>
             </MenuItem>
         </Menu>
     </>;
@@ -168,6 +174,14 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                                                       }
                                                                   }}>
                                     <ListAltOutlinedIcon/>
+                                </IconButton></Tooltip>
+                                <Tooltip title="筛选找片"><IconButton component={Link} to="/discover" aria-label="筛选找片"
+                                                                  aria-current={pathname === '/discover' ? 'page' : undefined}
+                                                                  sx={{
+                                                                      color: 'text.secondary',
+                                                                      display: {xs: 'none', sm: 'inline-flex'}
+                                                                  }}>
+                                    <TuneIcon/>
                                 </IconButton></Tooltip>
                                 <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 1}, flexShrink: 0}}>
                                     <DataBackupPanel/>
