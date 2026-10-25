@@ -1,7 +1,11 @@
 import MovieIcon from '@mui/icons-material/Movie';
 import WhatshotOutlinedIcon from '@mui/icons-material/WhatshotOutlined';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
-import {AppBar, Box, Container, IconButton, Toolbar, Tooltip, Typography, useScrollTrigger} from '@mui/material';
+import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
+import {
+    AppBar, Box, Container, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar, Tooltip, Typography,
+    useMediaQuery, useScrollTrigger,
+} from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
 import type {SxProps, Theme} from '@mui/material/styles';
 import React, {useState} from 'react';
@@ -43,10 +47,42 @@ interface LayoutProps {
     children: React.ReactNode;
 }
 
+/** 窄屏合并浏览入口；切换到宽屏时卸载，避免菜单残留或遮挡独立图标。 */
+function BrowseMenu() {
+    const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+    const {pathname} = useLocation();
+
+    return <>
+        <Tooltip title="热门榜与影视列表"><IconButton
+            id="browse-menu-button" aria-label="热门榜与影视列表"
+            aria-haspopup="menu" aria-expanded={Boolean(anchor)}
+            aria-controls={anchor ? 'browse-menu' : undefined}
+            onClick={event => setAnchor(event.currentTarget)} sx={{color: 'text.secondary'}}>
+            <MenuOutlinedIcon/>
+        </IconButton></Tooltip>
+        <Menu id="browse-menu" anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}
+              anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+              transformOrigin={{vertical: 'top', horizontal: 'right'}}
+              slotProps={{list: {'aria-labelledby': 'browse-menu-button'}}}>
+            <MenuItem component={Link} to="/hot" selected={pathname === '/hot'}
+                      aria-current={pathname === '/hot' ? 'page' : undefined} onClick={() => setAnchor(null)}>
+                <ListItemIcon><WhatshotOutlinedIcon fontSize="small"/></ListItemIcon>
+                <ListItemText>热门榜</ListItemText>
+            </MenuItem>
+            <MenuItem component={Link} to="/lists" selected={pathname === '/lists'}
+                      aria-current={pathname === '/lists' ? 'page' : undefined} onClick={() => setAnchor(null)}>
+                <ListItemIcon><ListAltOutlinedIcon fontSize="small"/></ListItemIcon>
+                <ListItemText>影视列表</ListItemText>
+            </MenuItem>
+        </Menu>
+    </>;
+}
+
 /** 全站公共框架：固定工具栏与页面主体，搜索、备份、主题入口跨页面保留。 */
 const Layout: React.FC<LayoutProps> = ({children}) => {
     // 搜索组件只上报展开状态；公共布局据此分配空间，不接管输入或查询请求。
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+    const compactNavigation = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
     const {pathname} = useLocation();
 
     return (
@@ -66,6 +102,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                     textDecoration: 'none',
                                     color: 'inherit',
                                     gap: {xs: 1, sm: 1.5},
+                                    '@media (max-width: 359px)': {gap: 0.75},
                                     flexShrink: 0
                                 }}
                             >
@@ -76,6 +113,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                         justifyContent: 'center',
                                         width: 40,
                                         height: 40,
+                                        '@media (max-width: 359px)': {width: 32, height: 32},
                                         borderRadius: '8px',
                                         backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.1),
                                         color: 'primary.main',
@@ -88,7 +126,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                     noWrap
                                     sx={{
                                         fontWeight: 800,
-                                        '@media (max-width: 399px)': {display: 'none'},
+                                        '@media (max-width: 359px)': {fontSize: 17},
                                         letterSpacing: 0,
                                         background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                                         WebkitBackgroundClip: 'text',
@@ -108,12 +146,13 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                 justifyContent: 'flex-end'
                             }}>
                                 <SearchBar onExpandChange={setIsSearchExpanded}/>
+                                {compactNavigation && !isSearchExpanded && <BrowseMenu/>}
                                 <Tooltip title="电影实时热门榜"><IconButton component={Link} to="/hot" aria-label="电影实时热门榜"
                                                                      aria-current={pathname === '/hot' ? 'page' : undefined}
                                                                      sx={{
                                                                          color: 'text.secondary',
                                                                          display: {
-                                                                             xs: isSearchExpanded ? 'none' : 'inline-flex',
+                                                                             xs: 'none',
                                                                              sm: 'inline-flex'
                                                                          }
                                                                      }}>
@@ -124,7 +163,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                                                   sx={{
                                                                       color: 'text.secondary',
                                                                       display: {
-                                                                          xs: isSearchExpanded ? 'none' : 'inline-flex',
+                                                                          xs: 'none',
                                                                           sm: 'inline-flex'
                                                                       }
                                                                   }}>
