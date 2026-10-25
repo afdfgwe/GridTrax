@@ -1,10 +1,11 @@
 /** TMDB 请求和图片地址的统一入口，页面只调用封装函数，不自行拼接鉴权头。 */
 import axios from 'axios';
-import type {HotKind, HotSearchItem, TrendingMovie, TrendingPerson, TrendingTVShow, TrendingWindow} from '../types/hotMovies';
+import type {HotKind, HotSearchItem, TrendingMovie, TrendingPerson, TrendingTVShow, TrendingWindow, TVListKind, TVListResponse} from '../types/hotMovies';
 import {createRequestCache} from '../utils/requestCache';
 import {normalizeTVAggregateCredits} from '../utils/movieCredits';
 import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
 import {loadPersonDetails} from './personDetails';
+import {getTVListRequest, normalizeTVListResponse} from '../utils/tvLists';
 import type {
     TMDBCountry,
     TMDBGenre,
@@ -139,6 +140,13 @@ export async function getTrendingTVShows(timeWindow: TrendingWindow = 'day', sig
         params: {language: 'zh-CN', page: 1}, signal,
     });
     return res.data.results;
+}
+
+/** 四种电视剧列表按页加载，播出日期统一按北京时间，复用已有鉴权配置。 */
+export async function getTVList(list: TVListKind, page = 1, signal?: AbortSignal): Promise<TVListResponse> {
+    const request = getTVListRequest(list, page);
+    const res = await tmdbAxios.get<TVListResponse>(request.path, {params: request.params, signal});
+    return normalizeTVListResponse(res.data);
 }
 
 /** 人物日榜、周榜直接使用趋势条目中的头像、职业及代表作品，不额外请求人物详情。 */

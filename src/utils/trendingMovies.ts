@@ -37,7 +37,7 @@ export function getTrendingPersonWorks(person: TrendingPerson) {
 }
 
 /** 保持接口排名并复用榜单行结构，不把 TMDB 评分填入豆瓣评分字段。 */
-export function toTrendingRows(entries: (TrendingMovie | TrendingTVShow)[]): HotRow[] {
+export function toTrendingRows(entries: (TrendingMovie | TrendingTVShow)[], rankOffset = 0): HotRow[] {
     return entries.map((entry, index) => {
         // 统一标题和日期字段，保留接口原始排名、类型及地区，不额外搜索匹配。
         const movie: TrendingMovie = 'name' in entry ? {
@@ -46,7 +46,7 @@ export function toTrendingRows(entries: (TrendingMovie | TrendingTVShow)[]): Hot
         return {
             item: {
                 id: String(movie.id),
-                rank: index + 1,
+                rank: rankOffset + index + 1,
                 title: movie.title,
                 year: movie.release_date?.match(/^\d{4}(?=-)/)?.[0],
             },

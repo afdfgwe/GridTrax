@@ -1,6 +1,8 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
     Alert,
     Box,
@@ -8,6 +10,8 @@ import {
     Container,
     IconButton,
     LinearProgress,
+    MenuItem,
+    Select,
     Skeleton,
     Tab,
     Tabs,
@@ -22,11 +26,12 @@ import {Link, useSearchParams} from 'react-router-dom';
 import {getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useHotMovies} from '../hooks/useHotMovies';
-import type {HotCategory, HotRow, HotSource, TrendingWindow} from '../types/hotMovies';
+import type {HotCategory, HotRow, HotSource, TrendingWindow, TVListSelection} from '../types/hotMovies';
 import type {TMDBCountry, TMDBGenre} from '../types';
 import {parseHotMovieInfo} from '../utils/hotMovieInfo';
 import {getTrendingInfo, getTrendingPersonWorks, resolveHotCategory} from '../utils/trendingMovies';
 import {getPersonDepartment} from '../utils/personProfile';
+import {resolveTVList, resolveTVListPage, TV_LIST_LABELS} from '../utils/tvLists';
 
 const categoryLabels: Record<HotCategory, string> = {movie: '电影', tv: '电视剧', person: '人物'};
 
@@ -211,17 +216,21 @@ function RankingRow({
     );
 }
 
-/** 支持豆瓣影视榜及 TMDB 影视、人物日榜和周榜，切换不改动观看记录。 */
+/** 支持豆瓣榜、TMDB 趋势榜和分页电视剧列表，切换不改动观看记录。 */
 export default function HotMoviesPage() {
-    // 榜单选项随当前网址保留，详情返回或刷新时恢复，不额外增加切换历史。
+    // 榜单选项随当前网址保留，详情返回或刷新时恢复；列表切换不额外增加历史。
     const [searchParams, setSearchParams] = useSearchParams();
     const source: HotSource = searchParams.get('source') === 'tmdb' ? 'tmdb' : 'douban';
     const kind = resolveHotCategory(searchParams.get('kind'), source);
     const timeWindow: TrendingWindow = searchParams.get('window') === 'week' ? 'week' : 'day';
-    const changeSelection = (key: 'source' | 'kind' | 'window', value: HotSource | HotCategory | TrendingWindow) => {
+    const tvList = resolveTVList(searchParams.get('list'));
+    const isTVList = source === 'tmdb' && kind === 'tv' && tvList !== 'trending';
+    const page = isTVList ? resolveTVListPage(searchParams.get('page')) : 1;
+    const changeSelection = (key: 'source' | 'kind' | 'window' | 'list', value: HotSource | HotCategory | TrendingWindow | TVListSelection) => {
         setSearchParams(previous => {
             const next = new URLSearchParams(previous);
             next.set(key, value);
+            next.delete('page');
             // 从人物榜切回豆瓣时同时修正网址，避免保留一个豆瓣不支持的类别。
             if (key === 'source' && value === 'douban' && next.get('kind') === 'person') next.set('kind', 'movie');
             return next;
@@ -238,10 +247,19 @@ export default function HotMoviesPage() {
         error,
         loading,
         matching,
-        refresh
+        refresh,
+        totalPages
     } = useHotMovies(
-        activeKind, source, source === 'tmdb' ? timeWindow : 'day',
+        activeKind, source, source === 'tmdb' && !isTVList ? timeWindow : 'day', {tvList, page},
     );
+    const changePage = (nextPage: number) => {
+        setSearchParams(previous => {
+            const next = new URLSearchParams(previous);
+            next.set('page', String(nextPage));
+            return next;
+        });
+        window.scrollTo({top: 0, behavior: 'instant'});
+    };
     const sourceLabel = source === 'tmdb' ? 'TMDB' : '豆瓣';
     const matchError = rows.find(row => row.error)?.error;
     const fetchedDate = fetchedAt ? new Date(fetchedAt) : undefined;
@@ -290,7 +308,7 @@ export default function HotMoviesPage() {
                     <Tab value="tv" label="电视剧"/>
                     {source === 'tmdb' && <Tab value="person" label="人物"/>}
                 </Tabs>
-                {source === 'tmdb' ? <ToggleButtonGroup value={timeWindow} exclusive size="small" aria-label="TMDB 榜单周期"
+                {source === 'tmdb' && !isTVList ? <ToggleButtonGroup value={timeWindow} exclusive size="small" aria-label="TMDB 榜单周期"
                                                         onChange={(_, value: TrendingWindow | null) => {
                                                             if (value) changeSelection('window', value);
                                                         }}
@@ -307,7 +325,7 @@ export default function HotMoviesPage() {
                     <ToggleButton value="day" aria-label={`TMDB ${categoryLabels[kind]}日榜`}>日榜</ToggleButton>
                     <ToggleButton value="week"
                                   aria-label={`TMDB ${categoryLabels[kind]}周榜`}>周榜</ToggleButton>
-                </ToggleButtonGroup> : <Typography variant="caption" color="text.secondary"
+                </ToggleButtonGroup> : source === 'douban' && <Typography variant="caption" color="text.secondary"
                                                    sx={{pb: 1.25, whiteSpace: 'nowrap', fontWeight: 700}}>豆瓣 TOP
                     10</Typography>}
                 {(loading || matching) && <LinearProgress aria-label="加载热门榜"
@@ -320,6 +338,31 @@ export default function HotMoviesPage() {
                                                               borderRadius: 0
                                                           }}/>}
             </Box>
+            {source === 'tmdb' && kind === 'tv' && <Box sx={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 1.5,
+                flexWrap: 'wrap'
+            }}>
+                <Select size="small" value={tvList} inputProps={{'aria-label': '电视剧列表'}}
+                        onChange={event => changeSelection('list', event.target.value as TVListSelection)}
+                        sx={{minWidth: 120, fontSize: 13, '& .MuiSelect-select': {py: 0.75}}}>
+                    {(Object.entries(TV_LIST_LABELS) as [TVListSelection, string][]).map(([value, label]) =>
+                        <MenuItem key={value} value={value}>{label}</MenuItem>)}
+                </Select>
+                {isTVList && <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto'}}>
+                    <Tooltip title="上一页"><span><IconButton size="small" aria-label="电视剧列表上一页"
+                        disabled={loading || page <= 1} onClick={() => changePage(page - 1)}>
+                        <ChevronLeftIcon fontSize="small"/>
+                    </IconButton></span></Tooltip>
+                    <Typography variant="caption" aria-label="电视剧列表页码" sx={{
+                        minWidth: '8ch', textAlign: 'center', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums'
+                    }}>{page} / {totalPages === undefined ? '…' : Math.max(1, totalPages)}</Typography>
+                    <Tooltip title="下一页"><span><IconButton size="small" aria-label="电视剧列表下一页"
+                        disabled={loading || Boolean(error) || totalPages === undefined || page >= totalPages}
+                        onClick={() => changePage(page + 1)}>
+                        <ChevronRightIcon fontSize="small"/>
+                    </IconButton></span></Tooltip>
+                </Box>}
+            </Box>}
             <Box sx={{display: 'flex', justifyContent: 'flex-end', minHeight: 36, alignItems: 'center'}}>
                 {fetchedDate && Number.isFinite(fetchedDate.getTime()) &&
                     <Typography variant="caption" color="text.secondary" sx={{fontVariantNumeric: 'tabular-nums'}}>
@@ -366,7 +409,7 @@ export default function HotMoviesPage() {
                 </Box>)}
             </Box>}
             {rows.length > 0 &&
-                <Box component="ol" aria-label={`${sourceLabel}${categoryLabels[activeKind]}实时热门榜`}
+                <Box component="ol" aria-label={isTVList ? `TMDB电视剧${TV_LIST_LABELS[tvList]}列表` : `${sourceLabel}${categoryLabels[activeKind]}实时热门榜`}
                      sx={{
                          listStyle: 'none', p: 0, m: 0,
                          // 人物资料较少，宽屏双列、窄屏单列，不再沿用影视榜的大海报间距。
@@ -376,7 +419,7 @@ export default function HotMoviesPage() {
                          })
                      }}>
                     {rows.map(row => <RankingRow
-                        key={`${source}-${activeKind}-${source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row}
+                        key={`${source}-${activeKind}-${isTVList ? `${tvList}-${page}` : source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row}
                         kind={activeKind} source={source} genres={genres} countries={countries}/>)}
                 </Box>}
         </Container>
