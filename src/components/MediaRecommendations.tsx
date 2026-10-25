@@ -150,7 +150,11 @@ export default function MediaRecommendations({
 
     return (
         <Box component="section" aria-labelledby={headingId} aria-busy={loading}
-             sx={{mt: kind === 'similar' ? 1.5 : 4, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
+             sx={{
+                 mt: kind === 'similar' ? 1.5 : 4, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0,
+                 // 仅在合集实际显示时缩小后续推荐的间距，保持与“推荐 → 相似”一致。
+                 '& + section[aria-labelledby="movie-recommendations-heading"]': kind === 'collection' ? {mt: 1.5} : {},
+             }}>
             <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
                 <Box sx={{minWidth: 0}}>
                     <Typography id={headingId} component="h2" variant="h6" fontWeight={700}>{title}</Typography>
