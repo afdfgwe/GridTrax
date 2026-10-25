@@ -119,25 +119,26 @@ function RankingRow({
     return (
         <Box component="li" sx={{
             minWidth: 0, borderBottom: 1, borderColor: 'divider', display: 'grid',
-            gridTemplateColumns: showPoster ? {
+            gridTemplateColumns: person ? {xs: '64px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'} : showPoster ? {
                 xs: '96px minmax(0, 1fr)',
                 sm: '140px minmax(0, 1fr)'
             } : 'minmax(0, 1fr)',
-            columnGap: {xs: 2, sm: 3}, rowGap: 1.5, py: {xs: 2.5, sm: 3}, px: {xs: 0, sm: 1},
-            '&:first-of-type': {pt: {xs: 1.5, sm: 2}}
+            columnGap: person ? 1.5 : {xs: 2, sm: 3}, rowGap: person ? 0 : 1.5,
+            py: person ? 1.75 : {xs: 2.5, sm: 3}, px: person ? 0 : {xs: 0, sm: 1},
+            ...(!person && {'&:first-of-type': {pt: {xs: 1.5, sm: 2}}})
         }}>
             {showPoster &&
                 <Box component={Link} {...linkProps}
                      sx={{
                          position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
-                         gridRow: {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 1.5, bgcolor: 'action.hover',
+                         gridRow: person ? 'auto' : {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 1.5, bgcolor: 'action.hover',
                          '&:hover img': {transform: 'scale(1.035)'},
                          '@media (prefers-reduced-motion: reduce)': {'& img': {transition: 'none'}}
                      }}>
                     {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> : person && !imagePath ?
                         <Box role="img" aria-label={`${item.title}暂无头像`} sx={{
                             height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}><PersonOutlineIcon sx={{fontSize: 48, color: 'text.disabled'}}/></Box> :
+                        }}><PersonOutlineIcon sx={{fontSize: 32, color: 'text.disabled'}}/></Box> :
                         // 前三名通常位于首屏，优先加载海报，其余懒加载。
                         <Box component="img" src={getPosterUrl(imagePath ?? undefined)} alt=""
                              loading={item.rank <= 3 ? 'eager' : 'lazy'}
@@ -150,17 +151,17 @@ function RankingRow({
                                  transition: 'transform 250ms ease'
                              }}/>}
                     <Box aria-hidden="true" sx={{
-                        position: 'absolute', left: 0, top: 0, px: 1, py: 0.25,
+                        position: 'absolute', left: 0, top: 0, px: person ? 0.625 : 1, py: 0.25,
                         bgcolor: item.rank <= 3 ? 'primary.main' : 'rgba(12, 18, 22, 0.88)',
                         color: item.rank <= 3 ? 'primary.contrastText' : '#fff',
-                        fontSize: 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums'
+                        fontSize: person ? 12 : 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums'
                     }}>
                         {String(item.rank).padStart(2, '0')}
                     </Box>
                 </Box>}
             <Box sx={{minWidth: 0}}>
                 <Typography component="h2" sx={{
-                    fontWeight: 750, fontSize: {xs: 18, sm: 23}, lineHeight: 1.35,
+                    fontWeight: 750, fontSize: person ? {xs: 17, sm: 18} : {xs: 18, sm: 23}, lineHeight: 1.35,
                     overflowWrap: 'anywhere'
                 }}>
                     <Box component={Link} {...linkProps} sx={{
@@ -181,14 +182,14 @@ function RankingRow({
                                               sx={{
                                                   mt: 0.375,
                                                   fontWeight: 750,
-                                                  fontSize: {xs: 14, sm: 16},
+                                                  fontSize: person ? 13 : {xs: 14, sm: 16},
                                                   lineHeight: 1.4,
                                                   overflowWrap: 'anywhere'
                                               }}>
                     {originalTitle}
                 </Typography>}
                 {person ? works.length > 0 && <Typography component="div" variant="body2" color="text.secondary"
-                                                         sx={{mt: 1, lineHeight: 1.8, overflowWrap: 'anywhere'}}>
+                                                         sx={{mt: 0.5, fontSize: 13, lineHeight: 1.6, overflowWrap: 'anywhere'}}>
                     {works.map((work, index) => <Fragment key={`${work.kind}-${work.id}`}>
                         {index > 0 && '，'}
                         <Box component={Link} to={`/${work.kind}/${work.id}`} sx={{
@@ -347,19 +348,33 @@ export default function HotMoviesPage() {
             </Alert>}
             {!loading && !error && rows.length === 0 &&
                 <Typography color="text.secondary" sx={{py: 2}}>{kind === 'person' ? '暂无热门人物' : '暂无热门影片'}</Typography>}
-            {loading && <Box aria-label={`正在获取${sourceLabel}榜单`}>
-                {Array.from({length: 5}, (_, index) => <Box key={index} sx={{
-                    display: 'flex', gap: 2, py: 3, borderBottom: 1, borderColor: 'divider',
-                    '&:first-of-type': {pt: 2}
+            {loading && <Box aria-label={`正在获取${sourceLabel}榜单`} sx={kind === 'person' ? {
+                display: 'grid', gridTemplateColumns: {xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))'},
+                columnGap: 3, alignItems: 'start'
+            } : undefined}>
+                {Array.from({length: kind === 'person' ? 6 : 5}, (_, index) => <Box key={index} sx={{
+                    display: 'flex', gap: kind === 'person' ? 1.5 : 2, py: kind === 'person' ? 1.75 : 3,
+                    minWidth: 0, borderBottom: 1, borderColor: 'divider',
+                    ...(kind !== 'person' && {'&:first-of-type': {pt: 2}})
                 }}>
-                    <Skeleton variant="rectangular" width={96} height={144}/>
-                    <Box sx={{flex: 1}}><Skeleton width="55%" height={32}/><Skeleton width="30%"/><Skeleton/><Skeleton
-                        width="85%"/></Box>
+                    <Skeleton variant="rectangular" sx={{
+                        width: kind === 'person' ? {xs: 64, sm: 72} : 96, aspectRatio: '2 / 3',
+                        height: 'auto', flexShrink: 0, borderRadius: 1.5
+                    }}/>
+                    <Box sx={{flex: 1, minWidth: 0}}><Skeleton width="55%" height={kind === 'person' ? 24 : 32}/>
+                        <Skeleton width="30%"/><Skeleton/>{kind !== 'person' && <Skeleton width="85%"/>}</Box>
                 </Box>)}
             </Box>}
             {rows.length > 0 &&
                 <Box component="ol" aria-label={`${sourceLabel}${categoryLabels[activeKind]}实时热门榜`}
-                     sx={{listStyle: 'none', p: 0, m: 0}}>
+                     sx={{
+                         listStyle: 'none', p: 0, m: 0,
+                         // 人物资料较少，宽屏双列、窄屏单列，不再沿用影视榜的大海报间距。
+                         ...(activeKind === 'person' && {
+                             display: 'grid', gridTemplateColumns: {xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))'},
+                             columnGap: 3, alignItems: 'start'
+                         })
+                     }}>
                     {rows.map(row => <RankingRow
                         key={`${source}-${activeKind}-${source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row}
                         kind={activeKind} source={source} genres={genres} countries={countries}/>)}
