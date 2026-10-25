@@ -11,6 +11,7 @@ import {getThemeConfig} from './theme/themes';
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const SearchPage = React.lazy(() => import('./pages/SearchPage'));
 const HotMoviesPage = React.lazy(() => import('./pages/HotMoviesPage'));
+const MediaListsPage = React.lazy(() => import('./pages/MediaListsPage'));
 const TvDetailPage = React.lazy(() => import('./pages/TvDetailPage'));
 const MovieDetailPage = React.lazy(() => import('./pages/MovieDetailPage'));
 const PersonDetailPage = React.lazy(() => import('./pages/PersonDetailPage'));
@@ -43,6 +44,7 @@ const App: React.FC = () => {
                             <Route path="/" element={<HomePage/>}/>
                             <Route path="/search" element={<SearchPage/>}/>
                             <Route path="/hot" element={<HotMoviesPage/>}/>
+                            <Route path="/lists" element={<MediaListsPage/>}/>
                             <Route path="/tv/:id" element={<TvDetailPage/>}/>
                             <Route path="/movie/:id" element={<MovieDetailPage/>}/>
                             <Route path="/person/:id" element={<PersonDetailPage/>}/>

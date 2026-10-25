@@ -1,8 +1,5 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
     Alert,
     Box,
@@ -10,8 +7,6 @@ import {
     Container,
     IconButton,
     LinearProgress,
-    MenuItem,
-    Select,
     Skeleton,
     Tab,
     Tabs,
@@ -20,217 +15,28 @@ import {
     Tooltip,
     Typography
 } from '@mui/material';
-import {darken, lighten} from '@mui/material/styles';
-import {Fragment} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
-import {getPosterUrl} from '../api/tmdb';
-import ExpandableOverview from '../components/ExpandableOverview';
+import RankingRow from '../components/RankingRow';
 import {useHotMovies} from '../hooks/useHotMovies';
-import type {HotCategory, HotRow, HotSource, TrendingWindow, TVListSelection} from '../types/hotMovies';
-import type {TMDBCountry, TMDBGenre} from '../types';
-import {parseHotMovieInfo} from '../utils/hotMovieInfo';
-import {getTrendingInfo, getTrendingPersonWorks, resolveHotCategory} from '../utils/trendingMovies';
-import {getPersonDepartment} from '../utils/personProfile';
-import {resolveTVList, resolveTVListPage, TV_LIST_LABELS} from '../utils/tvLists';
+import type {HotCategory, HotSource, TrendingWindow} from '../types/hotMovies';
+import {resolveHotCategory} from '../utils/trendingMovies';
 
 const categoryLabels: Record<HotCategory, string> = {movie: '电影', tv: '电视剧', person: '人物'};
 
-/** 两个榜单来源使用不同的数据适配器，最终统一成“标签 + 内容”的展示结构。 */
-function HotInfo({
-                     row,
-                     source,
-                     genres,
-                     countries
-                 }: { row: HotRow; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[] }) {
-    const parts = source === 'tmdb' ? getTrendingInfo(row.movie, genres, countries) : parseHotMovieInfo(row.item.info);
-    if (!parts.length) return null;
-    return (
-        <Box component="dl" sx={{display: 'grid', rowGap: 0.375, m: 0, mt: 1}}>
-            {parts.map(({label, value}) => <Box component="div" key={label}
-                                                sx={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: 'max-content minmax(0, 1fr)',
-                                                    columnGap: 0.75,
-                                                    alignItems: 'baseline',
-                                                    minWidth: 0
-                                                }}>
-                <Typography component="dt" variant="body2" color="text.secondary">{label}</Typography>
-                <Typography component="dd" variant="body2" sx={{
-                    m: 0, minWidth: 0, overflowWrap: 'anywhere',
-                    color: theme => theme.palette.mode === 'light'
-                        ? darken(theme.palette.text.primary, 0.12)
-                        : lighten(theme.palette.text.primary, 0.12)
-                }}>
-                    {value}
-                </Typography>
-            </Box>)}
-        </Box>
-    );
-}
 
-// 两个来源的评分独立判断，不能把某一来源的分数当成另一来源的缺省值。
-function Scores({row}: { row: HotRow }) {
-    const {item, movie} = row;
-    const douban = typeof item.rating === 'number' && Number.isFinite(item.rating) && item.rating > 0;
-    const tmdb = typeof movie?.vote_average === 'number' && Number.isFinite(movie.vote_average) && movie.vote_average > 0;
-    if (!douban && !tmdb) return null;
-    return (
-        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: {xs: 1.5, sm: 2.5}, alignItems: 'baseline', mt: 0.75}}>
-            {douban && <Box sx={{display: 'inline-flex', alignItems: 'baseline', gap: 0.5}}>
-                <Typography variant="caption" color="text.secondary">豆瓣</Typography>
-                <Typography component="span" sx={{
-                    fontSize: 20, lineHeight: 1.2, fontWeight: 800,
-                    color: 'warning.main', fontVariantNumeric: 'tabular-nums'
-                }}>{item.rating!.toFixed(1)}</Typography>
-            </Box>}
-            {tmdb && <Box sx={{display: 'inline-flex', alignItems: 'baseline', gap: 0.5}}>
-                <Typography variant="caption" color="text.secondary">TMDB</Typography>
-                <Typography component="span" sx={{
-                    fontSize: 20, lineHeight: 1.2, fontWeight: 800,
-                    color: 'primary.main', fontVariantNumeric: 'tabular-nums'
-                }}>{movie!.vote_average!.toFixed(1)}</Typography>
-            </Box>}
-        </Box>
-    );
-}
-
-function RankingRow({
-                      row,
-                      kind,
-                      source,
-                      genres,
-                      countries
-                  }: { row: HotRow; kind: HotCategory; source: HotSource; genres: TMDBGenre[]; countries: TMDBCountry[] }) {
-    const {item, movie, person, status} = row;
-    // 匹配结束后仍无 TMDB 资料时，使用豆瓣条目编号打开原始详情；加载中保留站内搜索。
-    const openDouban = source === 'douban' && !movie && (status === 'unmatched' || status === 'error');
-    const linkProps = {
-        to: person ? `/person/${person.id}` : movie ? `/${kind}/${movie.id}` : openDouban
-            ? `https://movie.douban.com/subject/${encodeURIComponent(item.id)}/`
-            : `/search?q=${encodeURIComponent(item.title)}`,
-        target: openDouban ? '_blank' : undefined,
-        rel: openDouban ? 'noopener noreferrer' : undefined,
-        'aria-label': openDouban ? `在豆瓣查看${item.title}详情（新标签页打开）`
-            : person || movie ? `查看${item.title}详情` : `搜索${item.title}`,
-    };
-    const showPoster = Boolean(person) || source === 'douban' || Boolean(movie?.poster_path);
-    const imagePath = person ? person.profile_path : movie?.poster_path;
-    const originalTitle = person ? (person.original_name?.trim() !== item.title ? person.original_name?.trim() : undefined)
-        : source === 'tmdb' ? movie?.original_title?.trim() : undefined;
-    const department = person ? getPersonDepartment(person.known_for_department) : '';
-    const works = person ? getTrendingPersonWorks(person) : [];
-    const overview = person ? undefined : source === 'tmdb' ? movie?.overview?.trim() : status === 'error' ? 'TMDB 资料加载失败' :
-        status === 'unmatched' ? '暂未匹配到 TMDB 影片' : movie?.overview || '暂无简介';
-    return (
-        <Box component="li" sx={{
-            minWidth: 0, borderBottom: 1, borderColor: 'divider', display: 'grid',
-            gridTemplateColumns: person ? {xs: '64px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'} : showPoster ? {
-                xs: '96px minmax(0, 1fr)',
-                sm: '140px minmax(0, 1fr)'
-            } : 'minmax(0, 1fr)',
-            columnGap: person ? 1.5 : {xs: 2, sm: 3}, rowGap: person ? 0 : 1.5,
-            py: person ? 1.75 : {xs: 2.5, sm: 3}, px: person ? 0 : {xs: 0, sm: 1},
-            ...(!person && {'&:first-of-type': {pt: {xs: 1.5, sm: 2}}})
-        }}>
-            {showPoster &&
-                <Box component={Link} {...linkProps}
-                     sx={{
-                         position: 'relative', width: '100%', aspectRatio: '2 / 3', alignSelf: 'start',
-                         gridRow: person ? 'auto' : {sm: '1 / span 2'}, overflow: 'hidden', borderRadius: 1.5, bgcolor: 'action.hover',
-                         '&:hover img': {transform: 'scale(1.035)'},
-                         '@media (prefers-reduced-motion: reduce)': {'& img': {transition: 'none'}}
-                     }}>
-                    {status === 'loading' ? <Skeleton variant="rectangular" width="100%" height="100%"/> : person && !imagePath ?
-                        <Box role="img" aria-label={`${item.title}暂无头像`} sx={{
-                            height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}><PersonOutlineIcon sx={{fontSize: 32, color: 'text.disabled'}}/></Box> :
-                        // 前三名通常位于首屏，优先加载海报，其余懒加载。
-                        <Box component="img" src={getPosterUrl(imagePath ?? undefined)} alt=""
-                             loading={item.rank <= 3 ? 'eager' : 'lazy'}
-                             onError={event => {
-                                 event.currentTarget.onerror = null;
-                                 event.currentTarget.src = '/placeholder-poster.svg';
-                             }}
-                             sx={{
-                                 display: 'block', width: '100%', height: '100%', objectFit: 'cover',
-                                 transition: 'transform 250ms ease'
-                             }}/>}
-                    <Box aria-hidden="true" sx={{
-                        position: 'absolute', left: 0, top: 0, px: person ? 0.625 : 1, py: 0.25,
-                        bgcolor: item.rank <= 3 ? 'primary.main' : 'rgba(12, 18, 22, 0.88)',
-                        color: item.rank <= 3 ? 'primary.contrastText' : '#fff',
-                        fontSize: person ? 12 : 16, fontWeight: 800, fontVariantNumeric: 'tabular-nums'
-                    }}>
-                        {String(item.rank).padStart(2, '0')}
-                    </Box>
-                </Box>}
-            <Box sx={{minWidth: 0}}>
-                <Typography component="h2" sx={{
-                    fontWeight: 750, fontSize: person ? {xs: 17, sm: 18} : {xs: 18, sm: 23}, lineHeight: 1.35,
-                    overflowWrap: 'anywhere'
-                }}>
-                    <Box component={Link} {...linkProps} sx={{
-                        color: 'text.primary', textDecoration: 'none',
-                        '&:hover, &:focus-visible': {color: 'primary.main', textDecoration: 'underline'}
-                    }}>
-                        {item.title}
-                    </Box>
-                    {department && <Typography component="span" color="text.secondary"
-                                               sx={{ml: 1, fontSize: 13, fontWeight: 400}}>{department}</Typography>}
-                    {item.year && <Typography component="span" color="text.secondary"
-                                              sx={{
-                                                  display: 'inline-block', ml: 0.75, fontSize: {xs: 14, sm: 16},
-                                                  fontWeight: 400, whiteSpace: 'nowrap'
-                                              }}>({item.year})</Typography>}
-                </Typography>
-                {originalTitle && <Typography color="text.secondary"
-                                              sx={{
-                                                  mt: 0.375,
-                                                  fontWeight: 750,
-                                                  fontSize: person ? 13 : {xs: 14, sm: 16},
-                                                  lineHeight: 1.4,
-                                                  overflowWrap: 'anywhere'
-                                              }}>
-                    {originalTitle}
-                </Typography>}
-                {person ? works.length > 0 && <Typography component="div" variant="body2" color="text.secondary"
-                                                         sx={{mt: 0.5, fontSize: 13, lineHeight: 1.6, overflowWrap: 'anywhere'}}>
-                    {works.map((work, index) => <Fragment key={`${work.kind}-${work.id}`}>
-                        {index > 0 && '，'}
-                        <Box component={Link} to={`/${work.kind}/${work.id}`} sx={{
-                            color: 'text.primary', textDecoration: 'none',
-                            '&:hover, &:focus-visible': {color: 'primary.main', textDecoration: 'underline'}
-                        }}>{work.title}</Box>
-                    </Fragment>)}
-                </Typography> : <>
-                    <HotInfo row={row} source={source} genres={genres} countries={countries}/>
-                    <Scores row={row}/>
-                </>}
-                {status === 'loading' &&
-                    <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
-            </Box>
-            {status !== 'loading' && overview && <Box sx={{gridColumn: showPoster ? {xs: '1 / -1', sm: '2'} : '1'}}>
-                <ExpandableOverview text={overview} collapsedLines={4}/>
-            </Box>}
-        </Box>
-    );
-}
-
-/** 支持豆瓣榜、TMDB 趋势榜和分页电视剧列表，切换不改动观看记录。 */
+/** 热门榜只展示豆瓣实时榜与 TMDB 日榜、周榜；影视列表使用独立页面。 */
 export default function HotMoviesPage() {
     // 榜单选项随当前网址保留，详情返回或刷新时恢复；列表切换不额外增加历史。
     const [searchParams, setSearchParams] = useSearchParams();
     const source: HotSource = searchParams.get('source') === 'tmdb' ? 'tmdb' : 'douban';
     const kind = resolveHotCategory(searchParams.get('kind'), source);
     const timeWindow: TrendingWindow = searchParams.get('window') === 'week' ? 'week' : 'day';
-    const tvList = resolveTVList(searchParams.get('list'));
-    const isTVList = source === 'tmdb' && kind === 'tv' && tvList !== 'trending';
-    const page = isTVList ? resolveTVListPage(searchParams.get('page')) : 1;
-    const changeSelection = (key: 'source' | 'kind' | 'window' | 'list', value: HotSource | HotCategory | TrendingWindow | TVListSelection) => {
+    const changeSelection = (key: 'source' | 'kind' | 'window', value: HotSource | HotCategory | TrendingWindow) => {
         setSearchParams(previous => {
             const next = new URLSearchParams(previous);
             next.set(key, value);
             next.delete('page');
+            next.delete('list');
             // 从人物榜切回豆瓣时同时修正网址，避免保留一个豆瓣不支持的类别。
             if (key === 'source' && value === 'douban' && next.get('kind') === 'person') next.set('kind', 'movie');
             return next;
@@ -247,19 +53,8 @@ export default function HotMoviesPage() {
         error,
         loading,
         matching,
-        refresh,
-        totalPages
-    } = useHotMovies(
-        activeKind, source, source === 'tmdb' && !isTVList ? timeWindow : 'day', {tvList, page},
-    );
-    const changePage = (nextPage: number) => {
-        setSearchParams(previous => {
-            const next = new URLSearchParams(previous);
-            next.set('page', String(nextPage));
-            return next;
-        });
-        window.scrollTo({top: 0, behavior: 'instant'});
-    };
+        refresh
+    } = useHotMovies(activeKind, source, timeWindow);
     const sourceLabel = source === 'tmdb' ? 'TMDB' : '豆瓣';
     const matchError = rows.find(row => row.error)?.error;
     const fetchedDate = fetchedAt ? new Date(fetchedAt) : undefined;
@@ -308,7 +103,7 @@ export default function HotMoviesPage() {
                     <Tab value="tv" label="电视剧"/>
                     {source === 'tmdb' && <Tab value="person" label="人物"/>}
                 </Tabs>
-                {source === 'tmdb' && !isTVList ? <ToggleButtonGroup value={timeWindow} exclusive size="small" aria-label="TMDB 榜单周期"
+                {source === 'tmdb' ? <ToggleButtonGroup value={timeWindow} exclusive size="small" aria-label="TMDB 榜单周期"
                                                         onChange={(_, value: TrendingWindow | null) => {
                                                             if (value) changeSelection('window', value);
                                                         }}
@@ -338,31 +133,6 @@ export default function HotMoviesPage() {
                                                               borderRadius: 0
                                                           }}/>}
             </Box>
-            {source === 'tmdb' && kind === 'tv' && <Box sx={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 1.5,
-                flexWrap: 'wrap'
-            }}>
-                <Select size="small" value={tvList} inputProps={{'aria-label': '电视剧列表'}}
-                        onChange={event => changeSelection('list', event.target.value as TVListSelection)}
-                        sx={{minWidth: 120, fontSize: 13, '& .MuiSelect-select': {py: 0.75}}}>
-                    {(Object.entries(TV_LIST_LABELS) as [TVListSelection, string][]).map(([value, label]) =>
-                        <MenuItem key={value} value={value}>{label}</MenuItem>)}
-                </Select>
-                {isTVList && <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto'}}>
-                    <Tooltip title="上一页"><span><IconButton size="small" aria-label="电视剧列表上一页"
-                        disabled={loading || page <= 1} onClick={() => changePage(page - 1)}>
-                        <ChevronLeftIcon fontSize="small"/>
-                    </IconButton></span></Tooltip>
-                    <Typography variant="caption" aria-label="电视剧列表页码" sx={{
-                        minWidth: '8ch', textAlign: 'center', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums'
-                    }}>{page} / {totalPages === undefined ? '…' : Math.max(1, totalPages)}</Typography>
-                    <Tooltip title="下一页"><span><IconButton size="small" aria-label="电视剧列表下一页"
-                        disabled={loading || Boolean(error) || totalPages === undefined || page >= totalPages}
-                        onClick={() => changePage(page + 1)}>
-                        <ChevronRightIcon fontSize="small"/>
-                    </IconButton></span></Tooltip>
-                </Box>}
-            </Box>}
             <Box sx={{display: 'flex', justifyContent: 'flex-end', minHeight: 36, alignItems: 'center'}}>
                 {fetchedDate && Number.isFinite(fetchedDate.getTime()) &&
                     <Typography variant="caption" color="text.secondary" sx={{fontVariantNumeric: 'tabular-nums'}}>
@@ -409,7 +179,7 @@ export default function HotMoviesPage() {
                 </Box>)}
             </Box>}
             {rows.length > 0 &&
-                <Box component="ol" aria-label={isTVList ? `TMDB电视剧${TV_LIST_LABELS[tvList]}列表` : `${sourceLabel}${categoryLabels[activeKind]}实时热门榜`}
+                <Box component="ol" aria-label={`${sourceLabel}${categoryLabels[activeKind]}实时热门榜`}
                      sx={{
                          listStyle: 'none', p: 0, m: 0,
                          // 人物资料较少，宽屏双列、窄屏单列，不再沿用影视榜的大海报间距。
@@ -419,7 +189,7 @@ export default function HotMoviesPage() {
                          })
                      }}>
                     {rows.map(row => <RankingRow
-                        key={`${source}-${activeKind}-${isTVList ? `${tvList}-${page}` : source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row}
+                        key={`${source}-${activeKind}-${source === 'tmdb' ? timeWindow : ''}-${row.item.id}`} row={row}
                         kind={activeKind} source={source} genres={genres} countries={countries}/>)}
                 </Box>}
         </Container>

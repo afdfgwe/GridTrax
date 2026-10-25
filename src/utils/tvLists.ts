@@ -10,6 +10,12 @@ export function resolveTVList(value: string | null): TVListSelection {
         ? value : 'trending';
 }
 
+/** 独立列表页默认展示今日播出，不允许旧参数将其切回趋势榜。 */
+export function resolveTVListKind(value: string | null): TVListKind {
+    const list = resolveTVList(value);
+    return list === 'trending' ? 'airing_today' : list;
+}
+
 /** TMDB 最多支持访问前 500 页；非法页码回到第一页。 */
 export function resolveTVListPage(value: string | number | null): number {
     const page = Number(value);

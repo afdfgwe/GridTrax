@@ -1,5 +1,6 @@
 import MovieIcon from '@mui/icons-material/Movie';
 import WhatshotOutlinedIcon from '@mui/icons-material/WhatshotOutlined';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import {AppBar, Box, Container, IconButton, Toolbar, Tooltip, Typography, useScrollTrigger} from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
 import type {SxProps, Theme} from '@mui/material/styles';
@@ -87,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                     noWrap
                                     sx={{
                                         fontWeight: 800,
-                                        '@media (max-width: 359px)': {display: 'none'},
+                                        '@media (max-width: 399px)': {display: 'none'},
                                         letterSpacing: 0,
                                         background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                                         WebkitBackgroundClip: 'text',
@@ -117,6 +118,17 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                                                          }
                                                                      }}>
                                     <WhatshotOutlinedIcon/>
+                                </IconButton></Tooltip>
+                                <Tooltip title="影视列表"><IconButton component={Link} to="/lists" aria-label="影视列表"
+                                                                   aria-current={pathname === '/lists' ? 'page' : undefined}
+                                                                   sx={{
+                                                                       color: 'text.secondary',
+                                                                       display: {
+                                                                           xs: isSearchExpanded ? 'none' : 'inline-flex',
+                                                                           sm: 'inline-flex'
+                                                                       }
+                                                                   }}>
+                                    <ListAltOutlinedIcon/>
                                 </IconButton></Tooltip>
                                 <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 1}, flexShrink: 0}}>
                                     <DataBackupPanel/>

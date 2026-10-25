@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {getTVListRequest, normalizeTVListResponse, resolveTVList, resolveTVListPage, TV_LIST_LABELS} from '../src/utils/tvLists.ts';
+import {getTVListRequest, normalizeTVListResponse, resolveTVList, resolveTVListKind, resolveTVListPage, TV_LIST_LABELS} from '../src/utils/tvLists.ts';
 import {toTrendingRows} from '../src/utils/trendingMovies.ts';
 
 test('电视剧列表只接受四种接口，未知网址参数回到趋势榜', () => {
@@ -10,6 +10,15 @@ test('电视剧列表只接受四种接口，未知网址参数回到趋势榜',
     }
     for (const value of [null, '', 'trending', 'invalid', '__proto__', 'constructor']) {
         assert.equal(resolveTVList(value), 'trending');
+    }
+});
+
+test('独立列表页只展示四种列表，缺省与旧趋势参数都回到今日播出', () => {
+    for (const list of ['airing_today', 'on_the_air', 'popular', 'top_rated']) {
+        assert.equal(resolveTVListKind(list), list);
+    }
+    for (const value of [null, '', 'trending', 'invalid', '__proto__']) {
+        assert.equal(resolveTVListKind(value), 'airing_today');
     }
 });
 
