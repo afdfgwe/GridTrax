@@ -4,6 +4,7 @@ import type {HotKind, HotSearchItem, TrendingMovie, TrendingPerson, TrendingTVSh
 import {createRequestCache} from '../utils/requestCache';
 import {normalizeTVAggregateCredits} from '../utils/movieCredits';
 import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
+import {loadPersonDetails} from './personDetails';
 import type {
     TMDBCountry,
     TMDBGenre,
@@ -79,13 +80,13 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
     };
 }
 
-/** 人物资料使用中文版本，缓存五分钟；失败请求不保留，页面可直接重试。 */
+/** 中文人物资料缺少简介时补取英文简介；合并结果缓存五分钟，中文请求失败不缓存。 */
 export function getPerson(personId: number): Promise<TMDBPerson> {
     if (!Number.isSafeInteger(personId) || personId <= 0) return Promise.reject(new Error('人物编号无效'));
-    return personCache.load(`person:${personId}:zh-CN`, async () => {
-        const res = await tmdbAxios.get<TMDBPerson>(`/person/${personId}`, {params: {language: 'zh-CN'}});
+    return personCache.load(`person:${personId}:zh-CN`, () => loadPersonDetails(async (language) => {
+        const res = await tmdbAxios.get<TMDBPerson>(`/person/${personId}`, {params: {language}});
         return res.data;
-    });
+    }));
 }
 
 /** 影视履历独立加载并缓存五分钟，只请求一次汇总接口，不逐部请求影片详情。 */
