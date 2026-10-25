@@ -75,8 +75,8 @@ export interface TMDBPersonCredit {
 /** 同一作品可能既有出演记录，也有多条幕后职务，展示时按类型和编号合并。 */
 export interface TMDBPersonCombinedCredits {
     id: number;
-    cast: Array<TMDBPersonCredit & {character?: string | null}>;
-    crew: Array<TMDBPersonCredit & {job?: string | null; department?: string | null}>;
+    cast: Array<TMDBPersonCredit & { character?: string | null }>;
+    crew: Array<TMDBPersonCredit & { job?: string | null; department?: string | null }>;
 }
 
 /** 推荐和相似电视剧共用条目字段，无需逐部请求详情。 */
@@ -112,6 +112,19 @@ export interface TMDBMovieRecommendations {
     results: TMDBMovieRecommendation[];
     total_pages: number;
     total_results: number;
+}
+
+/** 电影所属合集的摘要来自电影详情，完整系列影片另行按合集编号获取。 */
+export interface TMDBCollectionSummary {
+    id: number;
+    name: string;
+    poster_path?: string | null;
+    backdrop_path?: string | null;
+}
+
+export interface TMDBCollection extends TMDBCollectionSummary {
+    overview?: string;
+    parts: TMDBMovieRecommendation[];
 }
 
 /** 整部电视剧的详情，seasons 仅包含各季摘要，不包含每一集的完整信息。 */
@@ -216,6 +229,7 @@ export interface TMDBMovie {
     spoken_languages?: TMDBSpokenLanguage[] | null;
     production_countries?: TMDBProductionCountry[] | null;
     production_companies?: TMDBProductionCompany[] | null;
+    belongs_to_collection?: TMDBCollectionSummary | null;
 }
 
 /** 演职员的公共人物资料；头像缺失时使用人物占位图标。 */

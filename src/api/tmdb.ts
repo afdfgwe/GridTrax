@@ -20,6 +20,7 @@ import {getTVListRequest, normalizeTVListResponse} from '../utils/tvLists';
 import {getMovieListRequest, normalizeMovieListResponse} from '../utils/movieLists';
 import type {
     TMDBCountry,
+    TMDBCollection,
     TMDBGenre,
     TMDBMovie,
     TMDBPerson,
@@ -60,6 +61,7 @@ const personCreditsCache = createRequestCache<PersonWork[]>(20);
 const recommendationsCache = createRequestCache<TMDBTVRecommendations>(40);
 const movieRecommendationsCache = createRequestCache<TMDBMovieRecommendations>(40);
 const movieSimilarCache = createRequestCache<TMDBMovieRecommendations>(40);
+const collectionsCache = createRequestCache<TMDBCollection>(40);
 const similarCache = createRequestCache<TMDBTVRecommendations>(40);
 
 // 请求路径含作品类型、作品 ID 和季号，可直接作为详情缓存键，避免不同资源相互覆盖。
@@ -234,6 +236,20 @@ export async function getTVSeason(tvId: number, seasonNumber: number): Promise<T
 /** 电影详情，包含片名、上映日期、片长、类型及 TMDB 评分。 */
 export async function getMovie(movieId: number): Promise<TMDBMovie> {
     return getDetails<TMDBMovie>(`/movie/${movieId}`);
+}
+
+/** 合集独立缓存五分钟，共享请求，不逐部加载详情，也不写入本地观看记录。 */
+export function getMovieCollection(collectionId: number): Promise<TMDBCollection> {
+    if (!Number.isSafeInteger(collectionId) || collectionId <= 0) {
+        return Promise.reject(new Error('合集编号无效'));
+    }
+    return collectionsCache.load(`collection:${collectionId}:zh-CN`, async () => {
+        const res = await tmdbAxios.get<TMDBCollection>(`/collection/${collectionId}`, {
+            params: {language: 'zh-CN'},
+        });
+        if (!Array.isArray(res.data.parts)) throw new Error('合集列表格式错误');
+        return res.data;
+    });
 }
 
 /** 电影推荐只请求中文第一页，独立缓存五分钟，展示层保留前十部。 */

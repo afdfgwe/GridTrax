@@ -209,6 +209,11 @@ const MovieDetailPage: React.FC = () => {
                                     />
                                 )}
                             </Box>
+                            {movie.belongs_to_collection && movie.belongs_to_collection.id > 0 && (
+                                <MediaRecommendations key={`collection:${movie.id}`}
+                                                      mediaId={movie.belongs_to_collection.id} mediaType="movie"
+                                                      kind="collection" currentMovieId={movie.id}/>
+                            )}
                             <MediaRecommendations key={`recommendations:${movie.id}`} mediaId={movie.id}
                                                   mediaType="movie"/>
                             <MediaRecommendations key={`similar:${movie.id}`} mediaId={movie.id} mediaType="movie"

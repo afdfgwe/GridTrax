@@ -3,26 +3,39 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {Alert, Box, Button, CardActionArea, IconButton, Skeleton, Tooltip, Typography} from '@mui/material';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
-import {getMovieRecommendations, getMovieSimilar, getPosterUrl, getTVRecommendations, getTVSimilar} from '../api/tmdb';
+import {
+    getMovieCollection,
+    getMovieRecommendations,
+    getMovieSimilar,
+    getPosterUrl,
+    getTVRecommendations,
+    getTVSimilar
+} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
+import {useProgressStore} from '../store/useProgressStore';
+import {getCollectionMovies} from '../utils/movieCollection';
+import {STATUS_LABELS} from '../types';
 import type {
     TMDBMovieRecommendation,
-    TMDBMovieRecommendations,
     TMDBTVRecommendation,
-    TMDBTVRecommendations
 } from '../types';
 import CompactCardTitle from './CompactCardTitle';
 import PosterScoreBadge from './PosterScoreBadge';
 
 /** 推荐卡片沿用追踪面板的海报比例、年份和评分，整张卡片可键盘或触摸进入详情。 */
-function RecommendationCard({item, mediaType}: {
+function RecommendationCard({item, mediaType, collection = false, currentMovieId}: {
     item: TMDBTVRecommendation | TMDBMovieRecommendation; mediaType: 'movie' | 'tv';
+    collection?: boolean; currentMovieId?: number;
 }) {
     const [failed, setFailed] = useState(false);
+    const status = useProgressStore((state) => collection
+        ? state.data.records[`tmdb_movie_${item.id}`]?.global_status : undefined);
+    const current = collection && item.id === currentMovieId;
     const title = ('title' in item ? item.title || item.original_title : item.name || item.original_name) || '未知作品';
     const year = ('title' in item ? item.release_date : item.first_air_date)?.slice(0, 4);
     return (
         <CardActionArea component={Link} to={`/${mediaType}/${item.id}`} aria-label={`查看${title}详情`}
+                        aria-current={current ? 'page' : undefined}
                         sx={{
                             display: 'block',
                             borderRadius: 1,
@@ -48,35 +61,60 @@ function RecommendationCard({item, mediaType}: {
                 <PosterScoreBadge score={item.vote_average}/>
             </Box>
             <Box sx={{py: 0.75, px: 0.25}}><CompactCardTitle title={title}/></Box>
+            {collection && (current || status) && <Typography variant="caption" component="div"
+                                                              sx={{
+                                                                  px: 0.25,
+                                                                  pb: 0.5,
+                                                                  color: current ? 'primary.main' : 'text.secondary'
+                                                              }}>
+                {current ? '当前影片' : ''}{current && status ? ' · ' : ''}{status ? STATUS_LABELS[status] : ''}
+            </Typography>}
         </CardActionArea>
     );
 }
 
 type MediaRecommendationsProps = {
     mediaId: number;
+} & ({
     mediaType: 'movie' | 'tv';
     kind?: 'recommendations' | 'similar';
+    currentMovieId?: never;
+} | {
+    mediaType: 'movie';
+    kind: 'collection';
+    currentMovieId: number;
+});
+
+type MediaRowData = {
+    results: Array<TMDBMovieRecommendation | TMDBTVRecommendation>;
+    collectionName?: string;
 };
 
-/** 电影和电视剧的推荐、相似各取前十部，独立维护请求与滚动状态。 */
+/** 推荐与相似各取前十部；合集保留全部作品，共用横向海报布局与独立加载状态。 */
 export default function MediaRecommendations({
                                                  mediaId,
                                                  mediaType,
-                                                 kind = 'recommendations'
+                                                 kind = 'recommendations',
+                                                 currentMovieId,
                                              }: MediaRecommendationsProps) {
-    const title = kind === 'similar' ? '相似' : '猜你喜欢';
-    const label = kind === 'similar' ? '相似' : '推荐';
+    const title = kind === 'collection' ? '同系列电影' : kind === 'similar' ? '相似' : '猜你喜欢';
+    const label = kind === 'collection' ? '同系列' : kind === 'similar' ? '相似' : '推荐';
     const mediaLabel = mediaType === 'movie' ? '电影' : '电视剧';
     const headingId = `${mediaType}-${kind}-heading`;
-    const load = useCallback(() => {
+    const load = useCallback((): Promise<MediaRowData> => {
+        if (kind === 'collection') {
+            return getMovieCollection(mediaId).then((collection) => ({
+                results: getCollectionMovies(collection.parts), collectionName: collection.name,
+            }));
+        }
         if (mediaType === 'movie') {
             return kind === 'similar' ? getMovieSimilar(mediaId) : getMovieRecommendations(mediaId);
         }
         return kind === 'similar' ? getTVSimilar(mediaId) : getTVRecommendations(mediaId);
     }, [mediaId, mediaType, kind]);
-    const {data, loading, error, retry} = useAsyncResource<TMDBMovieRecommendations | TMDBTVRecommendations>(
+    const {data, loading, error, retry} = useAsyncResource<MediaRowData>(
         `${mediaType}-${kind}:${mediaId}`, load);
-    const results = data?.results.slice(0, 10) ?? [];
+    const results = (kind === 'collection' ? data?.results : data?.results.slice(0, 10)) ?? [];
     const listRef = useRef<HTMLDivElement>(null);
     const [scroll, setScroll] = useState({previous: false, next: false});
     // 留 1px 容差判断轨道两端是否还有内容，控制左右箭头可用状态。
@@ -108,12 +146,20 @@ export default function MediaRecommendations({
 
     // 保留电视剧推荐原有的隐藏逻辑；电影推荐和相似列表无数据时明确显示空态。
     if (mediaType === 'tv' && kind === 'recommendations' && !loading && !error && results.length === 0) return null;
+    if (kind === 'collection' && !loading && !error && results.length === 0) return null;
 
     return (
         <Box component="section" aria-labelledby={headingId} aria-busy={loading}
              sx={{mt: kind === 'similar' ? 1.5 : 4, pt: 2.5, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
             <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
-                <Typography id={headingId} component="h2" variant="h6" fontWeight={700}>{title}</Typography>
+                <Box sx={{minWidth: 0}}>
+                    <Typography id={headingId} component="h2" variant="h6" fontWeight={700}>{title}</Typography>
+                    {data?.collectionName && <Typography variant="body2" color="text.secondary"
+                                                         sx={{
+                                                             mt: 0.5,
+                                                             overflowWrap: 'anywhere'
+                                                         }}>{data.collectionName}</Typography>}
+                </Box>
                 {!loading && !error && results.length > 0 && (scroll.previous || scroll.next) &&
                     <Box sx={{display: {xs: 'none', sm: 'flex'}, gap: 0.5, flexShrink: 0}}>
                         <Tooltip title={`向左查看${label}`}><span><IconButton size="small" aria-label={`向左查看${label}`}
@@ -152,7 +198,9 @@ export default function MediaRecommendations({
                         '& > li': {width: {xs: 96, sm: 112}, flexShrink: 0, minWidth: 0}
                     }}>
                         {results.map(item => <Box component="li" key={item.id}><RecommendationCard item={item}
-                                                                                                   mediaType={mediaType}/></Box>)}
+                                                                                                   mediaType={mediaType}
+                                                                                                   collection={kind === 'collection'}
+                                                                                                   currentMovieId={currentMovieId}/></Box>)}
                     </Box>
                 </Box>
             )}
