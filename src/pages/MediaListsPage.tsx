@@ -12,8 +12,6 @@ import {
     MenuItem,
     Select,
     Skeleton,
-    Tab,
-    Tabs,
     Tooltip,
     Typography,
 } from '@mui/material';
@@ -71,38 +69,35 @@ export default function MediaListsPage() {
                     <RefreshIcon fontSize="small"/>
                 </IconButton></span></Tooltip>
             </Box>
-            <Box sx={{position: 'relative', borderBottom: 1, borderColor: 'divider', mt: {xs: 2, sm: 3}}}>
-                <Tabs value={kind} onChange={(_, value: HotKind) => changeKind(value)} aria-label="影视列表类型"
-                      sx={{
-                          minHeight: 44,
-                          '& .MuiTabs-indicator': {height: 2, visibility: loading ? 'hidden' : 'visible'},
-                          '& .MuiTab-root': {minHeight: 44, minWidth: 72, px: 2, fontSize: 15, fontWeight: 700}
-                      }}>
-                    <Tab value="movie" label="电影"/>
-                    <Tab value="tv" label="电视剧"/>
-                </Tabs>
-                {loading && <LinearProgress aria-label="加载影视列表" sx={{
-                    position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderRadius: 0,
-                }}/>}
-            </Box>
             <Box sx={{
-                display: 'flex', alignItems: 'center', gap: 1, mt: 1.5, flexWrap: 'wrap',
+                position: 'relative', display: 'flex', alignItems: 'center', gap: {xs: 0.5, sm: 1},
+                mt: {xs: 2, sm: 3}, pb: 1.5, borderBottom: 1, borderColor: 'divider',
             }}>
+                <Select size="small" value={kind} inputProps={{'aria-label': '影视列表类型'}}
+                        onChange={event => changeKind(event.target.value as HotKind)}
+                        sx={{minWidth: 80, flexShrink: 0, fontSize: 13, '& .MuiSelect-select': {py: 0.75, pl: 1}}}>
+                    <MenuItem value="movie">电影</MenuItem>
+                    <MenuItem value="tv">电视剧</MenuItem>
+                </Select>
                 <Select size="small" value={activeList} inputProps={{'aria-label': `${kindLabel}列表`}}
                         onChange={event => changeList(event.target.value as MovieListKind | TVListKind)}
-                        sx={{minWidth: 112, fontSize: 13, '& .MuiSelect-select': {py: 0.75}}}>
+                        sx={{minWidth: {xs: 96, sm: 112}, flexShrink: 0, fontSize: 13, '& .MuiSelect-select': {py: 0.75, pl: 1}}}>
                     {lists.map(list => <MenuItem key={list} value={list}>
                         {kind === 'movie' ? MOVIE_LIST_LABELS[list as MovieListKind] : TV_LIST_LABELS[list as TVListKind]}
                     </MenuItem>)}
                 </Select>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto'}}>
+                <Box sx={{
+                    display: 'flex', alignItems: 'center', gap: {xs: 0, sm: 0.5}, ml: 'auto', flexShrink: 0,
+                    '& .MuiIconButton-root': {width: {xs: 24, sm: 30}, height: 30},
+                }}>
                     <Tooltip title="上一页"><span><IconButton size="small" aria-label={`${kindLabel}列表上一页`}
                                                            disabled={loading || page <= 1}
                                                            onClick={() => changePage(page - 1)}>
                         <ChevronLeftIcon fontSize="small"/>
                     </IconButton></span></Tooltip>
                     <Typography variant="caption" aria-label={`${kindLabel}列表页码`} sx={{
-                        minWidth: '6ch', textAlign: 'center', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
+                        minWidth: '6ch', fontSize: {xs: 11, sm: 12}, textAlign: 'center',
+                        whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
                     }}>{page} / {totalPages === undefined ? '…' : Math.max(1, totalPages)}</Typography>
                     <Tooltip title="下一页"><span><IconButton size="small" aria-label={`${kindLabel}列表下一页`}
                                                            disabled={loading || Boolean(error) || totalPages === undefined || page >= totalPages}
@@ -110,6 +105,9 @@ export default function MediaListsPage() {
                         <ChevronRightIcon fontSize="small"/>
                     </IconButton></span></Tooltip>
                 </Box>
+                {loading && <LinearProgress aria-label="加载影视列表" sx={{
+                    position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, borderRadius: 0,
+                }}/>}
             </Box>
             <Box sx={{display: 'flex', justifyContent: 'flex-end', minHeight: 36, alignItems: 'center'}}>
                 {fetchedDate && Number.isFinite(fetchedDate.getTime()) &&

@@ -90,7 +90,7 @@ export default function RankingRow({
         'aria-label': openDouban ? `在豆瓣查看${item.title}详情（新标签页打开）`
             : person || movie ? `查看${item.title}详情` : `搜索${item.title}`,
     };
-    const showPoster = Boolean(person) || source === 'douban' || Boolean(movie?.poster_path);
+    // 缺少海报时仍保留图片列，由 getPosterUrl 提供与详情页相同的占位图。
     const imagePath = person ? person.profile_path : movie?.poster_path;
     const originalTitle = person ? (person.original_name?.trim() !== item.title ? person.original_name?.trim() : undefined)
         : source === 'tmdb' ? movie?.original_title?.trim() : undefined;
@@ -101,16 +101,15 @@ export default function RankingRow({
     return (
         <Box component="li" sx={{
             minWidth: 0, borderBottom: 1, borderColor: 'divider', display: 'grid',
-            gridTemplateColumns: person ? {xs: '64px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'} : showPoster ? {
+            gridTemplateColumns: person ? {xs: '64px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'} : {
                 xs: '96px minmax(0, 1fr)',
                 sm: '140px minmax(0, 1fr)'
-            } : 'minmax(0, 1fr)',
+            },
             columnGap: person ? 1.5 : {xs: 2, sm: 3}, rowGap: person ? 0 : 1.5,
             py: person ? 1.75 : {xs: 2.5, sm: 3}, px: person ? 0 : {xs: 0, sm: 1},
             ...(!person && {'&:first-of-type': {pt: {xs: 1.5, sm: 2}}})
         }}>
-            {showPoster &&
-                <Box component={Link} {...linkProps}
+            <Box component={Link} {...linkProps}
                      sx={{
                          position: 'relative',
                          width: '100%',
@@ -147,7 +146,7 @@ export default function RankingRow({
                     }}>
                         {String(item.rank).padStart(2, '0')}
                     </Box>
-                </Box>}
+                </Box>
             <Box sx={{minWidth: 0}}>
                 <Typography component="h2" sx={{
                     fontWeight: 750, fontSize: person ? {xs: 17, sm: 18} : {xs: 18, sm: 23}, lineHeight: 1.35,
@@ -198,7 +197,7 @@ export default function RankingRow({
                 {status === 'loading' &&
                     <Box sx={{mt: 2}} aria-label="正在匹配 TMDB"><Skeleton/><Skeleton width="75%"/></Box>}
             </Box>
-            {status !== 'loading' && overview && <Box sx={{gridColumn: showPoster ? {xs: '1 / -1', sm: '2'} : '1'}}>
+            {status !== 'loading' && overview && <Box sx={{gridColumn: {xs: '1 / -1', sm: '2'}}}>
                 <ExpandableOverview text={overview} collapsedLines={4}/>
             </Box>}
         </Box>
