@@ -1,13 +1,15 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
-import {Autocomplete, Box, Button, Chip, Collapse, MenuItem, Slider, Stack, TextField, Typography} from '@mui/material';
+import {Autocomplete, Box, Button, Chip, Collapse, IconButton, MenuItem, Slider, Stack, TextField, Tooltip, Typography} from '@mui/material';
 import {alpha} from '@mui/material/styles';
 import {useState} from 'react';
 import type {TMDBCountry, TMDBGenre} from '../types';
 import type {TMDBLanguage} from '../api/tmdb';
 import {
-    DEFAULT_DISCOVERY_FILTERS, DISCOVERY_SORTS, discoveryLanguageLabel, validateMovieDiscovery,
+    DEFAULT_DISCOVERY_FILTERS, DISCOVERY_SORT_GROUPS, discoveryLanguageLabel, validateMovieDiscovery,
     type MovieDiscoveryFilters as Filters,
 } from '../utils/movieDiscovery';
 
@@ -78,6 +80,10 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
         setErrors({});
     };
     const ratingRange = [Number(draft.ratingFrom || 0), Number(draft.ratingTo || 10)];
+    const sortGroup = DISCOVERY_SORT_GROUPS.find(group => draft.sort.startsWith(`${group.value}.`))
+        ?? DISCOVERY_SORT_GROUPS[0];
+    const ascending = draft.sort.endsWith('.asc');
+    const sortDirectionLabel = `${ascending ? sortGroup.ascLabel : sortGroup.descLabel}，点击切换为${ascending ? sortGroup.descLabel : sortGroup.ascLabel}`;
     const numericField = (field: 'yearFrom' | 'yearTo', label: string) => (
         <TextField label={label} size="small" type="number" value={draft[field]} fullWidth
                    onChange={event => change(field, event.target.value)} error={Boolean(errors[field])}
@@ -114,10 +120,19 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
         setErrors(nextErrors);
         if (!Object.keys(nextErrors).length) onApply(draft);
     }} sx={{display: 'flex', flexDirection: 'column', gap: 2.5}}>
-        <TextField select size="small" label="排序" value={draft.sort}
-                   onChange={event => change('sort', event.target.value)}>
-            {DISCOVERY_SORTS.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
-        </TextField>
+        <Stack direction="row" spacing={1} alignItems="center">
+            <TextField select size="small" label="排序" value={sortGroup.value} sx={{flex: 1, minWidth: 0}}
+                       onChange={event => change('sort', `${event.target.value}.${ascending ? 'asc' : 'desc'}`)}>
+                {DISCOVERY_SORT_GROUPS.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+            </TextField>
+            <Tooltip title={sortDirectionLabel}>
+                <IconButton aria-label={sortDirectionLabel} color="primary"
+                            onClick={() => change('sort', `${sortGroup.value}.${ascending ? 'desc' : 'asc'}`)}
+                            sx={{width: 40, height: 40, flexShrink: 0, border: 1, borderColor: 'divider', borderRadius: 1}}>
+                    {ascending ? <ArrowUpwardIcon fontSize="small"/> : <ArrowDownwardIcon fontSize="small"/>}
+                </IconButton>
+            </Tooltip>
+        </Stack>
         <Box component="fieldset" sx={{border: 0, p: 0, m: 0, minWidth: 0}}>
             <Typography component="legend" variant="body2" fontWeight={700} sx={{mb: 1}}>类型
                 <Typography component="span" variant="caption" color="text.secondary" sx={{ml: 1}}>匹配任一类型</Typography>
