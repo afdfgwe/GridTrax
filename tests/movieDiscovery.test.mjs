@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {LANGUAGE_NAMES_ZH} from '../src/constants/languageNames.ts';
 import {
     DEFAULT_DISCOVERY_FILTERS, DISCOVERY_SORTS, discoveryLanguageLabel, getMovieDiscoveryRequest,
     parseMovieDiscovery, resolveDiscoveryPage, serializeMovieDiscovery, validateMovieDiscovery,
@@ -138,4 +139,47 @@ test('语言名称使用中文且非法代码有兜底', () => {
     assert.match(discoveryLanguageLabel('zh'), /中文/);
     assert.match(discoveryLanguageLabel('en'), /英语/);
     assert.equal(discoveryLanguageLabel('invalid_language', '未知语言'), '未知语言');
+});
+
+test('中文映射表包含提供的187项语言，每项均为两位代码和中文名称', () => {
+    assert.equal(Object.keys(LANGUAGE_NAMES_ZH).length, 187);
+    assert.ok(Object.isFrozen(LANGUAGE_NAMES_ZH));
+    for (const [code, label] of Object.entries(LANGUAGE_NAMES_ZH)) {
+        assert.match(code, /^[a-z]{2}$/);
+        assert.match(label, /\p{Script=Han}/u);
+    }
+    assert.equal(LANGUAGE_NAMES_ZH.cn, '粤语');
+    assert.equal(LANGUAGE_NAMES_ZH.xx, '无语言');
+});
+
+test('浏览器中文名称优先于本地映射和接口名称', context => {
+    context.mock.method(Intl.DisplayNames.prototype, 'of', () => '浏览器中文名称');
+    assert.equal(discoveryLanguageLabel('en', 'English'), '浏览器中文名称');
+});
+
+test('浏览器不识别或缺少中文数据时使用本地映射', context => {
+    const lookup = context.mock.method(Intl.DisplayNames.prototype, 'of', code => code);
+    assert.equal(discoveryLanguageLabel('cn', 'Cantonese'), '粤语');
+    assert.equal(discoveryLanguageLabel('xx', 'No Language'), '无语言');
+    lookup.mock.mockImplementation(() => undefined);
+    assert.equal(discoveryLanguageLabel('ja', 'Japanese'), '日语');
+    lookup.mock.mockImplementation(() => 'English');
+    assert.equal(discoveryLanguageLabel('en', 'English'), '英语');
+});
+
+test('浏览器功能不可用时全部187项仍可显示中文且筛选代码不变', context => {
+    context.mock.method(Intl, 'DisplayNames', function () { throw new Error('不可用'); });
+    for (const [code, label] of Object.entries(LANGUAGE_NAMES_ZH)) {
+        assert.equal(discoveryLanguageLabel(code, 'API name'), label);
+    }
+    assert.equal(getMovieDiscoveryRequest(filters({language: 'cn'})).params.with_original_language, 'cn');
+    assert.equal(getMovieDiscoveryRequest(filters({language: 'xx'})).params.with_original_language, 'xx');
+});
+
+test('未收录语言回退到接口名称或代码，不误读对象原型属性', context => {
+    context.mock.method(Intl.DisplayNames.prototype, 'of', code => code);
+    assert.equal(discoveryLanguageLabel('zz', '  接口名称  '), '接口名称');
+    assert.equal(discoveryLanguageLabel('zz', '  '), 'zz');
+    assert.equal(discoveryLanguageLabel('zz'), 'zz');
+    assert.equal(discoveryLanguageLabel('constructor'), 'constructor');
 });

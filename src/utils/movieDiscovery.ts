@@ -1,3 +1,5 @@
+import {LANGUAGE_NAMES_ZH} from '../constants/languageNames.ts';
+
 /** 发现电影只接收已开放的筛选项，统一处理表单、网址和接口参数。 */
 export const DISCOVERY_SORTS = [
     {value: 'popularity.desc', label: '热度从高到低'},
@@ -126,11 +128,15 @@ export function getMovieDiscoveryRequest(filters: MovieDiscoveryFilters, page = 
     return {path: '/discover/movie', params};
 }
 
-/** 字典没有中文名称时使用浏览器语言数据，保留代码作为最终兜底。 */
+/** 优先使用浏览器中文名称，其次查本地映射，再回退接口名称或语言代码。 */
 export function discoveryLanguageLabel(code: string, fallback = code): string {
     try {
-        return new Intl.DisplayNames(['zh-CN'], {type: 'language'}).of(code) || fallback;
+        const label = new Intl.DisplayNames(['zh-CN'], {type: 'language'}).of(code)?.trim();
+        // 未识别的代码可能原样返回；缺少中文语言数据时还可能返回英文名称。
+        if (label && label.toLowerCase() !== code.toLowerCase() && /\p{Script=Han}/u.test(label)) return label;
     } catch {
-        return fallback;
+        // 浏览器不支持该功能或代码无效时，继续使用本地映射。
     }
+    if (Object.hasOwn(LANGUAGE_NAMES_ZH, code)) return LANGUAGE_NAMES_ZH[code];
+    return fallback.trim() || code;
 }
