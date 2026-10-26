@@ -38,7 +38,7 @@ function CollectionMovie({movie, genres}: { movie: TMDBMovieRecommendation; genr
     return <Box component="li" sx={{
         display: 'grid', alignItems: 'start',
         gridTemplateColumns: {xs: '88px minmax(0, 1fr)', sm: '120px minmax(0, 1fr)'},
-        gap: {xs: 2, sm: 3}, py: {xs: 2.5, sm: 3}, borderBottom: 1, borderColor: 'divider',
+        columnGap: {xs: 2, sm: 3}, rowGap: 1.5, py: {xs: 2.5, sm: 3}, borderBottom: 1, borderColor: 'divider',
         '&:last-child': {borderBottom: 0}
     }}>
         <Link component={RouterLink} to={`/movie/${movie.id}`} aria-label={`查看${title}详情`}
@@ -73,10 +73,10 @@ function CollectionMovie({movie, genres}: { movie: TMDBMovieRecommendation; genr
                 {genreNames.map(name => <Chip key={name} label={name} size="small" variant="outlined"
                     sx={{height: 22, borderRadius: 1, color: 'text.secondary', '& .MuiChip-label': {px: 1}}}/>)}
             </Box>}
-            {movie.overview?.trim() && <Box sx={{mt: 1}}>
-                <ExpandableOverview text={movie.overview.trim()} collapsedLines={4}/>
-            </Box>}
         </Box>
+        {movie.overview?.trim() && <Box sx={{gridColumn: '1 / -1', minWidth: 0}}>
+            <ExpandableOverview text={movie.overview.trim()} collapsedLines={4}/>
+        </Box>}
     </Box>;
 }
 
