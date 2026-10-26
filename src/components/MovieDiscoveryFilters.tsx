@@ -2,6 +2,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import {Autocomplete, Box, Button, Chip, Collapse, MenuItem, Slider, Stack, TextField, Typography} from '@mui/material';
+import {alpha} from '@mui/material/styles';
 import {useState} from 'react';
 import type {TMDBCountry, TMDBGenre} from '../types';
 import type {TMDBLanguage} from '../api/tmdb';
@@ -104,7 +105,10 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
                         getAriaLabel={index => index === 0 ? '最低评分' : '最高评分'}
                         getAriaValueText={value => `${value} 分`}
                         valueLabelDisplay="auto"
-                        marks={[{value: 0, label: '0'}, {value: 5, label: '5'}, {value: 10, label: '10'}]}
+                        marks={Array.from({length: 11}, (_, value) => ({
+                            value,
+                            label: value % 5 === 0 ? String(value) : undefined,
+                        }))}
                         onChange={(_, value) => {
                             if (!Array.isArray(value)) return;
                             // 两端回到完整范围时取消对应限制，避免保留无意义的筛选标签。
@@ -115,10 +119,20 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
                             }));
                             setErrors({});
                         }}
-                        sx={{
-                            '& .MuiSlider-thumb': {width: 16, height: 16},
+                        sx={theme => ({
+                            '& .MuiSlider-thumb': {
+                                width: 16,
+                                height: 16,
+                                '&:hover, &.Mui-focusVisible': {
+                                    boxShadow: `0 0 0 5px ${alpha(theme.palette.primary.main, 0.16)}`,
+                                    '@media (hover: none)': {boxShadow: 'none'},
+                                },
+                                '&.Mui-active': {
+                                    boxShadow: `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
+                                },
+                            },
                             '& .MuiSlider-markLabel': {fontSize: 12},
-                        }}/>
+                        })}/>
             </Box>
         </Box>
         <TextField select size="small" label="排序" value={draft.sort}
