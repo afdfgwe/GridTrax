@@ -3,11 +3,13 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import React, {useCallback, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
-import {searchMulti} from '../api/tmdb';
+import {searchCollections, searchMulti} from '../api/tmdb';
 import MediaCard from '../components/MediaCard';
 import PersonSearchCard from '../components/PersonSearchCard';
+import CollectionSearchCard from '../components/CollectionSearchCard';
 import type {TMDBSearchResult} from '../types';
 import {useAsyncResource} from '../hooks/useAsyncResource';
+import {loadSearchResults} from '../utils/searchResults';
 
 /** 搜索结果页以地址栏 q 参数为查询来源，刷新或分享地址后仍能重新执行查询。 */
 const SearchPage: React.FC = () => {
@@ -20,13 +22,17 @@ const SearchPage: React.FC = () => {
     const [pagination, setPagination] = useState<{ query: string; totalPages: number }>();
     // 稳定加载函数的引用，避免普通重渲染触发 useAsyncResource 重新请求。
     const load = useCallback(async (signal: AbortSignal) => {
-        if (!query) return {results: [], total_pages: 0, page: 1};
-        const result = await searchMulti(query, page, signal);
+        if (!query) return {results: [], collections: [], total_pages: 0, page: 1};
+        const result = await loadSearchResults(page,
+            () => searchMulti(query, page, signal),
+            () => searchCollections(query, page, signal));
         if (!signal.aborted) setPagination({query, totalPages: result.total_pages});
         return result;
     }, [query, page]);
     const {data, error, loading, retry} = useAsyncResource(`${query}:${page}`, load);
     const results = data?.results ?? [];
+    const collections = data?.collections ?? [];
+    const hasResults = results.length > 0 || collections.length > 0;
     // 翻页时保留同一关键词的总页数，新关键词不使用旧搜索的分页信息。
     const totalPages = data?.total_pages ?? (pagination?.query === query ? pagination.totalPages : undefined);
     const changePage = (next: number) => setSearchParams({q: query, page: String(next)});
@@ -48,6 +54,10 @@ const SearchPage: React.FC = () => {
             <Container maxWidth="lg" sx={{py: 4}}>
                 {error && <Alert severity="error" sx={{mb: 3}} action={<Button color="inherit" size="small"
                                                                                onClick={retry}>重试</Button>}>{error}</Alert>}
+                {data?.warning && <Alert severity="warning" sx={{mb: 3}}
+                                         action={<Button color="inherit" size="small" onClick={retry}>重试</Button>}>
+                    {data.warning}
+                </Alert>}
 
                 {query && (
                     <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
@@ -76,10 +86,10 @@ const SearchPage: React.FC = () => {
                 )}
 
                 {/* 有关键词且请求成功但结果为空时，显示未找到提示。 */}
-                {!loading && results.length === 0 && query && !error && (
+                {!loading && !hasResults && query && !error && !data?.warning && (
                     <Box sx={{textAlign: 'center', py: 8}}>
                         <Typography variant="h6" color="text.secondary">
-                            没有找到「{query}」相关的影视作品或人物
+                            没有找到「{query}」相关的影视作品、人物或合集
                         </Typography>
                     </Box>
                 )}
@@ -94,13 +104,19 @@ const SearchPage: React.FC = () => {
                 )}
 
                 {/* 仅在加载结束后展示搜索结果，避免把旧结果当作本次结果。 */}
-                {!loading && results.length > 0 && (
+                {!loading && hasResults && (
                     <Grid container spacing={2}>
                         {results.map((item) => (
                             <Grid key={`${item.media_type}-${item.id}`} size={{xs: 6, sm: 4, md: 3, lg: 2}}>
                                 {item.media_type === 'person'
                                     ? <PersonSearchCard item={item}/>
                                     : <MediaCard item={item} onClick={handleCardClick}/>}
+                            </Grid>
+                        ))}
+                        {/* 合集始终追加在当前页综合搜索结果之后，无结果时不占位。 */}
+                        {collections.map((item) => (
+                            <Grid key={`collection-${item.id}`} size={{xs: 6, sm: 4, md: 3, lg: 2}}>
+                                <CollectionSearchCard item={item}/>
                             </Grid>
                         ))}
                     </Grid>

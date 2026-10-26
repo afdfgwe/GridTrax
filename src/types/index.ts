@@ -39,6 +39,24 @@ export interface TMDBSearchResult {
     }[];
 }
 
+/** 合集搜索没有影片类型、上映年份或评分，不混入影视详情使用的搜索类型。 */
+export interface TMDBCollectionSearchResult {
+    id: number;
+    name: string;
+    original_name?: string;
+    original_language?: string;
+    overview?: string;
+    poster_path?: string | null;
+    backdrop_path?: string | null;
+}
+
+/** 综合搜索与合集搜索共用页码，各自保留独立的总页数。 */
+export interface TMDBSearchPage<T> {
+    page: number;
+    total_pages: number;
+    results: T[];
+}
+
 /** 人物个人资料；未知日期、出生地和外链常以 null 或空字符串返回。 */
 export interface TMDBPerson {
     id: number;

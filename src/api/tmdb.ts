@@ -30,6 +30,8 @@ import type {
     TMDBMovieRecommendations,
     TMDBCredits,
     TMDBSearchResult,
+    TMDBCollectionSearchResult,
+    TMDBSearchPage,
     TMDBSeason,
     TMDBTVShow,
     TMDBTVAggregateCredits,
@@ -123,9 +125,7 @@ export const getBackdropUrl = (path?: string, size = 'w1280') =>
     path ? `${IMAGE_BASE}${size}${path}` : '';
 
 /** 综合搜索保留电影、电视剧及人物，由展示层分别处理卡片与跳转。 */
-export async function searchMulti(query: string, page = 1, signal?: AbortSignal): Promise<{
-    results: TMDBSearchResult[]; total_pages: number; page: number;
-}> {
+export async function searchMulti(query: string, page = 1, signal?: AbortSignal): Promise<TMDBSearchPage<TMDBSearchResult>> {
     const res = await tmdbAxios.get('/search/multi', {
         params: {query, page, language: 'zh-CN', include_adult: false},
         signal,
@@ -136,6 +136,16 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
         total_pages: Math.min(res.data.total_pages, 500),
         results: res.data.results as TMDBSearchResult[],
     };
+}
+
+/** 合集单独搜索并追加展示，使用与综合搜索相同的中文、页码和取消信号。 */
+export async function searchCollections(query: string, page = 1, signal?: AbortSignal): Promise<TMDBSearchPage<TMDBCollectionSearchResult>> {
+    const res = await tmdbAxios.get<TMDBSearchPage<TMDBCollectionSearchResult>>('/search/collection', {
+        params: {query, page, language: 'zh-CN', include_adult: false},
+        signal,
+    });
+    if (!Array.isArray(res.data.results)) throw new Error('合集搜索结果格式错误');
+    return {...res.data, total_pages: Math.min(res.data.total_pages, 500)};
 }
 
 /** 中文人物资料缺少简介时补取英文简介；合并结果缓存五分钟，中文请求失败不缓存。 */
