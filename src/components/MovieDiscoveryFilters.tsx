@@ -19,6 +19,57 @@ interface Props {
     onApply: (filters: Filters) => void;
 }
 
+interface RangeFilterProps {
+    label: string;
+    unit: string;
+    value: number[];
+    max: number;
+    step: number;
+    labelEvery: number;
+    ariaLabels: [string, string];
+    onChange: (value: number[]) => void;
+}
+
+/** 评分和片长共用范围滑块，统一圆点、交互外圈及刻度样式。 */
+function RangeFilter({label, unit, value, max, step, labelEvery, ariaLabels, onChange}: RangeFilterProps) {
+    return <Box>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+            <Typography variant="body2" fontWeight={700}>{label}</Typography>
+            <Typography variant="body2" color="primary.main" aria-live="polite"
+                        sx={{fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>
+                {value[0]}–{value[1]} {unit}
+            </Typography>
+        </Stack>
+        <Box sx={{px: 1.25, pt: 0.5}}>
+            <Slider value={value} min={0} max={max} step={step} shiftStep={step} disableSwap
+                    getAriaLabel={index => ariaLabels[index]}
+                    getAriaValueText={number => `${number} ${unit}`}
+                    valueLabelDisplay="auto"
+                    marks={Array.from({length: max / step + 1}, (_, index) => {
+                        const number = index * step;
+                        return {value: number, label: number % labelEvery === 0 ? String(number) : undefined};
+                    })}
+                    onChange={(_, next) => {
+                        if (Array.isArray(next)) onChange(next);
+                    }}
+                    sx={theme => ({
+                        '& .MuiSlider-thumb': {
+                            width: 16,
+                            height: 16,
+                            '&:hover, &.Mui-focusVisible': {
+                                boxShadow: `0 0 0 5px ${alpha(theme.palette.primary.main, 0.16)}`,
+                                '@media (hover: none)': {boxShadow: 'none'},
+                            },
+                            '&.Mui-active': {
+                                boxShadow: `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
+                            },
+                        },
+                        '& .MuiSlider-markLabel': {fontSize: 12},
+                    })}/>
+        </Box>
+    </Box>;
+}
+
 /** 草稿与已应用条件分开，只有提交后才更新网址和请求，避免输入时频繁查询。 */
 export default function MovieDiscoveryFilters({initial, genres, countries, languages, onApply}: Props) {
     const [draft, setDraft] = useState(initial);
@@ -29,14 +80,14 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
         setErrors({});
     };
     const ratingRange = [Number(draft.ratingFrom || 0), Number(draft.ratingTo || 10)];
-    const numericField = (field: Exclude<keyof Filters, 'genres' | 'country' | 'language' | 'sort' | 'ratingFrom' | 'ratingTo'>, label: string) => (
+    const numericField = (field: 'yearFrom' | 'yearTo' | 'minVotes', label: string) => (
         <TextField label={label} size="small" type="number" value={draft[field]} fullWidth
                    onChange={event => change(field, event.target.value)} error={Boolean(errors[field])}
                    helperText={errors[field]}
                    slotProps={{
                        htmlInput: {
                            min: field.startsWith('year') ? 1870 : 0,
-                           max: field.startsWith('year') ? 2100 : field === 'minVotes' ? 1_000_000_000 : 1000,
+                           max: field.startsWith('year') ? 2100 : 1_000_000_000,
                            step: 1,
                        }
                    }}/>
@@ -92,49 +143,15 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
             <Stack direction="row"
                    spacing={1}>{numericField('yearFrom', '起始年份')}{numericField('yearTo', '结束年份')}</Stack>
         </Box>
-        <Box>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                <Typography variant="body2" fontWeight={700}>TMDB 评分</Typography>
-                <Typography variant="body2" color="primary.main" aria-live="polite"
-                            sx={{fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>
-                    {ratingRange[0]}–{ratingRange[1]} 分
-                </Typography>
-            </Stack>
-            <Box sx={{px: 1.25, pt: 0.5}}>
-                <Slider value={ratingRange} min={0} max={10} step={1} shiftStep={1} disableSwap
-                        getAriaLabel={index => index === 0 ? '最低评分' : '最高评分'}
-                        getAriaValueText={value => `${value} 分`}
-                        valueLabelDisplay="auto"
-                        marks={Array.from({length: 11}, (_, value) => ({
-                            value,
-                            label: value % 5 === 0 ? String(value) : undefined,
-                        }))}
-                        onChange={(_, value) => {
-                            if (!Array.isArray(value)) return;
-                            // 两端回到完整范围时取消对应限制，避免保留无意义的筛选标签。
-                            setDraft(current => ({
-                                ...current,
-                                ratingFrom: value[0] === 0 ? '' : String(value[0]),
-                                ratingTo: value[1] === 10 ? '' : String(value[1]),
-                            }));
-                            setErrors({});
-                        }}
-                        sx={theme => ({
-                            '& .MuiSlider-thumb': {
-                                width: 16,
-                                height: 16,
-                                '&:hover, &.Mui-focusVisible': {
-                                    boxShadow: `0 0 0 5px ${alpha(theme.palette.primary.main, 0.16)}`,
-                                    '@media (hover: none)': {boxShadow: 'none'},
-                                },
-                                '&.Mui-active': {
-                                    boxShadow: `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
-                                },
-                            },
-                            '& .MuiSlider-markLabel': {fontSize: 12},
-                        })}/>
-            </Box>
-        </Box>
+        <RangeFilter label="TMDB 评分" unit="分" value={ratingRange} max={10} step={1} labelEvery={5}
+                     ariaLabels={['最低评分', '最高评分']} onChange={value => {
+            // 两端回到完整范围时取消对应限制，避免保留无意义的筛选标签。
+            setDraft(current => ({...current,
+                ratingFrom: value[0] === 0 ? '' : String(value[0]),
+                ratingTo: value[1] === 10 ? '' : String(value[1]),
+            }));
+            setErrors({});
+        }}/>
         <TextField select size="small" label="排序" value={draft.sort}
                    onChange={event => change('sort', event.target.value)}>
             {DISCOVERY_SORTS.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
@@ -152,11 +169,16 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
                                   isOptionEqualToValue={(a, b) => a.code === b.code} noOptionsText="暂无语言"
                                   renderInput={params => <TextField {...params} label="原始语言" placeholder="全部语言"/>}/>
                     {numericField('minVotes', '最低评分人数')}
-                    <Box>
-                        <Typography variant="body2" fontWeight={700} sx={{mb: 1.5}}>片长（分钟）</Typography>
-                        <Stack direction="row"
-                               spacing={1}>{numericField('runtimeFrom', '最短片长')}{numericField('runtimeTo', '最大片长')}</Stack>
-                    </Box>
+                    <RangeFilter label="片长" unit="分钟"
+                                 value={[Number(draft.runtimeFrom || 0), Number(draft.runtimeTo || 400)]}
+                                 max={400} step={16} labelEvery={80} ariaLabels={['最短片长', '最大片长']}
+                                 onChange={value => {
+                                     setDraft(current => ({...current,
+                                         runtimeFrom: value[0] === 0 ? '' : String(value[0]),
+                                         runtimeTo: value[1] === 400 ? '' : String(value[1]),
+                                     }));
+                                     setErrors({});
+                                 }}/>
                 </Stack>
             </Collapse>
         </Box>
