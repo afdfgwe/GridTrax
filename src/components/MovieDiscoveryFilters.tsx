@@ -115,7 +115,10 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
                             }));
                             setErrors({});
                         }}
-                        sx={{'& .MuiSlider-markLabel': {fontSize: 12}}}/>
+                        sx={{
+                            '& .MuiSlider-thumb': {width: 16, height: 16},
+                            '& .MuiSlider-markLabel': {fontSize: 12},
+                        }}/>
             </Box>
         </Box>
         <TextField select size="small" label="排序" value={draft.sort}
