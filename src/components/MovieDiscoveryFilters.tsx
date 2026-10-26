@@ -19,25 +19,25 @@ interface Props {
     onApply: (filters: Filters) => void;
 }
 
-interface RangeFilterProps {
+interface SliderFilterProps {
     label: string;
     unit: string;
-    value: number[];
+    value: number | number[];
     max: number;
     step: number;
     labelEvery: number;
-    ariaLabels: [string, string];
-    onChange: (value: number[]) => void;
+    ariaLabels: string[];
+    onChange: (value: number | number[]) => void;
 }
 
-/** 评分和片长共用范围滑块，统一圆点、交互外圈及刻度样式。 */
-function RangeFilter({label, unit, value, max, step, labelEvery, ariaLabels, onChange}: RangeFilterProps) {
+/** 单值与范围筛选共用滑块，统一圆点、交互外圈及刻度样式。 */
+function SliderFilter({label, unit, value, max, step, labelEvery, ariaLabels, onChange}: SliderFilterProps) {
     return <Box>
         <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
             <Typography variant="body2" fontWeight={700}>{label}</Typography>
             <Typography variant="body2" color="primary.main" aria-live="polite"
                         sx={{fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>
-                {value[0]}–{value[1]} {unit}
+                {Array.isArray(value) ? `${value[0]}–${value[1]}` : value} {unit}
             </Typography>
         </Stack>
         <Box sx={{px: 1.25, pt: 0.5}}>
@@ -49,9 +49,7 @@ function RangeFilter({label, unit, value, max, step, labelEvery, ariaLabels, onC
                         const number = index * step;
                         return {value: number, label: number % labelEvery === 0 ? String(number) : undefined};
                     })}
-                    onChange={(_, next) => {
-                        if (Array.isArray(next)) onChange(next);
-                    }}
+                    onChange={(_, next) => onChange(next)}
                     sx={theme => ({
                         '& .MuiSlider-thumb': {
                             width: 16,
@@ -80,14 +78,14 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
         setErrors({});
     };
     const ratingRange = [Number(draft.ratingFrom || 0), Number(draft.ratingTo || 10)];
-    const numericField = (field: 'yearFrom' | 'yearTo' | 'minVotes', label: string) => (
+    const numericField = (field: 'yearFrom' | 'yearTo', label: string) => (
         <TextField label={label} size="small" type="number" value={draft[field]} fullWidth
                    onChange={event => change(field, event.target.value)} error={Boolean(errors[field])}
                    helperText={errors[field]}
                    slotProps={{
                        htmlInput: {
-                           min: field.startsWith('year') ? 1870 : 0,
-                           max: field.startsWith('year') ? 2100 : 1_000_000_000,
+                           min: 1870,
+                           max: 2100,
                            step: 1,
                        }
                    }}/>
@@ -143,8 +141,9 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
             <Stack direction="row"
                    spacing={1}>{numericField('yearFrom', '起始年份')}{numericField('yearTo', '结束年份')}</Stack>
         </Box>
-        <RangeFilter label="TMDB 评分" unit="分" value={ratingRange} max={10} step={1} labelEvery={5}
+        <SliderFilter label="TMDB 评分" unit="分" value={ratingRange} max={10} step={1} labelEvery={5}
                      ariaLabels={['最低评分', '最高评分']} onChange={value => {
+            if (!Array.isArray(value)) return;
             // 两端回到完整范围时取消对应限制，避免保留无意义的筛选标签。
             setDraft(current => ({...current,
                 ratingFrom: value[0] === 0 ? '' : String(value[0]),
@@ -168,11 +167,16 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
                                   onChange={(_, value) => change('language', value?.code ?? '')}
                                   isOptionEqualToValue={(a, b) => a.code === b.code} noOptionsText="暂无语言"
                                   renderInput={params => <TextField {...params} label="原始语言" placeholder="全部语言"/>}/>
-                    {numericField('minVotes', '最低评分人数')}
-                    <RangeFilter label="片长" unit="分钟"
+                    <SliderFilter label="最低评分人数" unit="人" value={Number(draft.minVotes || 0)}
+                                  max={500} step={50} labelEvery={250} ariaLabels={['最低评分人数']}
+                                  onChange={value => {
+                                      if (typeof value === 'number') change('minVotes', value === 0 ? '' : String(value));
+                                  }}/>
+                    <SliderFilter label="片长" unit="分钟"
                                  value={[Number(draft.runtimeFrom || 0), Number(draft.runtimeTo || 400)]}
                                  max={400} step={16} labelEvery={80} ariaLabels={['最短片长', '最大片长']}
                                  onChange={value => {
+                                     if (!Array.isArray(value)) return;
                                      setDraft(current => ({...current,
                                          runtimeFrom: value[0] === 0 ? '' : String(value[0]),
                                          runtimeTo: value[1] === 400 ? '' : String(value[1]),
