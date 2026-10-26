@@ -1,6 +1,16 @@
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import {Alert, Box, Button, CardActionArea, IconButton, Skeleton, Tooltip, Typography} from '@mui/material';
+import {
+    Alert,
+    Box,
+    Button,
+    CardActionArea,
+    IconButton,
+    Link as MuiLink,
+    Skeleton,
+    Tooltip,
+    Typography
+} from '@mui/material';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {
@@ -158,11 +168,13 @@ export default function MediaRecommendations({
             <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 2}}>
                 <Box sx={{minWidth: 0}}>
                     <Typography id={headingId} component="h2" variant="h6" fontWeight={700}>{title}</Typography>
-                    {data?.collectionName && <Typography variant="body2" color="text.secondary"
-                                                         sx={{
-                                                             mt: 0.5,
-                                                             overflowWrap: 'anywhere'
-                                                         }}>{data.collectionName}</Typography>}
+                    {data?.collectionName && <MuiLink component={Link} to={`/collection/${mediaId}`}
+                                                      variant="body2" color="text.secondary" underline="hover"
+                                                      sx={{
+                                                          display: 'inline-block',
+                                                          mt: 0.5,
+                                                          overflowWrap: 'anywhere'
+                                                      }}>{data.collectionName}</MuiLink>}
                 </Box>
                 {!loading && !error && results.length > 0 && (scroll.previous || scroll.next) &&
                     <Box sx={{display: {xs: 'none', sm: 'flex'}, gap: 0.5, flexShrink: 0}}>

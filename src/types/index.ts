@@ -136,6 +136,7 @@ export interface TMDBMovieRecommendation {
     poster_path?: string | null;
     release_date?: string | null;
     vote_average?: number;
+    overview?: string;
 }
 
 export interface TMDBMovieRecommendations {
@@ -154,6 +155,7 @@ export interface TMDBCollectionSummary {
 }
 
 export interface TMDBCollection extends TMDBCollectionSummary {
+    original_name?: string;
     overview?: string;
     parts: TMDBMovieRecommendation[];
 }

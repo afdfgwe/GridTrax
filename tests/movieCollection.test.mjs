@@ -32,3 +32,15 @@ test('合集保留全部电影，不沿用推荐列表的十部上限', () => {
     const parts = Array.from({length: 15}, (_, index) => ({id: index + 1, title: `电影${index + 1}`}));
     assert.equal(getCollectionMovies(parts).length, 15);
 });
+
+test('合集详情排序保留成员原名、简介、评分等字段，缺失资料的电影仍展示', () => {
+    const movie = Object.freeze({
+        id: 2, title: '叶问2', original_title: '葉問2',
+        overview: '电影简介', vote_average: 7.5, release_date: '2010-04-29', poster_path: '/poster.jpg'
+    });
+    const missing = Object.freeze({id: 3, title: '未定档电影', poster_path: null, vote_average: 0});
+    const first = Object.freeze({id: 1, title: '叶问', release_date: '2008-12-12'});
+    const parts = Object.freeze([movie, missing, first]);
+    assert.deepEqual(getCollectionMovies(parts), [first, movie, missing]);
+    assert.equal(getCollectionMovies(parts)[1], movie);
+});

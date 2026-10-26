@@ -16,6 +16,7 @@ const MovieDiscoveryPage = React.lazy(() => import('./pages/MovieDiscoveryPage')
 const TvDetailPage = React.lazy(() => import('./pages/TvDetailPage'));
 const MovieDetailPage = React.lazy(() => import('./pages/MovieDetailPage'));
 const PersonDetailPage = React.lazy(() => import('./pages/PersonDetailPage'));
+const CollectionDetailPage = React.lazy(() => import('./pages/CollectionDetailPage'));
 
 const LoadingFallback = () => (
     <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
@@ -50,6 +51,7 @@ const App: React.FC = () => {
                             <Route path="/tv/:id" element={<TvDetailPage/>}/>
                             <Route path="/movie/:id" element={<MovieDetailPage/>}/>
                             <Route path="/person/:id" element={<PersonDetailPage/>}/>
+                            <Route path="/collection/:id" element={<CollectionDetailPage/>}/>
                         </Routes>
                     </Suspense>
                 </Layout>
