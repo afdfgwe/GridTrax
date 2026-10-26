@@ -1,6 +1,7 @@
 import {LANGUAGE_NAMES_ZH} from '../constants/languageNames.ts';
+import type {HotKind} from '../types/hotMovies.ts';
 
-/** 发现电影只接收已开放的筛选项，统一处理表单、网址和接口参数。 */
+/** 影视筛选只接收已开放的条件，统一处理表单、网址和接口参数。 */
 export const DISCOVERY_SORT_GROUPS = [
     {value: 'popularity', label: '热度', ascLabel: '热度从低到高', descLabel: '热度从高到低'},
     {value: 'vote_average', label: '评分', ascLabel: '评分从低到高', descLabel: '评分从高到低'},
@@ -15,6 +16,30 @@ export const DISCOVERY_SORTS = DISCOVERY_SORT_GROUPS.flatMap(group => [
     {value: `${group.value}.desc`, label: group.descLabel},
     {value: `${group.value}.asc`, label: group.ascLabel},
 ]);
+
+/** 电视剧没有票房排序，首播日期和名称也使用独立参数。 */
+export const TV_DISCOVERY_SORT_GROUPS = [
+    DISCOVERY_SORT_GROUPS[0],
+    DISCOVERY_SORT_GROUPS[1],
+    {value: 'first_air_date', label: '首播', ascLabel: '首播从旧到新', descLabel: '首播从新到旧'},
+    DISCOVERY_SORT_GROUPS[3],
+    {value: 'name', label: '标题', ascLabel: '标题升序', descLabel: '标题降序'},
+] as const;
+
+export function resolveDiscoveryKind(value: string | null): HotKind {
+    return value === 'tv' ? 'tv' : 'movie';
+}
+
+export function getDiscoverySortGroups(kind: HotKind) {
+    return kind === 'tv' ? TV_DISCOVERY_SORT_GROUPS : DISCOVERY_SORT_GROUPS;
+}
+
+export function getDiscoverySorts(kind: HotKind) {
+    return kind === 'movie' ? DISCOVERY_SORTS : TV_DISCOVERY_SORT_GROUPS.flatMap(group => [
+        {value: `${group.value}.desc`, label: group.descLabel},
+        {value: `${group.value}.asc`, label: group.ascLabel},
+    ]);
+}
 
 export interface MovieDiscoveryFilters {
     genres: number[];
@@ -47,7 +72,7 @@ function validNumber(value: string, min: number, max: number, integer: boolean) 
 }
 
 /** 非法地址参数回退默认值；不允许未知查询项透传到 TMDB。 */
-export function parseMovieDiscovery(params: URLSearchParams): MovieDiscoveryFilters {
+export function parseMovieDiscovery(params: URLSearchParams, kind: HotKind = 'movie'): MovieDiscoveryFilters {
     const filters: MovieDiscoveryFilters = {...DEFAULT_DISCOVERY_FILTERS, genres: []};
     filters.genres = [...new Set((params.get('genres') ?? '').split(',')
         .filter(value => /^\d+$/.test(value)).map(Number)
@@ -57,7 +82,7 @@ export function parseMovieDiscovery(params: URLSearchParams): MovieDiscoveryFilt
     if (/^[A-Za-z]{2}$/.test(country)) filters.country = country.toUpperCase();
     if (/^[a-z]{2}$/.test(language)) filters.language = language;
     const sort = params.get('sort');
-    if (DISCOVERY_SORTS.some(option => option.value === sort)) filters.sort = sort!;
+    if (getDiscoverySorts(kind).some(option => option.value === sort)) filters.sort = sort!;
     for (const [key, [min, max, integer]] of Object.entries(numericFields)) {
         const value = params.get(key) ?? '';
         if (validNumber(value, min, max, integer)) filters[key as keyof typeof numericFields] = String(Number(value));
@@ -99,8 +124,9 @@ export function resolveDiscoveryPage(value: string | null): number {
 }
 
 /** 省略空条件及默认排序，筛选、翻页和详情返回共享同一份网址状态。 */
-export function serializeMovieDiscovery(filters: MovieDiscoveryFilters, page = 1): URLSearchParams {
+export function serializeMovieDiscovery(filters: MovieDiscoveryFilters, page = 1, kind: HotKind = 'movie'): URLSearchParams {
     const params = new URLSearchParams();
+    if (kind === 'tv') params.set('kind', 'tv');
     for (const [key, value] of Object.entries(filters)) {
         if (key === 'genres') {
             if (filters.genres.length) params.set(key, [...new Set(filters.genres)].sort((a, b) => a - b).join(','));
@@ -114,15 +140,28 @@ export function serializeMovieDiscovery(filters: MovieDiscoveryFilters, page = 1
 
 /** 多个类型按“任一类型”匹配；年份使用首映日期范围，不误用上映地区。 */
 export function getMovieDiscoveryRequest(filters: MovieDiscoveryFilters, page = 1) {
+    return getDiscoveryRequest(filters, page, 'movie');
+}
+
+export function getTVDiscoveryRequest(filters: MovieDiscoveryFilters, page = 1) {
+    return getDiscoveryRequest(filters, page, 'tv');
+}
+
+/** 共用筛选只映射一次；电视剧按整剧首播年份筛选，不混入其他季的播出日期。 */
+function getDiscoveryRequest(filters: MovieDiscoveryFilters, page: number, kind: HotKind) {
     const params: Record<string, string | number | boolean> = {
-        language: 'zh-CN', include_adult: false, include_video: false,
-        sort_by: filters.sort, page: resolveDiscoveryPage(String(page)),
+        language: 'zh-CN', include_adult: false,
+        ...(kind === 'movie' ? {include_video: false} : {timezone: 'Asia/Shanghai'}),
+        sort_by: getDiscoverySorts(kind).some(option => option.value === filters.sort)
+            ? filters.sort : DEFAULT_DISCOVERY_FILTERS.sort,
+        page: resolveDiscoveryPage(String(page)),
     };
     if (filters.genres.length) params.with_genres = filters.genres.join('|');
     if (filters.country) params.with_origin_country = filters.country;
     if (filters.language) params.with_original_language = filters.language;
-    if (filters.yearFrom) params['primary_release_date.gte'] = `${filters.yearFrom}-01-01`;
-    if (filters.yearTo) params['primary_release_date.lte'] = `${filters.yearTo}-12-31`;
+    const dateField = kind === 'movie' ? 'primary_release_date' : 'first_air_date';
+    if (filters.yearFrom) params[`${dateField}.gte`] = `${filters.yearFrom}-01-01`;
+    if (filters.yearTo) params[`${dateField}.lte`] = `${filters.yearTo}-12-31`;
     const fields = {
         ratingFrom: 'vote_average.gte', ratingTo: 'vote_average.lte', minVotes: 'vote_count.gte',
         runtimeFrom: 'with_runtime.gte', runtimeTo: 'with_runtime.lte',
@@ -131,7 +170,7 @@ export function getMovieDiscoveryRequest(filters: MovieDiscoveryFilters, page = 
         const value = filters[field as keyof typeof fields];
         if (value !== '') params[parameter] = Number(value);
     }
-    return {path: '/discover/movie', params};
+    return {path: `/discover/${kind}`, params};
 }
 
 /** 优先使用浏览器中文名称，其次查本地映射，再回退接口名称或语言代码。 */

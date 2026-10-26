@@ -18,7 +18,7 @@ import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
 import {loadPersonDetails} from './personDetails';
 import {getTVListRequest, normalizeTVListResponse} from '../utils/tvLists';
 import {getMovieListRequest, normalizeMovieListResponse} from '../utils/movieLists';
-import {getMovieDiscoveryRequest, type MovieDiscoveryFilters} from '../utils/movieDiscovery';
+import {getMovieDiscoveryRequest, getTVDiscoveryRequest, type MovieDiscoveryFilters} from '../utils/movieDiscovery';
 import type {
     TMDBCountry,
     TMDBCollection,
@@ -87,9 +87,23 @@ export function getLanguages(): Promise<TMDBLanguage[]> {
 /** 筛选结果有界缓存五分钟；共享请求不被页面卸载取消，过时结果由资源钩子忽略。 */
 export function discoverMovies(filters: MovieDiscoveryFilters, page = 1): Promise<MovieListResponse> {
     const request = getMovieDiscoveryRequest(filters, page);
-    return discoveryCache.load(JSON.stringify(request.params), async () => {
+    return discoveryCache.load(JSON.stringify(request), async () => {
         const res = await tmdbAxios.get<MovieListResponse>(request.path, {params: request.params});
         return normalizeMovieListResponse(res.data);
+    });
+}
+
+/** 共用结果卡片的字段映射；缓存键包含接口路径，避免电影与同编号电视剧互相覆盖。 */
+export function discoverTVShows(filters: MovieDiscoveryFilters, page = 1): Promise<MovieListResponse> {
+    const request = getTVDiscoveryRequest(filters, page);
+    return discoveryCache.load(JSON.stringify(request), async () => {
+        const res = await tmdbAxios.get<TVListResponse>(request.path, {params: request.params});
+        const data = normalizeTVListResponse(res.data);
+        return {
+            ...data, results: data.results.map(show => ({
+                ...show, title: show.name, original_title: show.original_name, release_date: show.first_air_date,
+            }))
+        };
     });
 }
 

@@ -3,17 +3,32 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
-import {Autocomplete, Box, Button, Chip, Collapse, IconButton, MenuItem, Slider, Stack, TextField, Tooltip, Typography} from '@mui/material';
+import {
+    Autocomplete,
+    Box,
+    Button,
+    Chip,
+    Collapse,
+    IconButton,
+    MenuItem,
+    Slider,
+    Stack,
+    TextField,
+    Tooltip,
+    Typography
+} from '@mui/material';
 import {alpha} from '@mui/material/styles';
 import {useState} from 'react';
 import type {TMDBCountry, TMDBGenre} from '../types';
 import type {TMDBLanguage} from '../api/tmdb';
+import type {HotKind} from '../types/hotMovies';
 import {
-    DEFAULT_DISCOVERY_FILTERS, DISCOVERY_SORT_GROUPS, discoveryLanguageLabel, validateMovieDiscovery,
+    DEFAULT_DISCOVERY_FILTERS, getDiscoverySortGroups, discoveryLanguageLabel, validateMovieDiscovery,
     type MovieDiscoveryFilters as Filters,
 } from '../utils/movieDiscovery';
 
 interface Props {
+    kind: HotKind;
     initial: Filters;
     genres: TMDBGenre[];
     countries: TMDBCountry[];
@@ -71,7 +86,7 @@ function SliderFilter({label, unit, value, max, step, labelEvery, ariaLabels, on
 }
 
 /** 草稿与已应用条件分开，只有提交后才更新网址和请求，避免输入时频繁查询。 */
-export default function MovieDiscoveryFilters({initial, genres, countries, languages, onApply}: Props) {
+export default function MovieDiscoveryFilters({kind, initial, genres, countries, languages, onApply}: Props) {
     const [draft, setDraft] = useState(initial);
     const [errors, setErrors] = useState<ReturnType<typeof validateMovieDiscovery>>({});
     const [more, setMore] = useState(Boolean(initial.language || initial.minVotes || initial.runtimeFrom || initial.runtimeTo));
@@ -80,8 +95,9 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
         setErrors({});
     };
     const ratingRange = [Number(draft.ratingFrom || 0), Number(draft.ratingTo || 10)];
-    const sortGroup = DISCOVERY_SORT_GROUPS.find(group => draft.sort.startsWith(`${group.value}.`))
-        ?? DISCOVERY_SORT_GROUPS[0];
+    const sortGroups = getDiscoverySortGroups(kind);
+    const sortGroup = sortGroups.find(group => draft.sort.startsWith(`${group.value}.`)) ?? sortGroups[0];
+    const runtimeLabel = kind === 'tv' ? '单集时长' : '片长';
     const ascending = draft.sort.endsWith('.asc');
     const sortDirectionLabel = `${ascending ? sortGroup.ascLabel : sortGroup.descLabel}，点击切换为${ascending ? sortGroup.descLabel : sortGroup.ascLabel}`;
     const numericField = (field: 'yearFrom' | 'yearTo', label: string) => (
@@ -123,12 +139,19 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
         <Stack direction="row" spacing={1} alignItems="center">
             <TextField select size="small" label="排序" value={sortGroup.value} sx={{flex: 1, minWidth: 0}}
                        onChange={event => change('sort', `${event.target.value}.${ascending ? 'asc' : 'desc'}`)}>
-                {DISCOVERY_SORT_GROUPS.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                {sortGroups.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
             </TextField>
             <Tooltip title={sortDirectionLabel}>
                 <IconButton aria-label={sortDirectionLabel} color="primary"
                             onClick={() => change('sort', `${sortGroup.value}.${ascending ? 'desc' : 'asc'}`)}
-                            sx={{width: 40, height: 40, flexShrink: 0, border: 1, borderColor: 'divider', borderRadius: 1}}>
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                flexShrink: 0,
+                                border: 1,
+                                borderColor: 'divider',
+                                borderRadius: 1
+                            }}>
                     {ascending ? <ArrowUpwardIcon fontSize="small"/> : <ArrowDownwardIcon fontSize="small"/>}
                 </IconButton>
             </Tooltip>
@@ -156,15 +179,16 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
                       noOptionsText="暂无地区"
                       renderInput={params => <TextField {...params} label="制片地区" placeholder="全部地区"/>}/>
         <Box>
-            <Typography variant="body2" fontWeight={700} sx={{mb: 1.5}}>上映年份</Typography>
+            <Typography variant="body2" fontWeight={700} sx={{mb: 1.5}}>{kind === 'tv' ? '首播年份' : '上映年份'}</Typography>
             <Stack direction="row"
                    spacing={1}>{numericField('yearFrom', '起始年份')}{numericField('yearTo', '结束年份')}</Stack>
         </Box>
         <SliderFilter label="TMDB 评分" unit="分" value={ratingRange} max={10} step={1} labelEvery={5}
-                     ariaLabels={['最低评分', '最高评分']} onChange={value => {
+                      ariaLabels={['最低评分', '最高评分']} onChange={value => {
             if (!Array.isArray(value)) return;
             // 两端回到完整范围时取消对应限制，避免保留无意义的筛选标签。
-            setDraft(current => ({...current,
+            setDraft(current => ({
+                ...current,
                 ratingFrom: value[0] === 0 ? '' : String(value[0]),
                 ratingTo: value[1] === 10 ? '' : String(value[1]),
             }));
@@ -187,17 +211,19 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
                                   onChange={value => {
                                       if (typeof value === 'number') change('minVotes', value === 0 ? '' : String(value));
                                   }}/>
-                    <SliderFilter label="片长" unit="分钟"
-                                 value={[Number(draft.runtimeFrom || 0), Number(draft.runtimeTo || 400)]}
-                                 max={400} step={16} labelEvery={80} ariaLabels={['最短片长', '最大片长']}
-                                 onChange={value => {
-                                     if (!Array.isArray(value)) return;
-                                     setDraft(current => ({...current,
-                                         runtimeFrom: value[0] === 0 ? '' : String(value[0]),
-                                         runtimeTo: value[1] === 400 ? '' : String(value[1]),
-                                     }));
-                                     setErrors({});
-                                 }}/>
+                    <SliderFilter label={runtimeLabel} unit="分钟"
+                                  value={[Number(draft.runtimeFrom || 0), Number(draft.runtimeTo || 400)]}
+                                  max={400} step={16} labelEvery={80}
+                                  ariaLabels={[`最短${runtimeLabel}`, `最大${runtimeLabel}`]}
+                                  onChange={value => {
+                                      if (!Array.isArray(value)) return;
+                                      setDraft(current => ({
+                                          ...current,
+                                          runtimeFrom: value[0] === 0 ? '' : String(value[0]),
+                                          runtimeTo: value[1] === 400 ? '' : String(value[1]),
+                                      }));
+                                      setErrors({});
+                                  }}/>
                 </Stack>
             </Collapse>
         </Box>

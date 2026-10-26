@@ -5,50 +5,51 @@ import CloseIcon from '@mui/icons-material/Close';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
     Alert, Box, Button, Chip, Container, Drawer, IconButton, LinearProgress, Skeleton, Tooltip,
-    Typography, useMediaQuery,
+    ToggleButton, ToggleButtonGroup, Typography, useMediaQuery,
 } from '@mui/material';
 import type {Theme} from '@mui/material/styles';
 import {useCallback, useMemo, useState} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
-import {discoverMovies, getCountries, getGenres, getLanguages, getPosterUrl} from '../api/tmdb';
+import {discoverMovies, discoverTVShows, getCountries, getGenres, getLanguages, getPosterUrl} from '../api/tmdb';
 import MovieDiscoveryFilters from '../components/MovieDiscoveryFilters';
 import PosterScoreBadge from '../components/PosterScoreBadge';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {
-    DEFAULT_DISCOVERY_FILTERS, DISCOVERY_SORTS, discoveryLanguageLabel, parseMovieDiscovery,
-    resolveDiscoveryPage, serializeMovieDiscovery, type MovieDiscoveryFilters as Filters,
+    DEFAULT_DISCOVERY_FILTERS, getDiscoverySorts, discoveryLanguageLabel, parseMovieDiscovery,
+    resolveDiscoveryKind, resolveDiscoveryPage, serializeMovieDiscovery, type MovieDiscoveryFilters as Filters,
 } from '../utils/movieDiscovery';
-
-const loadGenres = () => getGenres('movie');
 
 /** 高级找片独立于榜单；已应用条件与页码写入网址，沿用全站历史滚动恢复。 */
 export default function MovieDiscoveryPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const query = searchParams.toString();
-    const filters = useMemo(() => parseMovieDiscovery(new URLSearchParams(query)), [query]);
-    const filterKey = serializeMovieDiscovery(filters).toString();
+    const kind = resolveDiscoveryKind(searchParams.get('kind'));
+    const kindLabel = kind === 'tv' ? '电视剧' : '电影';
+    const filters = useMemo(() => parseMovieDiscovery(new URLSearchParams(query), kind), [query, kind]);
+    const filterKey = serializeMovieDiscovery(filters, 1, kind).toString();
     const page = resolveDiscoveryPage(searchParams.get('page'));
     const desktop = useMediaQuery((theme: Theme) => theme.breakpoints.up('md'));
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const genres = useAsyncResource('discovery-genres', loadGenres);
+    const loadGenres = useCallback(() => getGenres(kind), [kind]);
+    const genres = useAsyncResource(`discovery-genres-${kind}`, loadGenres);
     const countries = useAsyncResource('discovery-countries', getCountries);
     const languages = useAsyncResource('discovery-languages', getLanguages);
     const [pagination, setPagination] = useState<{ key: string; total: number; count: number }>();
     const load = useCallback(async (signal: AbortSignal) => {
-        const result = await discoverMovies(filters, page);
+        const result = await (kind === 'tv' ? discoverTVShows : discoverMovies)(filters, page);
         if (!signal.aborted) setPagination({key: filterKey, total: result.total_pages, count: result.total_results});
         return result;
-    }, [filters, filterKey, page]);
+    }, [filters, filterKey, page, kind]);
     const {data, error, loading, retry} = useAsyncResource(`${filterKey}:${page}`, load);
     // 翻页期间只保留同一组条件的总页数，避免页码短暂变成另一套条件的结果。
     const previous = pagination?.key === filterKey ? pagination : undefined;
     const totalPages = data?.total_pages ?? previous?.total;
     const totalResults = data?.total_results ?? previous?.count;
     const apply = (next: Filters) => {
-        setSearchParams(serializeMovieDiscovery(next));
+        setSearchParams(serializeMovieDiscovery(next, 1, kind));
         setDrawerOpen(false);
     };
-    const changePage = (next: number) => setSearchParams(serializeMovieDiscovery(filters, next));
+    const changePage = (next: number) => setSearchParams(serializeMovieDiscovery(filters, next, kind));
     const remove = (...keys: Array<keyof Filters>) => {
         const next = {...filters};
         for (const key of keys) Object.assign(next, {[key]: DEFAULT_DISCOVERY_FILTERS[key]});
@@ -86,11 +87,11 @@ export default function MovieDiscoveryPage() {
     });
     if (filters.runtimeFrom || filters.runtimeTo) tags.push({
         key: 'runtime',
-        label: `${filters.runtimeFrom || '0'}–${filters.runtimeTo || '不限'} 分钟`,
+        label: `${kind === 'tv' ? '单集 ' : ''}${filters.runtimeFrom || '0'}–${filters.runtimeTo || '不限'} 分钟`,
         remove: () => remove('runtimeFrom', 'runtimeTo')
     });
 
-    const form = <MovieDiscoveryFilters key={filterKey} initial={filters} genres={genres.data ?? []}
+    const form = <MovieDiscoveryFilters key={filterKey} kind={kind} initial={filters} genres={genres.data ?? []}
                                         countries={countries.data ?? []} languages={languages.data ?? []}
                                         onApply={apply}/>;
     const pager = <Box sx={{display: 'flex', alignItems: 'center', flexShrink: 0}}>
@@ -110,7 +111,22 @@ export default function MovieDiscoveryPage() {
             <Tooltip title="返回追踪"><IconButton component={Link} to="/" aria-label="返回追踪" size="small"><ArrowBackIcon
                 fontSize="small"/></IconButton></Tooltip>
             <Typography component="h1" sx={{fontSize: {xs: 22, sm: 30}, fontWeight: 800, flex: 1}}>筛选找片</Typography>
-            <Chip label="电影" size="small" variant="outlined"/>
+            <ToggleButtonGroup exclusive value={kind} size="small" aria-label="找片类型"
+                               onChange={(_, next) => {
+                                   if (next !== 'movie' && next !== 'tv' || next === kind) return;
+                                   // 切换类别时清除旧类型、排序及页码，避免参数跨类别误用。
+                                   setSearchParams(serializeMovieDiscovery({
+                                       ...DEFAULT_DISCOVERY_FILTERS,
+                                       genres: []
+                                   }, 1, next));
+                                   setDrawerOpen(false);
+                               }} sx={{
+                flexShrink: 0,
+                '& .MuiToggleButton-root': {px: {xs: 1, sm: 1.5}, py: 0.5, fontSize: 13}
+            }}>
+                <ToggleButton value="movie">电影</ToggleButton>
+                <ToggleButton value="tv">电视剧</ToggleButton>
+            </ToggleButtonGroup>
         </Box>
         <Box sx={{
             display: 'grid',
@@ -118,7 +134,7 @@ export default function MovieDiscoveryPage() {
             gap: {xs: 2, md: 4},
             alignItems: 'start'
         }}>
-            {desktop && <Box component="aside" aria-label="电影筛选条件" sx={{
+            {desktop && <Box component="aside" aria-label={`${kindLabel}筛选条件`} sx={{
                 position: 'sticky', top: 96,
                 maxHeight: 'calc(100dvh - 112px)', overflowY: 'auto', pr: 1.5, scrollbarWidth: 'thin'
             }}>
@@ -131,24 +147,26 @@ export default function MovieDiscoveryPage() {
                     gap: 1, pb: 1.5, mb: 2, borderBottom: 1, borderColor: 'divider'
                 }}>
                     {!desktop ? <Button size="small" color="inherit" variant="outlined" startIcon={<TuneIcon/>}
-                                        onClick={() => setDrawerOpen(true)} aria-label="打开电影筛选条件" sx={{flexShrink: 0}}>
+                                        onClick={() => setDrawerOpen(true)} aria-label={`打开${kindLabel}筛选条件`}
+                                        sx={{flexShrink: 0}}>
                         筛选{tags.length ? ` (${tags.length})` : ''}
                     </Button> : <Typography variant="body2" color="text.secondary">
-                        {totalResults === undefined ? '电影' : `${totalResults.toLocaleString('zh-CN')} 部电影`}
+                        {totalResults === undefined ? kindLabel : `${totalResults.toLocaleString('zh-CN')} 部${kindLabel}`}
                     </Typography>}
                     {pager}
-                    {loading && <LinearProgress aria-label="正在筛选电影"
+                    {loading && <LinearProgress aria-label={`正在筛选${kindLabel}`}
                                                 sx={{position: 'absolute', bottom: -1, left: 0, right: 0, height: 2}}/>}
                 </Box>
                 <Box sx={{display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 2}}>
                     <Typography variant="caption" color="text.secondary" sx={{mr: 'auto'}}>
-                        {DISCOVERY_SORTS.find(option => option.value === filters.sort)?.label}
+                        {getDiscoverySorts(kind).find(option => option.value === filters.sort)?.label}
                     </Typography>
                     {!desktop && totalResults !== undefined && <Typography variant="caption"
-                                                                           color="text.secondary">{totalResults.toLocaleString('zh-CN')} 部电影</Typography>}
+                                                                           color="text.secondary">{totalResults.toLocaleString('zh-CN')} 部{kindLabel}</Typography>}
                 </Box>
                 {tags.length > 0 &&
-                    <Box aria-label="已应用的筛选条件" sx={{display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75, mb: 2}}>
+                    <Box aria-label="已应用的筛选条件"
+                         sx={{display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75, mb: 2}}>
                         {tags.map(tag => <Chip key={tag.key} label={tag.label} size="small" onDelete={tag.remove}/>)}
                         <Button size="small" color="inherit"
                                 sx={{height: 24, minHeight: 24, py: 0, flexShrink: 0, whiteSpace: 'nowrap'}}
@@ -160,11 +178,11 @@ export default function MovieDiscoveryPage() {
                                if (genres.error) genres.retry();
                                if (countries.error) countries.retry();
                                if (languages.error) languages.retry();
-                           }}>重试</Button>}>部分筛选选项暂时无法加载，电影结果不受影响。</Alert>}
+                           }}>重试</Button>}>部分筛选选项暂时无法加载，{kindLabel}结果不受影响。</Alert>}
                 {error && <Alert severity="error" sx={{mb: 2}} action={<Button size="small" color="inherit"
                                                                                onClick={retry}>重试</Button>}>{error}</Alert>}
                 {!loading && !error && !data?.results.length && <Box sx={{py: 8, textAlign: 'center'}}>
-                    <Typography color="text.secondary" sx={{mb: 2}}>没有找到符合条件的电影</Typography>
+                    <Typography color="text.secondary" sx={{mb: 2}}>没有找到符合条件的{kindLabel}</Typography>
                     {page > 1 ? <Button onClick={() => changePage(1)}>返回第一页</Button>
                         : <Button onClick={() => apply({...DEFAULT_DISCOVERY_FILTERS, genres: []})}>清空筛选</Button>}
                 </Box>}
@@ -194,7 +212,7 @@ export default function MovieDiscoveryPage() {
                     columnGap: {xs: 1.25, sm: 2}, rowGap: 2.5
                 }}>
                     {data.results.map(movie => <Box component="li" key={movie.id} sx={{minWidth: 0}}>
-                        <Box component={Link} to={`/movie/${movie.id}`} sx={{
+                        <Box component={Link} to={`/${kind}/${movie.id}`} sx={{
                             display: 'block',
                             textDecoration: 'none',
                             color: 'text.primary',
