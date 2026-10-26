@@ -16,6 +16,7 @@ import {createRequestCache} from '../utils/requestCache';
 import {normalizeTVAggregateCredits} from '../utils/movieCredits';
 import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
 import {loadPersonDetails} from './personDetails';
+import {loadCollectionDetails} from './collectionDetails';
 import {getTVListRequest, normalizeTVListResponse} from '../utils/tvLists';
 import {getMovieListRequest, normalizeMovieListResponse} from '../utils/movieLists';
 import {getMovieDiscoveryRequest, getTVDiscoveryRequest, type MovieDiscoveryFilters} from '../utils/movieDiscovery';
@@ -301,18 +302,17 @@ export async function getMovie(movieId: number): Promise<TMDBMovie> {
     return getDetails<TMDBMovie>(`/movie/${movieId}`);
 }
 
-/** 合集独立缓存五分钟，共享请求，不逐部加载详情，也不写入本地观看记录。 */
+/** 合集缺少中文简介时补取英文；合并结果独立缓存五分钟，不逐部加载电影详情。 */
 export function getMovieCollection(collectionId: number): Promise<TMDBCollection> {
     if (!Number.isSafeInteger(collectionId) || collectionId <= 0) {
         return Promise.reject(new Error('合集编号无效'));
     }
-    return collectionsCache.load(`collection:${collectionId}:zh-CN`, async () => {
+    return collectionsCache.load(`collection:${collectionId}:zh-CN`, () => loadCollectionDetails(async (language) => {
         const res = await tmdbAxios.get<TMDBCollection>(`/collection/${collectionId}`, {
-            params: {language: 'zh-CN'},
+            params: {language},
         });
-        if (!Array.isArray(res.data.parts)) throw new Error('合集列表格式错误');
         return res.data;
-    });
+    }));
 }
 
 /** 电影推荐只请求中文第一页，独立缓存五分钟，展示层保留前十部。 */
