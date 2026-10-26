@@ -87,48 +87,56 @@ export default function CollectionDetailPage() {
     const goBack = () => window.history.state?.idx > 0 ? navigate(-1) : navigate('/search');
 
     return <Box sx={{position: 'relative', minHeight: '80vh'}}>
-        {collection?.backdrop_path && <Box aria-hidden="true" sx={{
-            position: 'absolute', inset: '0 0 auto',
-            height: {xs: 220, sm: 340}, overflow: 'hidden', pointerEvents: 'none'
+        <Box sx={{
+            position: 'relative', height: {xs: 220, sm: 300, md: 340},
+            overflow: 'hidden', bgcolor: 'background.paper'
         }}>
-            <Box component="img" src={getBackdropUrl(collection.backdrop_path)} alt=""
-                 sx={{width: '100%', height: '100%', objectFit: 'cover', opacity: 0.2}}/>
-            <Box sx={{
+            {collection?.backdrop_path && <Box component="img" src={getBackdropUrl(collection.backdrop_path)} alt=""
+                 sx={{width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.55)'}}/>}
+            <Box aria-hidden="true" sx={{
                 position: 'absolute', inset: 0, background: theme =>
-                    `linear-gradient(to bottom, ${alpha(theme.palette.background.default, 0.2)}, ${theme.palette.background.default})`
+                    `linear-gradient(to bottom, ${alpha(theme.palette.background.default, 0.12)}, ${alpha(theme.palette.background.default, 0.55)} 65%, ${theme.palette.background.default})`
             }}/>
-        </Box>}
-        <Container maxWidth="lg" sx={{position: 'relative', pt: {xs: 1, sm: 2}, pb: 5}}>
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: {xs: 2.5, sm: 4}}}>
-                <Tooltip title="返回"><IconButton onClick={goBack} aria-label="返回上一页" size="small">
+            <Tooltip title="返回"><IconButton onClick={goBack} aria-label="返回上一页" sx={{
+                position: 'absolute', top: 16, left: 16, zIndex: 1,
+                bgcolor: alpha('#000', 0.5), color: '#fff',
+                '&:hover': {bgcolor: alpha('#000', 0.7)}
+            }}>
                     <ArrowBackIcon fontSize="small"/>
-                </IconButton></Tooltip>
-                <Typography variant="body2" color="text.secondary">合集详情</Typography>
-            </Box>
+            </IconButton></Tooltip>
+        </Box>
+        <Container maxWidth="lg" sx={{
+            position: 'relative', pb: 5,
+            // 海报从背景图中部开始，标题与简介自然接在海报下方。
+            mt: collection || loading ? {xs: -20, sm: -27.5, md: -31.25} : 0
+        }}>
             {error && <Alert severity="error" action={validId &&
                 <Button color="inherit" size="small" onClick={retry}>重试</Button>}>
                 {validId ? error : '合集编号无效，请从搜索结果重新进入。'}
             </Alert>}
             {loading && <Box aria-label="正在加载合集详情" sx={{
-                display: 'grid', gap: 3,
-                gridTemplateColumns: {xs: '112px minmax(0, 1fr)', sm: '200px minmax(0, 1fr)'}
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2.5
             }}>
-                <Skeleton variant="rounded" sx={{aspectRatio: '2/3', height: 'auto'}}/>
-                <Box sx={{minWidth: 0}}><Skeleton width="85%" height={48}/><Skeleton width="50%" height={28}/>
+                <Skeleton variant="rounded" sx={{width: {xs: 160, sm: 190, md: 210}, aspectRatio: '2/3', height: 'auto'}}/>
+                <Box sx={{width: '100%', maxWidth: 800}}><Skeleton width="60%" height={48} sx={{mx: 'auto'}}/>
+                    <Skeleton width="35%" height={28} sx={{mx: 'auto'}}/>
                     <Skeleton/><Skeleton/><Skeleton width="70%"/></Box>
-                <Box sx={{gridColumn: '1 / -1'}}><Skeleton width={140} height={40}/>
+                <Box sx={{width: '100%'}}><Skeleton width={140} height={40}/>
                     <Skeleton height={120}/><Skeleton height={120}/></Box>
             </Box>}
             {collection && <>
                 <Box component="section" aria-labelledby="collection-name" sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {xs: '112px minmax(0, 1fr)', sm: '200px minmax(0, 1fr)'},
-                    columnGap: {xs: 2.5, sm: 4}, rowGap: 2.5, alignItems: 'start', pb: {xs: 3, sm: 4}
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    gap: 2.5, pb: {xs: 3, sm: 4}
                 }}>
-                    <Box sx={{gridRow: {sm: '1 / span 2'}}}>
+                    <Box sx={{
+                        width: {xs: 160, sm: 190, md: 210}, maxWidth: '55vw', flexShrink: 0,
+                        borderRadius: 2, '& img': {borderRadius: 'inherit'},
+                        boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}`
+                    }}>
                         <CollectionPoster key={collection.id} path={collection.poster_path} title={title}/>
                     </Box>
-                    <Box sx={{minWidth: 0, alignSelf: {xs: 'center', sm: 'start'}}}>
+                    <Box sx={{minWidth: 0, width: '100%', textAlign: 'center'}}>
                         <Chip label="电影合集" size="small" variant="outlined" sx={{mb: 1.5}}/>
                         <Typography id="collection-name" component="h1" sx={{
                             fontSize: '2rem',
@@ -140,7 +148,7 @@ export default function CollectionDetailPage() {
                             overflowWrap: 'anywhere'
                         }}>{originalName}</Typography>}
                     </Box>
-                    {collection.overview?.trim() && <Box sx={{gridColumn: {xs: '1 / -1', sm: 2}, minWidth: 0}}>
+                    {collection.overview?.trim() && <Box sx={{width: '100%', maxWidth: 800, minWidth: 0}}>
                         <ExpandableOverview key={collection.id} text={collection.overview.trim()} collapsedLines={10}/>
                     </Box>}
                 </Box>
