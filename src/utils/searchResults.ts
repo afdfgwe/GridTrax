@@ -1,5 +1,34 @@
 import type {TMDBCollectionSearchResult, TMDBSearchPage, TMDBSearchResult} from '../types/index.ts';
 
+export const SEARCH_CATEGORIES = [
+    {value: 'all', label: '全部'},
+    {value: 'movie', label: '电影'},
+    {value: 'tv', label: '电视剧'},
+    {value: 'collection', label: '合集'},
+    {value: 'person', label: '人物'},
+] as const;
+
+export type SearchCategory = typeof SEARCH_CATEGORIES[number]['value'];
+export type MediaSearchCategory = TMDBSearchResult['media_type'];
+
+/** 旧搜索链接和手动输入的未知分类统一回退为全部。 */
+export function getSearchCategory(value: string | null): SearchCategory {
+    return SEARCH_CATEGORIES.find(category => category.value === value)?.value ?? 'all';
+}
+
+/** 单类搜索没有 media_type 字段，在请求边界补齐以复用原有卡片和详情跳转。 */
+export function normalizeCategorySearchPage(
+    data: TMDBSearchPage<Omit<TMDBSearchResult, 'media_type'>>,
+    category: MediaSearchCategory,
+): TMDBSearchPage<TMDBSearchResult> {
+    if (!Array.isArray(data.results)) throw new Error('分类搜索结果格式错误');
+    return {
+        ...data,
+        total_pages: Math.min(data.total_pages, 500),
+        results: data.results.map(item => ({...item, media_type: category})),
+    };
+}
+
 export interface CombinedSearchPage {
     page: number;
     total_pages: number;

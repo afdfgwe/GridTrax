@@ -17,6 +17,7 @@ import {normalizeTVAggregateCredits} from '../utils/movieCredits';
 import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
 import {loadPersonDetails} from './personDetails';
 import {loadCollectionDetails} from './collectionDetails';
+import {normalizeCategorySearchPage, type MediaSearchCategory} from '../utils/searchResults';
 import {getTVListRequest, normalizeTVListResponse} from '../utils/tvLists';
 import {getMovieListRequest, normalizeMovieListResponse} from '../utils/movieLists';
 import {getMovieDiscoveryRequest, getTVDiscoveryRequest, type MovieDiscoveryFilters} from '../utils/movieDiscovery';
@@ -139,7 +140,18 @@ export async function searchMulti(query: string, page = 1, signal?: AbortSignal)
     };
 }
 
-/** 合集单独搜索并追加展示，使用与综合搜索相同的中文、页码和取消信号。 */
+/** 按类别查询完整结果及独立页码，不从综合搜索的当前页中过滤。 */
+export async function searchMediaCategory(
+    category: MediaSearchCategory, query: string, page = 1, signal?: AbortSignal,
+): Promise<TMDBSearchPage<TMDBSearchResult>> {
+    const res = await tmdbAxios.get<TMDBSearchPage<Omit<TMDBSearchResult, 'media_type'>>>(`/search/${category}`, {
+        params: {query, page, language: 'zh-CN', include_adult: false},
+        signal,
+    });
+    return normalizeCategorySearchPage(res.data, category);
+}
+
+/** 合集可独立搜索或追加到全部结果后，沿用中文、页码和取消信号。 */
 export async function searchCollections(query: string, page = 1, signal?: AbortSignal): Promise<TMDBSearchPage<TMDBCollectionSearchResult>> {
     const res = await tmdbAxios.get<TMDBSearchPage<TMDBCollectionSearchResult>>('/search/collection', {
         params: {query, page, language: 'zh-CN', include_adult: false},

@@ -1,8 +1,47 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {loadSearchResults} from '../src/utils/searchResults.ts';
+import {
+    getSearchCategory,
+    loadSearchResults,
+    normalizeCategorySearchPage,
+    SEARCH_CATEGORIES
+} from '../src/utils/searchResults.ts';
 
 const response = (results = [], total_pages = 1, page = 1) => ({results, total_pages, page});
+
+test('搜索分类固定为全部、电影、电视剧、合集、人物，未知值回退全部', () => {
+    assert.deepEqual(SEARCH_CATEGORIES.map(item => item.label), ['全部', '电影', '电视剧', '合集', '人物']);
+    for (const {value} of SEARCH_CATEGORIES) assert.equal(getSearchCategory(value), value);
+    for (const value of [null, '', 'unknown', 'Movie', '__proto__']) assert.equal(getSearchCategory(value), 'all');
+});
+
+for (const category of ['movie', 'tv', 'person']) {
+    test(`${category} 分类补齐卡片类型并保留原始字段和顺序，不修改接口数据`, () => {
+        const first = Object.freeze({
+            id: 1, title: '电影', name: '姓名或剧名', profile_path: '/profile.jpg',
+            known_for: [{id: 3, title: '代表作'}], known_for_department: 'Acting'
+        });
+        const second = Object.freeze({id: 2, name: '第二项'});
+        const data = Object.freeze(response(Object.freeze([first, second]), 8, 2));
+        const result = normalizeCategorySearchPage(data, category);
+        assert.deepEqual(result, {
+            ...data,
+            results: [{...first, media_type: category}, {...second, media_type: category}]
+        });
+        assert.equal(result.results[0].known_for, first.known_for);
+        assert.equal(first.media_type, undefined);
+        assert.equal(result.page, 2);
+        assert.equal(result.total_pages, 8);
+    });
+}
+
+test('分类搜索保持空结果和五百页上限，异常列表交给页面错误处理', () => {
+    assert.deepEqual(normalizeCategorySearchPage(response([], 0), 'person'), response([], 0));
+    assert.equal(normalizeCategorySearchPage(response([], 900), 'movie').total_pages, 500);
+    for (const results of [null, undefined, {}]) {
+        assert.throws(() => normalizeCategorySearchPage({results, page: 1, total_pages: 1}, 'tv'), /分类搜索结果格式错误/);
+    }
+});
 
 test('综合搜索与合集搜索并行启动，分别保留顺序且不修改接口数据', async () => {
     const results = Object.freeze([{id: 1, media_type: 'movie'}, {id: 2, media_type: 'person'}]);
