@@ -137,6 +137,8 @@ export interface TMDBMovieRecommendation {
     release_date?: string | null;
     vote_average?: number;
     overview?: string;
+    /** 合集成员及推荐影片的类型编号，通过电影类型字典转换为中文名称。 */
+    genre_ids?: number[];
 }
 
 export interface TMDBMovieRecommendations {

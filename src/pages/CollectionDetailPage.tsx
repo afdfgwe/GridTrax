@@ -5,10 +5,10 @@ import {
 import {alpha} from '@mui/material/styles';
 import {useCallback, useState} from 'react';
 import {Link as RouterLink, useNavigate, useParams} from 'react-router-dom';
-import {getBackdropUrl, getMovieCollection, getPosterUrl} from '../api/tmdb';
+import {getBackdropUrl, getGenres, getMovieCollection, getPosterUrl} from '../api/tmdb';
 import ExpandableOverview from '../components/ExpandableOverview';
 import {useAsyncResource} from '../hooks/useAsyncResource';
-import type {TMDBMovieRecommendation} from '../types';
+import type {TMDBGenre, TMDBMovieRecommendation} from '../types';
 import {getCollectionMovies} from '../utils/movieCollection';
 
 /** 图片路径缺失或加载失败时统一使用海报占位，保持列表尺寸稳定。 */
@@ -26,12 +26,15 @@ function CollectionPoster({path, title}: { path?: string | null; title: string }
 }
 
 /** 成员电影只使用合集 parts 中的资料，不为列表逐部请求详情或演职员。 */
-function CollectionMovie({movie}: { movie: TMDBMovieRecommendation }) {
+function CollectionMovie({movie, genres}: { movie: TMDBMovieRecommendation; genres: readonly TMDBGenre[] }) {
     const title = movie.title?.trim() || movie.original_title?.trim() || '未知电影';
     const originalTitle = movie.original_title?.trim();
     const releaseDate = movie.release_date?.trim();
     const score = movie.vote_average;
     const scoreLabel = typeof score === 'number' && Number.isFinite(score) && score > 0 ? score.toFixed(1) : undefined;
+    const genreNames = [...new Set(movie.genre_ids ?? [])]
+        .map(id => genres.find(genre => genre.id === id)?.name?.trim())
+        .filter((name): name is string => Boolean(name));
     return <Box component="li" sx={{
         display: 'grid', alignItems: 'start',
         gridTemplateColumns: {xs: '88px minmax(0, 1fr)', sm: '120px minmax(0, 1fr)'},
@@ -66,11 +69,30 @@ function CollectionMovie({movie}: { movie: TMDBMovieRecommendation }) {
                     TMDB {scoreLabel}
                 </Typography>}
             </Box>}
+            {genreNames.length > 0 && <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1}}>
+                {genreNames.map(name => <Chip key={name} label={name} size="small" variant="outlined"
+                    sx={{height: 22, borderRadius: 1, color: 'text.secondary', '& .MuiChip-label': {px: 1}}}/>)}
+            </Box>}
             {movie.overview?.trim() && <Box sx={{mt: 1}}>
                 <ExpandableOverview text={movie.overview.trim()} collapsedLines={4}/>
             </Box>}
         </Box>
     </Box>;
+}
+
+const loadMovieGenres = () => getGenres('movie');
+
+/** 整个列表共用电影类型字典及其缓存，字典加载失败不阻塞合集正文。 */
+function CollectionMovieList({movies}: { movies: TMDBMovieRecommendation[] }) {
+    const {data: genres, error, retry} = useAsyncResource('movie-genres', loadMovieGenres);
+    return <>
+        {error && <Alert severity="warning" sx={{mt: 2}} action={
+            <Button color="inherit" size="small" onClick={retry}>重试</Button>
+        }>电影类型暂时加载失败，其余影片信息不受影响。</Alert>}
+        <Box component="ul" sx={{listStyle: 'none', p: 0, m: 0}}>
+            {movies.map(movie => <CollectionMovie key={movie.id} movie={movie} genres={genres ?? []}/>)}
+        </Box>
+    </>;
 }
 
 /** 合集详情与电影页共享五分钟接口缓存，纯展示，不创建或改变本地观看记录。 */
@@ -161,9 +183,8 @@ export default function CollectionDetailPage() {
                                     fontWeight={700}>系列电影</Typography>
                         <Typography variant="body2" color="text.secondary">{movies.length} 部</Typography>
                     </Box>
-                    {movies.length ? <Box component="ul" sx={{listStyle: 'none', p: 0, m: 0}}>
-                        {movies.map(movie => <CollectionMovie key={`${collection.id}:${movie.id}`} movie={movie}/>)}
-                    </Box> : <Typography color="text.secondary" variant="body2" sx={{py: 3}}>暂无系列电影</Typography>}
+                    {movies.length ? <CollectionMovieList key={collection.id} movies={movies}/> :
+                        <Typography color="text.secondary" variant="body2" sx={{py: 3}}>暂无系列电影</Typography>}
                 </Box>
             </>}
         </Container>
