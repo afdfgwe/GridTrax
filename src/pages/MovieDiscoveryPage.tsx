@@ -122,7 +122,7 @@ export default function MovieDiscoveryPage() {
                                    setDrawerOpen(false);
                                }} sx={{
                 flexShrink: 0,
-                '& .MuiToggleButton-root': {px: {xs: 1, sm: 1.5}, py: 0.5, fontSize: 13}
+                '& .MuiToggleButton-root': {px: {xs: 0.75, sm: 1}, py: 0.25, minHeight: 28, fontSize: 12, lineHeight: 1.5}
             }}>
                 <ToggleButton value="movie">电影</ToggleButton>
                 <ToggleButton value="tv">电视剧</ToggleButton>
