@@ -148,9 +148,10 @@ export default function MovieDiscoveryPage() {
                                                                            color="text.secondary">{totalResults.toLocaleString('zh-CN')} 部电影</Typography>}
                 </Box>
                 {tags.length > 0 &&
-                    <Box aria-label="已应用的筛选条件" sx={{display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 2}}>
+                    <Box aria-label="已应用的筛选条件" sx={{display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.75, mb: 2}}>
                         {tags.map(tag => <Chip key={tag.key} label={tag.label} size="small" onDelete={tag.remove}/>)}
                         <Button size="small" color="inherit"
+                                sx={{height: 24, minHeight: 24, py: 0, flexShrink: 0, whiteSpace: 'nowrap'}}
                                 onClick={() => apply({...DEFAULT_DISCOVERY_FILTERS, genres: []})}>清空筛选</Button>
                     </Box>}
                 {[genres, countries, languages].some(resource => resource.error) &&
