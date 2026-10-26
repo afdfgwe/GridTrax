@@ -114,6 +114,10 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
         setErrors(nextErrors);
         if (!Object.keys(nextErrors).length) onApply(draft);
     }} sx={{display: 'flex', flexDirection: 'column', gap: 2.5}}>
+        <TextField select size="small" label="排序" value={draft.sort}
+                   onChange={event => change('sort', event.target.value)}>
+            {DISCOVERY_SORTS.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+        </TextField>
         <Box component="fieldset" sx={{border: 0, p: 0, m: 0, minWidth: 0}}>
             <Typography component="legend" variant="body2" fontWeight={700} sx={{mb: 1}}>类型
                 <Typography component="span" variant="caption" color="text.secondary" sx={{ml: 1}}>匹配任一类型</Typography>
@@ -151,10 +155,6 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
             }));
             setErrors({});
         }}/>
-        <TextField select size="small" label="排序" value={draft.sort}
-                   onChange={event => change('sort', event.target.value)}>
-            {DISCOVERY_SORTS.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
-        </TextField>
         <Box>
             <Button size="small" color="inherit" onClick={() => setMore(value => !value)} aria-expanded={more}
                     aria-controls="discovery-more-filters"

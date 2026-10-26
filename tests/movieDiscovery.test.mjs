@@ -120,6 +120,12 @@ test('表单限制整数年份、票数和片长，接受合法评分小数及�
     })), {});
 });
 
+test('排序包含六类双向选项，不包含原始标题', () => {
+    const expected = ['popularity', 'vote_average', 'primary_release_date', 'vote_count', 'revenue', 'title']
+        .flatMap(field => [`${field}.asc`, `${field}.desc`]);
+    assert.deepEqual(DISCOVERY_SORTS.map(option => option.value).sort(), expected.sort());
+});
+
 test('所有排序选项均能持久化并正确发送', () => {
     for (const {value} of DISCOVERY_SORTS) {
         const parsed = parseMovieDiscovery(serializeMovieDiscovery(filters({sort: value})));

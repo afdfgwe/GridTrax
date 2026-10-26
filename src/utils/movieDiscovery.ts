@@ -3,11 +3,17 @@ import {LANGUAGE_NAMES_ZH} from '../constants/languageNames.ts';
 /** 发现电影只接收已开放的筛选项，统一处理表单、网址和接口参数。 */
 export const DISCOVERY_SORTS = [
     {value: 'popularity.desc', label: '热度从高到低'},
+    {value: 'popularity.asc', label: '热度从低到高'},
     {value: 'vote_average.desc', label: '评分从高到低'},
+    {value: 'vote_average.asc', label: '评分从低到高'},
     {value: 'primary_release_date.desc', label: '上映从新到旧'},
     {value: 'primary_release_date.asc', label: '上映从旧到新'},
     {value: 'vote_count.desc', label: '评分人数从多到少'},
+    {value: 'vote_count.asc', label: '评分人数从少到多'},
     {value: 'revenue.desc', label: '票房从高到低'},
+    {value: 'revenue.asc', label: '票房从低到高'},
+    {value: 'title.asc', label: '标题升序'},
+    {value: 'title.desc', label: '标题降序'},
 ] as const;
 
 export interface MovieDiscoveryFilters {
