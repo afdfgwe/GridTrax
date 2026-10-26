@@ -1,7 +1,7 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
-import {Autocomplete, Box, Button, Chip, Collapse, MenuItem, Stack, TextField, Typography} from '@mui/material';
+import {Autocomplete, Box, Button, Chip, Collapse, MenuItem, Slider, Stack, TextField, Typography} from '@mui/material';
 import {useState} from 'react';
 import type {TMDBCountry, TMDBGenre} from '../types';
 import type {TMDBLanguage} from '../api/tmdb';
@@ -27,15 +27,16 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
         setDraft(current => ({...current, [field]: value}));
         setErrors({});
     };
-    const numericField = (field: Exclude<keyof Filters, 'genres' | 'country' | 'language' | 'sort'>, label: string) => (
+    const ratingRange = [Number(draft.ratingFrom || 0), Number(draft.ratingTo || 10)];
+    const numericField = (field: Exclude<keyof Filters, 'genres' | 'country' | 'language' | 'sort' | 'ratingFrom' | 'ratingTo'>, label: string) => (
         <TextField label={label} size="small" type="number" value={draft[field]} fullWidth
                    onChange={event => change(field, event.target.value)} error={Boolean(errors[field])}
                    helperText={errors[field]}
                    slotProps={{
                        htmlInput: {
                            min: field.startsWith('year') ? 1870 : 0,
-                           max: field.startsWith('year') ? 2100 : field.startsWith('rating') ? 10 : field === 'minVotes' ? 1_000_000_000 : 1000,
-                           step: field.startsWith('rating') ? 0.1 : 1,
+                           max: field.startsWith('year') ? 2100 : field === 'minVotes' ? 1_000_000_000 : 1000,
+                           step: 1,
                        }
                    }}/>
     );
@@ -91,9 +92,31 @@ export default function MovieDiscoveryFilters({initial, genres, countries, langu
                    spacing={1}>{numericField('yearFrom', '起始年份')}{numericField('yearTo', '结束年份')}</Stack>
         </Box>
         <Box>
-            <Typography variant="body2" fontWeight={700} sx={{mb: 1.5}}>TMDB 评分</Typography>
-            <Stack direction="row"
-                   spacing={1}>{numericField('ratingFrom', '最低评分')}{numericField('ratingTo', '最高评分')}</Stack>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                <Typography variant="body2" fontWeight={700}>TMDB 评分</Typography>
+                <Typography variant="body2" color="primary.main" aria-live="polite"
+                            sx={{fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>
+                    {ratingRange[0]}–{ratingRange[1]} 分
+                </Typography>
+            </Stack>
+            <Box sx={{px: 1.25, pt: 0.5}}>
+                <Slider value={ratingRange} min={0} max={10} step={1} shiftStep={1} disableSwap
+                        getAriaLabel={index => index === 0 ? '最低评分' : '最高评分'}
+                        getAriaValueText={value => `${value} 分`}
+                        valueLabelDisplay="auto"
+                        marks={[{value: 0, label: '0'}, {value: 5, label: '5'}, {value: 10, label: '10'}]}
+                        onChange={(_, value) => {
+                            if (!Array.isArray(value)) return;
+                            // 两端回到完整范围时取消对应限制，避免保留无意义的筛选标签。
+                            setDraft(current => ({
+                                ...current,
+                                ratingFrom: value[0] === 0 ? '' : String(value[0]),
+                                ratingTo: value[1] === 10 ? '' : String(value[1]),
+                            }));
+                            setErrors({});
+                        }}
+                        sx={{'& .MuiSlider-markLabel': {fontSize: 12}}}/>
+            </Box>
         </Box>
         <TextField select size="small" label="排序" value={draft.sort}
                    onChange={event => change('sort', event.target.value)}>
