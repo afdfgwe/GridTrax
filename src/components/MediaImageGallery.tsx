@@ -7,9 +7,9 @@ import {
 } from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {getMediaImages, getPosterUrl} from '../api/tmdb';
+import {getCountries, getMediaImages, getPosterUrl} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
-import type {TMDBMediaImages} from '../types';
+import type {TMDBCountry, TMDBMediaImages} from '../types';
 import {getMediaImageMetadata, withCurrentMediaImage} from '../utils/mediaImages';
 import type {MediaImageKind} from '../utils/mediaImages';
 import MediaImageSlides from './MediaImageSlides';
@@ -44,6 +44,13 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
     const [selection, setSelection] = useState(initial);
+    const hasCountryCodes = kinds.some(kind => images[kind].some(photo => photo.iso_3166_1?.trim()));
+    // 仅在大图相册含国家代码时加载字典，与制片信息共用 API 层缓存。
+    const loadCountries = useCallback(
+        () => hasCountryCodes ? getCountries() : Promise.resolve<TMDBCountry[]>([]),
+        [hasCountryCodes],
+    );
+    const {data: countries} = useAsyncResource('media-image-countries:zh-CN', loadCountries);
     const closeRef = useRef<HTMLButtonElement>(null);
     const slideRef = useRef<HTMLDivElement>(null);
     const available = kinds.filter(kind => images[kind].length > 0);
@@ -122,7 +129,7 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
                 borderColor: 'divider',
                 flexShrink: 0
             }}>
-                {getMediaImageMetadata(active).map(item => <Box key={item.label} sx={{minWidth: 0}}>
+                {getMediaImageMetadata(active, countries).map(item => <Box key={item.label} sx={{minWidth: 0}}>
                     <Typography component="dt" variant="caption" color="text.secondary">{item.label}</Typography>
                     <Typography component="dd" variant="body2" sx={{
                         m: 0, fontWeight: 600, overflowWrap: 'anywhere',

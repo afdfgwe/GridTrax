@@ -12,12 +12,31 @@ test('图片元数据按中文展示，不用语言推断国家，尺寸仅接�
         {label: '国家', value: '未提供'}, {label: '语言', value: '中文'},
         {label: '宽度', value: '1920 px'}, {label: '高度', value: '1080 px'},
     ]);
-    assert.equal(getMediaImageMetadata({file_path: '/a.jpg', iso_3166_1: 'cn', iso_639_1: 'en'})[0].value, '中国');
+    assert.equal(getMediaImageMetadata({file_path: '/a.jpg', iso_3166_1: 'cn', iso_639_1: 'en'})[0].value, 'CN');
     assert.equal(getMediaImageMetadata({file_path: '/a.jpg', iso_639_1: null})[1].value, '无语言');
     assert.equal(getMediaImageMetadata({file_path: '/a.jpg'})[1].value, '未提供');
     for (const width of [0, -1, Infinity, NaN, 1.2, '100', undefined]) {
         assert.equal(getMediaImageMetadata({file_path: '/a.jpg', width})[2].value, '未提供');
     }
+});
+
+test('图片国家使用接口地区字典，优先中文名称，缺失时依次回退英文和代码', () => {
+    const countries = Object.freeze([
+        Object.freeze({iso_3166_1: 'US', native_name: ' 美国 ', english_name: 'United States of America'}),
+        Object.freeze({iso_3166_1: ' cn ', native_name: '接口中文名称', english_name: 'China'}),
+        Object.freeze({iso_3166_1: 'DE', native_name: ' ', english_name: ' Germany '}),
+        Object.freeze({iso_3166_1: 'FR', native_name: '', english_name: ''}),
+    ]);
+    const countryName = code => getMediaImageMetadata({file_path: '/a.jpg', iso_3166_1: code}, countries)[0].value;
+    assert.equal(countryName('us'), '美国');
+    assert.equal(countryName(' CN '), '接口中文名称');
+    assert.equal(countryName('DE'), 'Germany');
+    assert.equal(countryName('FR'), 'FR');
+    assert.equal(countryName('JP'), 'JP');
+    assert.equal(countryName(null), '未提供');
+    assert.equal(countryName(undefined), '未提供');
+    assert.equal(countryName(' '), '未提供');
+    assert.equal(getMediaImageMetadata({file_path: '/a.jpg', iso_639_1: 'en'}, countries)[0].value, '未提供');
 });
 
 test('电影与同编号电视剧使用不同相册路径，不传图片语言筛选', () => {
