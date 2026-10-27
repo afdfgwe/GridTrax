@@ -3,12 +3,32 @@ import {discoveryLanguageLabel} from './movieDiscovery.ts';
 
 export type MediaImageKind = 'backdrops' | 'posters';
 
-/** 图片语言不等于发行国家；不根据语言或影片产地推测图片国家。 */
-export function getMediaImageMetadata(photo: TMDBMediaImage, countries: readonly TMDBCountry[] = []): { label: string; value: string }[] {
-    const code = photo.iso_3166_1?.trim().toUpperCase();
+function imageCountryCode(photo: TMDBMediaImage): string {
+    return photo.iso_3166_1?.trim().toUpperCase() || '';
+}
+
+function imageCountryName(code: string, countries: readonly TMDBCountry[]): string {
     const country = code ? countries.find(item => item.iso_3166_1.trim().toUpperCase() === code) : undefined;
     // 复用接口中文地区字典；加载失败或未匹配时保留图片自身的国家代码。
-    const countryName = country?.native_name?.trim() || country?.english_name?.trim() || code || '未提供';
+    return country?.native_name?.trim() || country?.english_name?.trim() || code || '未提供';
+}
+
+/** 按相册出现顺序列出国家；缺少国家信息的图片单独归类，不根据语言推断。 */
+export function getMediaImageCountries(photos: readonly TMDBMediaImage[], countries: readonly TMDBCountry[] = []): { code: string; name: string }[] {
+    return [...new Set(photos.map(imageCountryCode))].map(code => ({
+        code, name: code ? imageCountryName(code, countries) : '未提供国家',
+    }));
+}
+
+/** 星号表示全部国家，空字符串表示国家未提供；保留原有图片顺序。 */
+export function filterMediaImagesByCountry(photos: readonly TMDBMediaImage[], code: string): readonly TMDBMediaImage[] {
+    if (code === '*') return photos;
+    return photos.filter(photo => imageCountryCode(photo) === code.trim().toUpperCase());
+}
+
+/** 图片语言不等于发行国家；不根据语言或影片产地推测图片国家。 */
+export function getMediaImageMetadata(photo: TMDBMediaImage, countries: readonly TMDBCountry[] = []): { label: string; value: string }[] {
+    const countryName = imageCountryName(imageCountryCode(photo), countries);
     const language = photo.iso_639_1?.trim().toLowerCase();
     const dimension = (value: number | undefined) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? String(value) : '未提供';
     const width = dimension(photo.width);

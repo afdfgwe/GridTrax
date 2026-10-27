@@ -1,11 +1,47 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+    filterMediaImagesByCountry,
+    getMediaImageCountries,
     getMediaImageMetadata,
     getMediaImagesPath,
     normalizeMediaImages,
     withCurrentMediaImage
 } from '../src/utils/mediaImages.ts';
+
+test('国家分类合并重复代码并使用中文名称，不从图片语言推断国家', () => {
+    const photos = Object.freeze([
+        {file_path: '/a.jpg', iso_3166_1: ' us '},
+        {file_path: '/b.jpg', iso_3166_1: 'US'},
+        {file_path: '/c.jpg', iso_3166_1: null, iso_639_1: 'zh'},
+        {file_path: '/d.jpg', iso_3166_1: ' '},
+        {file_path: '/e.jpg', iso_3166_1: 'DE'},
+    ]);
+    assert.deepEqual(getMediaImageCountries(photos, [{
+        iso_3166_1: 'US',
+        native_name: '美国',
+        english_name: 'United States'
+    }]), [
+        {code: 'US', name: '美国'}, {code: '', name: '未提供国家'}, {code: 'DE', name: 'DE'},
+    ]);
+    assert.deepEqual(getMediaImageCountries(photos).map(item => item.name), ['US', '未提供国家', 'DE']);
+    assert.deepEqual(getMediaImageCountries([]), []);
+});
+
+test('国家筛选保留图片顺序和全部国家引用，区分未提供国家与无匹配项', () => {
+    const photos = Object.freeze([
+        Object.freeze({file_path: '/a.jpg', iso_3166_1: 'us'}),
+        Object.freeze({file_path: '/b.jpg', iso_639_1: 'en'}),
+        Object.freeze({file_path: '/c.jpg', iso_3166_1: ' US '}),
+        Object.freeze({file_path: '/d.jpg', iso_3166_1: null}),
+    ]);
+    assert.equal(filterMediaImagesByCountry(photos, '*'), photos);
+    assert.deepEqual(filterMediaImagesByCountry(photos, ' us '), [photos[0], photos[2]]);
+    assert.deepEqual(filterMediaImagesByCountry(photos, ''), [photos[1], photos[3]]);
+    assert.deepEqual(filterMediaImagesByCountry(photos, 'CN'), []);
+    assert.deepEqual(filterMediaImagesByCountry([], '*'), []);
+    assert.equal(photos.length, 4);
+});
 
 test('图片元数据按中文展示，不用语言推断国家，尺寸仅接受正整数', () => {
     assert.deepEqual(getMediaImageMetadata({file_path: '/a.jpg', iso_639_1: 'zh', width: 1920, height: 1080}), [

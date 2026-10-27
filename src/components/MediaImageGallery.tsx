@@ -3,14 +3,14 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
 import {
     Alert, Box, Button, ButtonBase, CircularProgress, Dialog, DialogTitle, IconButton,
-    Skeleton, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useMediaQuery
+    MenuItem, Select, Skeleton, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useMediaQuery
 } from '@mui/material';
 import {useTheme} from '@mui/material/styles';
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {getCountries, getMediaImages, getPosterUrl} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import type {TMDBCountry, TMDBMediaImages} from '../types';
-import {withCurrentMediaImage} from '../utils/mediaImages';
+import {filterMediaImagesByCountry, getMediaImageCountries, withCurrentMediaImage} from '../utils/mediaImages';
 import type {MediaImageKind} from '../utils/mediaImages';
 import MediaImageList from './MediaImageList';
 
@@ -44,6 +44,7 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
     const [selection, setSelection] = useState(initial);
+    const [country, setCountry] = useState('*');
     const hasCountryCodes = kinds.some(kind => images[kind].some(photo => photo.iso_3166_1?.trim()));
     // 仅在大图相册含国家代码时加载字典，与制片信息共用 API 层缓存。
     const loadCountries = useCallback(
@@ -53,8 +54,17 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
     const {data: countries} = useAsyncResource('media-image-countries:zh-CN', loadCountries);
     const closeRef = useRef<HTMLButtonElement>(null);
     const available = kinds.filter(kind => images[kind].length > 0);
-    const photos = images[selection.kind];
+    // 只筛选已加载图片；滚动更新当前索引时保持数组引用稳定，避免触发重新定位。
+    const photos = useMemo(() => filterMediaImagesByCountry(images[selection.kind], country), [images, selection.kind, country]);
+    const countryOptions = useMemo(() => getMediaImageCountries([...images.backdrops, ...images.posters], countries), [images, countries]);
     const index = Math.max(0, photos.findIndex(photo => photo.file_path === selection.path));
+    const changeCountry = (value: string) => {
+        setCountry(value);
+        setSelection({
+            kind: selection.kind,
+            path: filterMediaImagesByCountry(images[selection.kind], value)[0]?.file_path ?? ''
+        });
+    };
     return <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="lg"
                    aria-labelledby="media-gallery-title" slotProps={{
         paper: {
@@ -79,24 +89,38 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
                         sx={{
                             flexShrink: 0,
                             fontVariantNumeric: 'tabular-nums'
-                        }}>{index + 1} / {photos.length}</Typography>
+                        }}>{photos.length ? index + 1 : 0} / {photos.length}</Typography>
             <Tooltip title="关闭"><IconButton ref={closeRef} autoFocus aria-label="关闭影视相册" onClick={onClose}><CloseIcon/></IconButton></Tooltip>
         </DialogTitle>
-        {available.length > 1 && <Box sx={{px: 2, pb: 1, flexShrink: 0}}>
+        <Box sx={{px: 2, pb: 1, flexShrink: 0, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1}}>
             <ImageKinds value={selection.kind} available={available}
-                        onChange={kind => setSelection({kind, path: images[kind][0].file_path})}/>
-        </Box>}
+                        onChange={kind => setSelection({
+                            kind,
+                            path: filterMediaImagesByCountry(images[kind], country)[0]?.file_path ?? ''
+                        })}/>
+            <Select size="small" displayEmpty value={country} onChange={event => changeCountry(event.target.value)}
+                    inputProps={{'aria-label': '图片国家'}} MenuProps={{slotProps: {paper: {sx: {maxHeight: 320}}}}}
+                    sx={{minWidth: 120, maxWidth: 180, fontSize: '0.75rem', '& .MuiSelect-select': {py: 0.5}}}>
+                <MenuItem value="*">全部国家</MenuItem>
+                {countryOptions.map(option => <MenuItem key={option.code} value={option.code}>{option.name}</MenuItem>)}
+            </Select>
+        </Box>
         {error && <Alert severity="warning" sx={{mx: 2, mb: 1}} action={<Button color="inherit" size="small"
                                                                                 onClick={() => {
                                                                                     closeRef.current?.focus();
                                                                                     retry();
                                                                                 }}>重试</Button>}>相册加载失败，仍可查看当前图片</Alert>}
-        {photos.length > 0 && <MediaImageList key={selection.kind} photos={photos} index={index} name={name}
-                                              kind={selection.kind} countries={countries}
-                                              onChange={value => setSelection({
-                                                  kind: selection.kind,
-                                                  path: photos[value].file_path
-                                              })}/>}
+        {photos.length === 0 && <Box role="status" sx={{p: 3, textAlign: 'center'}}>
+            <Typography color="text.secondary" variant="body2">该分类暂无所选国家的图片</Typography>
+            <Button size="small" onClick={() => changeCountry('*')} sx={{mt: 1}}>查看全部国家</Button>
+        </Box>}
+        {photos.length > 0 &&
+            <MediaImageList key={`${selection.kind}:${country}`} photos={photos} index={index} name={name}
+                            kind={selection.kind} countries={countries}
+                            onChange={value => setSelection({
+                                kind: selection.kind,
+                                path: photos[value].file_path
+                            })}/>}
     </Dialog>;
 }
 
