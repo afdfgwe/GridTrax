@@ -10,9 +10,9 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import {getCountries, getMediaImages, getPosterUrl} from '../api/tmdb';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import type {TMDBCountry, TMDBMediaImages} from '../types';
-import {getMediaImageMetadata, withCurrentMediaImage} from '../utils/mediaImages';
+import {withCurrentMediaImage} from '../utils/mediaImages';
 import type {MediaImageKind} from '../utils/mediaImages';
-import MediaImageSlides from './MediaImageSlides';
+import MediaImageList from './MediaImageList';
 
 const labels = {backdrops: '剧照', posters: '海报'};
 const kinds: MediaImageKind[] = ['backdrops', 'posters'];
@@ -52,34 +52,11 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
     );
     const {data: countries} = useAsyncResource('media-image-countries:zh-CN', loadCountries);
     const closeRef = useRef<HTMLButtonElement>(null);
-    const slideRef = useRef<HTMLDivElement>(null);
     const available = kinds.filter(kind => images[kind].length > 0);
     const photos = images[selection.kind];
     const index = Math.max(0, photos.findIndex(photo => photo.file_path === selection.path));
-    const active = photos[index];
-    const move = (direction: number) => {
-        const track = slideRef.current;
-        const target = Math.max(0, Math.min(photos.length - 1, index + direction));
-        track?.scrollTo({
-            left: target * track.clientWidth,
-            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
-        });
-    };
-
     return <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="lg"
-                   aria-labelledby="media-gallery-title" onKeyDown={event => {
-        if (event.altKey || event.ctrlKey || event.metaKey) return;
-        // 分类控件保留原生左右键操作，大图区域的方向键用于切换图片。
-        if ((event.target as HTMLElement).closest('[role="group"][aria-label="图片分类"]')) return;
-        if (event.key === 'ArrowLeft') {
-            event.preventDefault();
-            move(-1);
-        }
-        if (event.key === 'ArrowRight') {
-            event.preventDefault();
-            move(1);
-        }
-    }} slotProps={{
+                   aria-labelledby="media-gallery-title" slotProps={{
         paper: {
             sx: {
                 borderRadius: fullScreen ? 0 : 2, overflow: 'hidden',
@@ -114,30 +91,12 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
                                                                                     closeRef.current?.focus();
                                                                                     retry();
                                                                                 }}>重试</Button>}>相册加载失败，仍可查看当前图片</Alert>}
-        {active && <>
-            <MediaImageSlides key={selection.kind} photos={photos} index={index} name={name} trackRef={slideRef}
-                              onChange={value => setSelection({kind: selection.kind, path: photos[value].file_path})}/>
-            <Box component="dl" aria-label="图片信息" aria-live="polite" sx={{
-                display: 'grid',
-                gridTemplateColumns: {xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))'},
-                columnGap: 2,
-                rowGap: 1,
-                m: 0,
-                px: {xs: 2, sm: 3},
-                py: 1.5,
-                borderTop: 1,
-                borderColor: 'divider',
-                flexShrink: 0
-            }}>
-                {getMediaImageMetadata(active, countries).map(item => <Box key={item.label} sx={{minWidth: 0}}>
-                    <Typography component="dt" variant="caption" color="text.secondary">{item.label}</Typography>
-                    <Typography component="dd" variant="body2" sx={{
-                        m: 0, fontWeight: 600, overflowWrap: 'anywhere',
-                        fontVariantNumeric: 'tabular-nums'
-                    }}>{item.value}</Typography>
-                </Box>)}
-            </Box>
-        </>}
+        {photos.length > 0 && <MediaImageList key={selection.kind} photos={photos} index={index} name={name}
+                                              kind={selection.kind} countries={countries}
+                                              onChange={value => setSelection({
+                                                  kind: selection.kind,
+                                                  path: photos[value].file_path
+                                              })}/>}
     </Dialog>;
 }
 

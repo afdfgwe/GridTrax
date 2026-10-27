@@ -17,10 +17,12 @@ export default function PhotoCanvas({
                                         next,
                                         label = '人物照片大图',
                                         fallbackSize = 'h632',
-                                        nativeSwipe = false
+                                        nativeSwipe = false,
+                                        overlayControls = false
                                     }: {
     path: string; name: string; previous?: () => void; next?: () => void; label?: string; fallbackSize?: string;
     nativeSwipe?: boolean;
+    overlayControls?: boolean;
 }) {
     const viewportRef = useRef<HTMLDivElement>(null);
     const gesture = useRef<{ id: number; x: number; y: number; panX: number; panY: number } | null>(null);
@@ -70,7 +72,8 @@ export default function PhotoCanvas({
         }
     };
 
-    return <Box sx={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, minWidth: 0}}>
+    return <Box
+        sx={{position: 'relative', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, minWidth: 0}}>
         <Box sx={{position: 'relative', flex: 1, minHeight: 0, bgcolor: 'action.hover'}}>
             <Box ref={viewportRef} role="region" aria-label={label} tabIndex={0}
                  onPointerDown={event => {
@@ -79,7 +82,7 @@ export default function PhotoCanvas({
                          return;
                      }
                      if (event.button !== 0) return;
-                     // 影视轮播在原始比例下交给浏览器处理触摸滑动，放大后仍可拖拽看图。
+                     // 影视相册在原始比例下交给浏览器处理触摸滚动，放大后仍可拖拽看图。
                      if (nativeSwipe && scale === 1 && event.pointerType !== 'mouse') return;
                      gesture.current = {
                          id: event.pointerId, x: event.clientX, y: event.clientY,
@@ -156,7 +159,13 @@ export default function PhotoCanvas({
                                                        }}><ChevronRightIcon/></IconButton></span></Tooltip>
             </>}
         </Box>
-        <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, py: 0.5, flexShrink: 0}}>
+        <Box sx={{
+            display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, py: 0.5, flexShrink: 0,
+            ...(overlayControls ? {
+                position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+                bgcolor: 'background.paper', borderRadius: 1, px: 0.5, boxShadow: 1,
+            } : {}),
+        }}>
             <Tooltip title="缩小"><span><IconButton size="small" aria-label="缩小照片" disabled={!ready || scale <= 1}
                                                   onClick={() => zoom(scale - 0.5)}><ZoomOutIcon
                 fontSize="small"/></IconButton></span></Tooltip>
