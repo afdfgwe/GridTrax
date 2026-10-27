@@ -1,4 +1,5 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import StarIcon from '@mui/icons-material/Star';
 import {
     Alert,
@@ -143,12 +144,20 @@ const MovieDetailPage: React.FC = () => {
                                         </Typography>
                                     )}
                                     {tagline && (
-                                        <Typography variant="body1" color="text.secondary" sx={{
-                                            mb: 1.5, lineHeight: 1.6, fontStyle: 'italic',
-                                            whiteSpace: 'pre-line', overflowWrap: 'anywhere',
+                                        <Box component="blockquote" sx={{
+                                            m: 0, mb: 1.5, display: 'flex', alignItems: 'flex-start', gap: 0.75,
                                         }}>
-                                            {tagline}
-                                        </Typography>
+                                            <FormatQuoteIcon aria-hidden="true" sx={{
+                                                fontSize: 22, color: 'primary.main', flexShrink: 0, mt: 0.125,
+                                                transform: 'rotate(180deg)',
+                                            }}/>
+                                            <Typography variant="body1" color="text.secondary" sx={{
+                                                minWidth: 0, lineHeight: 1.6, fontStyle: 'italic', fontWeight: 500,
+                                                whiteSpace: 'pre-line', overflowWrap: 'anywhere',
+                                            }}>
+                                                {tagline}
+                                            </Typography>
+                                        </Box>
                                     )}
                                     <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5}}>
                                         {Number.isFinite(movie.vote_average) && movie.vote_average > 0 && (
