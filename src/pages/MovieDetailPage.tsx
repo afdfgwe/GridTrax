@@ -109,7 +109,6 @@ const MovieDetailPage: React.FC = () => {
                                 display: 'flex',
                                 flexDirection: {xs: 'column', sm: 'row'},
                                 gap: {xs: 2, sm: 3},
-                                mb: 4,
                                 alignItems: {xs: 'center', sm: 'flex-start'}
                             }}>
                                 <ButtonBase
