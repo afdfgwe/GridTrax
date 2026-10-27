@@ -42,6 +42,7 @@ const TvDetailPage: React.FC = () => {
     const theme = useTheme();
     const primary = theme.palette.primary.main;
     const releaseYear = show?.first_air_date?.trim().slice(0, 4);
+    const tagline = show?.tagline?.trim();
 
     const backdropUrl = show?.backdrop_path ? getBackdropUrl(show.backdrop_path) : '';
 
@@ -152,6 +153,14 @@ const TvDetailPage: React.FC = () => {
                                     {show.original_name !== show.name && (
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
                                             {show.original_name}
+                                        </Typography>
+                                    )}
+                                    {tagline && (
+                                        <Typography variant="body1" color="text.secondary" sx={{
+                                            mb: 1.5, lineHeight: 1.6, fontStyle: 'italic',
+                                            whiteSpace: 'pre-line', overflowWrap: 'anywhere',
+                                        }}>
+                                            {tagline}
                                         </Typography>
                                     )}
                                     <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5}}>

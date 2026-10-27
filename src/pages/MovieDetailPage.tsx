@@ -46,6 +46,7 @@ const MovieDetailPage: React.FC = () => {
 
     const primary = theme.palette.primary.main;
     const releaseYear = movie?.release_date?.trim().slice(0, 4);
+    const tagline = movie?.tagline?.trim();
 
     // 接口评分与年份等信息来自 movie，观看状态来自浏览器中的 record。
 
@@ -139,6 +140,14 @@ const MovieDetailPage: React.FC = () => {
                                     {movie.original_title !== movie.title && (
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
                                             {movie.original_title}
+                                        </Typography>
+                                    )}
+                                    {tagline && (
+                                        <Typography variant="body1" color="text.secondary" sx={{
+                                            mb: 1.5, lineHeight: 1.6, fontStyle: 'italic',
+                                            whiteSpace: 'pre-line', overflowWrap: 'anywhere',
+                                        }}>
+                                            {tagline}
                                         </Typography>
                                     )}
                                     <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5}}>

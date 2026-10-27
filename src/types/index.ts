@@ -182,6 +182,7 @@ export interface TMDBTVShow {
     id: number;
     name: string;
     original_name: string;
+    tagline?: string | null; // 整剧宣传语，缺失或空白时不展示。
     overview: string;
     poster_path?: string;
     backdrop_path?: string;
@@ -268,6 +269,7 @@ export interface TMDBMovie {
     id: number;
     title: string;
     original_title: string;
+    tagline?: string | null; // 电影宣传语，缺失或空白时不展示。
     overview: string;
     poster_path?: string;
     backdrop_path?: string;
