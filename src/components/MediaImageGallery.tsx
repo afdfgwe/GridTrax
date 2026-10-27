@@ -54,11 +54,11 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
     const {data: countries} = useAsyncResource('media-image-countries:zh-CN', loadCountries);
     const closeRef = useRef<HTMLButtonElement>(null);
     const available = kinds.filter(kind => images[kind].length > 0);
+    // 每个分类独立列出有图片的国家，数量不受已选国家影响。
+    const countryOptions = useMemo(() => getMediaImageCountries(images[selection.kind], countries), [images, selection.kind, countries]);
+    const activeCountry = country === '*' || countryOptions.some(option => option.code === country) ? country : '*';
     // 只筛选已加载图片；滚动更新当前索引时保持数组引用稳定，避免触发重新定位。
-    const photos = useMemo(() => filterMediaImagesByCountry(images[selection.kind], country), [images, selection.kind, country]);
-    const countryOptions = useMemo(() => getMediaImageCountries([...images.backdrops, ...images.posters], countries), [images, countries]);
-    // 国家选项保持不变，数量只统计当前剧照或海报分类，不受已选国家影响。
-    const countryCounts = useMemo(() => new Map(getMediaImageCountries(images[selection.kind]).map(option => [option.code, option.count])), [images, selection.kind]);
+    const photos = useMemo(() => filterMediaImagesByCountry(images[selection.kind], activeCountry), [images, selection.kind, activeCountry]);
     const index = Math.max(0, photos.findIndex(photo => photo.file_path === selection.path));
     const changeCountry = (value: string) => {
         setCountry(value);
@@ -66,6 +66,12 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
             kind: selection.kind,
             path: filterMediaImagesByCountry(images[selection.kind], value)[0]?.file_path ?? ''
         });
+    };
+    const changeKind = (kind: MediaImageKind) => {
+        const matching = filterMediaImagesByCountry(images[kind], activeCountry);
+        // 新分类没有原选国家的图片时，恢复全部国家并定位到第一张。
+        setCountry(matching.length ? activeCountry : '*');
+        setSelection({kind, path: (matching.length ? matching : images[kind])[0]?.file_path ?? ''});
     };
     return <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="lg"
                    aria-labelledby="media-gallery-title" slotProps={{
@@ -96,16 +102,13 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
         </DialogTitle>
         <Box sx={{px: 2, pb: 1, flexShrink: 0, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1}}>
             <ImageKinds value={selection.kind} available={available}
-                        onChange={kind => setSelection({
-                            kind,
-                            path: filterMediaImagesByCountry(images[kind], country)[0]?.file_path ?? ''
-                        })}/>
-            <Select size="small" displayEmpty value={country} onChange={event => changeCountry(event.target.value)}
+                        onChange={changeKind}/>
+            <Select size="small" displayEmpty value={activeCountry} onChange={event => changeCountry(event.target.value)}
                     inputProps={{'aria-label': '图片国家'}} MenuProps={{slotProps: {paper: {sx: {maxHeight: 320}}}}}
                     sx={{minWidth: 120, maxWidth: 180, fontSize: '0.75rem', '& .MuiSelect-select': {py: 0.5}}}>
                 <MenuItem value="*">全部国家 ({images[selection.kind].length})</MenuItem>
                 {countryOptions.map(option => <MenuItem key={option.code} value={option.code}>
-                    {option.name} ({countryCounts.get(option.code) ?? 0})
+                    {option.name} ({option.count})
                 </MenuItem>)}
             </Select>
         </Box>
@@ -119,7 +122,7 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
             <Button size="small" onClick={() => changeCountry('*')} sx={{mt: 1}}>查看全部国家</Button>
         </Box>}
         {photos.length > 0 &&
-            <MediaImageList key={`${selection.kind}:${country}`} photos={photos} index={index} name={name}
+            <MediaImageList key={`${selection.kind}:${activeCountry}`} photos={photos} index={index} name={name}
                             kind={selection.kind} countries={countries}
                             onChange={value => setSelection({
                                 kind: selection.kind,

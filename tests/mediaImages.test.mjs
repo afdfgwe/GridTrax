@@ -44,6 +44,7 @@ test('国家数量与当前分类筛选结果一致，不把剧照和海报合�
     };
     for (const photos of Object.values(images)) {
         const options = getMediaImageCountries(photos);
+        assert.ok(options.every(option => option.count > 0));
         assert.equal(options.reduce((sum, option) => sum + option.count, 0), photos.length);
         for (const option of options) {
             assert.equal(option.count, filterMediaImagesByCountry(photos, option.code).length);
@@ -53,6 +54,7 @@ test('国家数量与当前分类筛选结果一致，不把剧照和海报合�
     assert.equal(counts.get('US') ?? 0, 0);
     assert.equal(counts.get('CN'), 2);
     assert.equal(counts.get(''), 1);
+    assert.deepEqual([...counts.keys()], ['CN', '']);
 });
 
 test('国家筛选保留图片顺序和全部国家引用，区分未提供国家与无匹配项', () => {
