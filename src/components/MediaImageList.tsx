@@ -5,7 +5,7 @@ import {getMediaImageMetadata} from '../utils/mediaImages';
 import type {MediaImageKind} from '../utils/mediaImages';
 import PhotoCanvas from './PhotoCanvas';
 
-/** 连续纵向看图；仅挂载视口附近的大图，信息栏始终紧跟对应图片。 */
+/** 纵向浏览响应式图片网格；仅挂载视口附近的大图，信息栏始终紧跟对应图片。 */
 export default function MediaImageList({photos, index, name, kind, countries, onChange}: {
     photos: readonly TMDBMediaImage[]; index: number; name: string; kind: MediaImageKind;
     countries?: readonly TMDBCountry[]; onChange: (index: number) => void;
@@ -45,11 +45,30 @@ export default function MediaImageList({photos, index, name, kind, countries, on
                     const list = event.currentTarget;
                     const items = Array.from(list.children) as HTMLElement[];
                     let target = 0;
-                    for (let i = 1; i < items.length && items[i].offsetTop <= list.scrollTop + 1; i++) target = i;
+                    for (let i = 1; i < items.length && items[i].offsetTop <= list.scrollTop + 1; i++) {
+                        if (items[i].offsetTop > items[target].offsetTop) target = i;
+                    }
+                    // 同排有多张图片时保留用户选中的图片，不让滚动计数跳到相邻图片。
+                    if (items[indexRef.current]?.offsetTop === items[target]?.offsetTop) return;
                     if (target >= 0 && target !== indexRef.current) onChange(target);
                 }} sx={{
-        position: 'relative', flex: 1, minHeight: 0, minWidth: 0, overflowY: 'auto', overflowX: 'hidden',
-        overscrollBehaviorY: 'contain', scrollbarWidth: 'thin', overflowAnchor: 'none',
+        position: 'relative',
+        flex: 1,
+        minHeight: 0,
+        minWidth: 0,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        display: 'grid',
+        gridTemplateColumns: {xs: 'minmax(0, 1fr)', md: `repeat(${kind === 'posters' ? 4 : 2}, minmax(0, 1fr))`},
+        alignContent: 'start',
+        alignItems: 'start',
+        columnGap: 2,
+        rowGap: 2,
+        px: {xs: 0, sm: 2},
+        pb: 2,
+        overscrollBehaviorY: 'contain',
+        scrollbarWidth: 'thin',
+        overflowAnchor: 'none',
         '&:focus-visible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2},
     }}>
         {photos.map((photo, photoIndex) => {
@@ -58,34 +77,32 @@ export default function MediaImageList({photos, index, name, kind, countries, on
                     ? photo.aspect_ratio : kind === 'posters' ? 2 / 3 : 16 / 9;
             return <Box component="figure" key={photo.file_path} data-path={photo.file_path}
                         aria-label={`第${photoIndex + 1}张${kind === 'posters' ? '海报' : '剧照'}`}
-                        sx={{m: 0, pb: 2}}>
-                <Box sx={{display: 'flex', width: '100%', aspectRatio: ratio, minHeight: 140, maxHeight: '72dvh'}}>
+                        sx={{m: 0, minWidth: 0}}>
+                <Box sx={{
+                    display: 'flex', width: '100%', minHeight: 140, maxHeight: '72dvh',
+                    aspectRatio: {xs: ratio, md: kind === 'posters' ? '2 / 3' : '16 / 9'},
+                }}>
                     {nearby.has(photo.file_path)
                         ? <PhotoCanvas path={photo.file_path} name={name} label={`第${photoIndex + 1}张影视图片大图`}
                                        fallbackSize="w780" nativeSwipe overlayControls/>
                         : <Skeleton variant="rectangular" width="100%" height="100%" animation={false}/>}
                 </Box>
-                <Box component="figcaption" sx={{px: {xs: 1, sm: 2}, py: 1, borderBottom: 1, borderColor: 'divider'}}>
-                    <Box component="dl" aria-label={`第${photoIndex + 1}张图片信息`} sx={{
-                        display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: {xs: 0.5, sm: 2}, m: 0,
+                <Box component="figcaption" sx={{px: {xs: 1, sm: 0.5}, pt: 0.75}}>
+                    <Box aria-label={`第${photoIndex + 1}张图片信息`} sx={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, minWidth: 0,
                     }}>
                         {getMediaImageMetadata(photo, countries).map(item => <Tooltip key={item.label}
                                                                                       title={`${item.label}：${item.value}`}>
-                            <Box sx={{display: 'flex', alignItems: 'baseline', gap: 0.5, minWidth: 0}}>
-                                <Typography component="dt" color="text.secondary"
-                                            sx={{fontSize: {xs: '0.6875rem', sm: '0.8125rem'}, flexShrink: 0}}>
-                                    {item.label === '宽度' ? '宽' : item.label === '高度' ? '高' : item.label}
-                                </Typography>
-                                <Typography component="dd" sx={{
-                                    m: 0,
-                                    fontSize: {xs: '0.6875rem', sm: '0.8125rem'},
-                                    fontWeight: 600,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    fontVariantNumeric: 'tabular-nums',
-                                }}>{item.value}</Typography>
-                            </Box>
+                            <Typography component="span" aria-label={`${item.label}：${item.value}`}
+                                        color="text.secondary" sx={{
+                                minWidth: 0,
+                                flexShrink: item.label === '尺寸' ? 0 : 1,
+                                fontSize: '0.75rem',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                fontVariantNumeric: 'tabular-nums',
+                            }}>{item.value}</Typography>
                         </Tooltip>)}
                     </Box>
                 </Box>

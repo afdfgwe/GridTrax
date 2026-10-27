@@ -10,7 +10,7 @@ import {
 test('图片元数据按中文展示，不用语言推断国家，尺寸仅接受正整数', () => {
     assert.deepEqual(getMediaImageMetadata({file_path: '/a.jpg', iso_639_1: 'zh', width: 1920, height: 1080}), [
         {label: '国家', value: '未提供'}, {label: '语言', value: '中文'},
-        {label: '宽度', value: '1920 px'}, {label: '高度', value: '1080 px'},
+        {label: '尺寸', value: '1920 × 1080'},
     ]);
     assert.equal(getMediaImageMetadata({file_path: '/a.jpg', iso_3166_1: 'cn', iso_639_1: 'en'})[0].value, 'CN');
     assert.equal(getMediaImageMetadata({file_path: '/a.jpg', iso_639_1: null})[1].value, '无语言');
@@ -18,6 +18,14 @@ test('图片元数据按中文展示，不用语言推断国家，尺寸仅接�
     for (const width of [0, -1, Infinity, NaN, 1.2, '100', undefined]) {
         assert.equal(getMediaImageMetadata({file_path: '/a.jpg', width})[2].value, '未提供');
     }
+});
+
+test('图片尺寸合并为宽乘高，部分缺失保留已知尺寸，不显示无效数字', () => {
+    const size = photo => getMediaImageMetadata({file_path: '/a.jpg', ...photo})[2];
+    assert.deepEqual(size({width: 1000, height: 1500}), {label: '尺寸', value: '1000 × 1500'});
+    assert.deepEqual(size({width: 1920}), {label: '尺寸', value: '1920 × 未提供'});
+    assert.deepEqual(size({height: 1080}), {label: '尺寸', value: '未提供 × 1080'});
+    assert.deepEqual(size({width: 0, height: -1}), {label: '尺寸', value: '未提供'});
 });
 
 test('图片国家使用接口地区字典，优先中文名称，缺失时依次回退英文和代码', () => {

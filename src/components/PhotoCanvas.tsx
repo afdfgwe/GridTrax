@@ -4,6 +4,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import {Alert, Box, CircularProgress, IconButton, Tooltip, Typography} from '@mui/material';
+import {alpha} from '@mui/material/styles';
 import {useEffect, useRef, useState} from 'react';
 import type {PointerEvent} from 'react';
 import {getPosterUrl} from '../api/tmdb';
@@ -159,18 +160,27 @@ export default function PhotoCanvas({
                                                        }}><ChevronRightIcon/></IconButton></span></Tooltip>
             </>}
         </Box>
-        <Box sx={{
+        <Box role="group" aria-label="照片缩放工具" sx={{
             display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, py: 0.5, flexShrink: 0,
             ...(overlayControls ? {
-                position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
-                bgcolor: 'background.paper', borderRadius: 1, px: 0.5, boxShadow: 1,
+                position: 'absolute', bottom: 8, right: 8, gap: 0.25, py: 0.25, px: 0.25,
+                bgcolor: theme => alpha(theme.palette.background.paper, 0.64),
+                backdropFilter: 'blur(6px)', borderRadius: 1,
+                transition: 'background-color 150ms ease',
+                '&:hover, &:focus-within': {bgcolor: theme => alpha(theme.palette.background.paper, 0.88)},
+                '& .MuiIconButton-root': {width: 28, height: 28},
+                '& .MuiSvgIcon-root': {fontSize: 18},
             } : {}),
         }}>
             <Tooltip title="缩小"><span><IconButton size="small" aria-label="缩小照片" disabled={!ready || scale <= 1}
                                                   onClick={() => zoom(scale - 0.5)}><ZoomOutIcon
                 fontSize="small"/></IconButton></span></Tooltip>
             <Typography component="span" variant="caption"
-                        sx={{width: 42, textAlign: 'center', fontVariantNumeric: 'tabular-nums'}}>
+                        sx={{
+                            width: overlayControls ? 34 : 42,
+                            textAlign: 'center',
+                            fontVariantNumeric: 'tabular-nums'
+                        }}>
                 {Math.round(scale * 100)}%
             </Typography>
             <Tooltip title="放大"><span><IconButton size="small" aria-label="放大照片" disabled={!ready || scale >= 3}

@@ -10,12 +10,13 @@ export function getMediaImageMetadata(photo: TMDBMediaImage, countries: readonly
     // 复用接口中文地区字典；加载失败或未匹配时保留图片自身的国家代码。
     const countryName = country?.native_name?.trim() || country?.english_name?.trim() || code || '未提供';
     const language = photo.iso_639_1?.trim().toLowerCase();
-    const dimension = (value: number | undefined) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? `${value} px` : '未提供';
+    const dimension = (value: number | undefined) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? String(value) : '未提供';
+    const width = dimension(photo.width);
+    const height = dimension(photo.height);
     return [
         {label: '国家', value: countryName},
         {label: '语言', value: language ? discoveryLanguageLabel(language) : photo.iso_639_1 === null ? '无语言' : '未提供'},
-        {label: '宽度', value: dimension(photo.width)},
-        {label: '高度', value: dimension(photo.height)},
+        {label: '尺寸', value: width === '未提供' && height === '未提供' ? '未提供' : `${width} × ${height}`},
     ];
 }
 
