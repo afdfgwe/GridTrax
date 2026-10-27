@@ -4,6 +4,7 @@ import {
     Alert,
     Box,
     Button,
+    ButtonBase,
     Chip,
     Container,
     IconButton,
@@ -11,13 +12,14 @@ import {
     Typography,
 } from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getMovie, getPosterUrl} from '../api/tmdb';
 import GlobalStatusPicker from '../components/GlobalStatusPicker';
 import ExpandableOverview from '../components/ExpandableOverview';
 import ProductionInfo from '../components/ProductionInfo';
 import MediaCredits from '../components/MediaCredits';
+import MediaImageGallery from '../components/MediaImageGallery';
 import MediaRecommendations from '../components/MediaRecommendations';
 import {useProgressStore} from '../store/useProgressStore';
 import type {MovieRecord, WatchStatus} from '../types';
@@ -30,6 +32,7 @@ const MovieDetailPage: React.FC = () => {
     const load = useCallback(() => getMovie(Number(id)), [id]);
     const {data: movie, loading, error, retry} = useAsyncResource(`movie:${id}`, load);
     const theme = useTheme();
+    const [posterOpenId, setPosterOpenId] = useState<number | null>(null);
 
     const ensureMovieRecord = useProgressStore((state) => state.ensureMovieRecord);
     const setMovieStatus = useProgressStore((state) => state.setMovieStatus);
@@ -109,23 +112,27 @@ const MovieDetailPage: React.FC = () => {
                                 mb: 4,
                                 alignItems: {xs: 'center', sm: 'flex-start'}
                             }}>
-                                <Box
-                                    component="img"
-                                    src={getPosterUrl(movie.poster_path, 'w342')}
-                                    alt={movie.title}
+                                <ButtonBase
+                                    disabled={!movie.poster_path}
+                                    aria-label={`查看${movie.title}的海报相册`}
+                                    onClick={() => setPosterOpenId(movie.id)}
                                     sx={{
                                         width: {xs: 160, sm: 150},
                                         maxWidth: {xs: '55vw', sm: 'none'},
                                         aspectRatio: '2/3',
                                         objectFit: 'cover',
                                         borderRadius: 2,
+                                        overflow: 'hidden',
                                         boxShadow: `0 8px 32px ${alpha(primary, 0.4)}`,
                                         flexShrink: 0,
                                         mt: -4,
                                         position: 'relative',
                                         zIndex: 2,
                                     }}
-                                />
+                                >
+                                    <Box component="img" src={getPosterUrl(movie.poster_path, 'w342')} alt={movie.title}
+                                         sx={{display: 'block', width: '100%', height: '100%', objectFit: 'cover'}}/>
+                                </ButtonBase>
                                 <Box sx={{flex: 1, minWidth: 0, width: {xs: '100%', sm: 'auto'}}}>
                                     <Typography variant="h4" fontWeight={800} gutterBottom sx={{lineHeight: 1.2}}>
                                         {movie.title}
@@ -184,6 +191,11 @@ const MovieDetailPage: React.FC = () => {
                             </Box>
 
                             <MediaCredits key={movie.id} mediaId={movie.id} mediaType="movie"/>
+                            <MediaImageGallery key={`images:${movie.id}`} mediaId={movie.id} mediaType="movie"
+                                               name={movie.title} posterPath={movie.poster_path}
+                                               backdropPath={movie.backdrop_path}
+                                               posterOpen={posterOpenId === movie.id}
+                                               onPosterClose={() => setPosterOpenId(null)}/>
 
                             {/* 默认显示“想看”不代表已保存；明确选择状态后才进入追踪列表。 */}
                             <Box

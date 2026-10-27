@@ -88,6 +88,20 @@ export interface TMDBPersonImages {
     profiles: TMDBPersonImage[];
 }
 
+/** 影视图片沿用 TMDB 字段；语言为空通常表示图片不含文字。 */
+export interface TMDBMediaImage extends TMDBPersonImage {
+    iso_639_1?: string | null;
+    vote_average?: number;
+    vote_count?: number;
+}
+
+/** 这里只展示横图和海报，不把透明 Logo 混入相册。 */
+export interface TMDBMediaImages {
+    id: number;
+    backdrops: TMDBMediaImage[];
+    posters: TMDBMediaImage[];
+}
+
 /** 人物影视履历共用作品字段，电影与电视剧分别使用自己的片名和日期。 */
 export interface TMDBPersonCredit {
     id: number;

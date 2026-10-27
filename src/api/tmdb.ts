@@ -18,6 +18,7 @@ import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
 import {loadPersonDetails} from './personDetails';
 import {loadCollectionDetails} from './collectionDetails';
 import {normalizeCategorySearchPage, type MediaSearchCategory} from '../utils/searchResults';
+import {getMediaImagesPath, normalizeMediaImages} from '../utils/mediaImages';
 import {getTVListRequest, normalizeTVListResponse} from '../utils/tvLists';
 import {getMovieListRequest, normalizeMovieListResponse} from '../utils/movieLists';
 import {getMovieDiscoveryRequest, getTVDiscoveryRequest, type MovieDiscoveryFilters} from '../utils/movieDiscovery';
@@ -28,6 +29,7 @@ import type {
     TMDBMovie,
     TMDBPerson,
     TMDBPersonImages,
+    TMDBMediaImages,
     TMDBPersonCombinedCredits,
     TMDBMovieRecommendations,
     TMDBCredits,
@@ -65,6 +67,7 @@ const creditsCache = createRequestCache<TMDBCredits>(40);
 const personCache = createRequestCache<TMDBPerson>(40);
 const personCreditsCache = createRequestCache<PersonWork[]>(20);
 const personImagesCache = createRequestCache<TMDBPersonImages>(40);
+const mediaImagesCache = createRequestCache<TMDBMediaImages>(40);
 const recommendationsCache = createRequestCache<TMDBTVRecommendations>(40);
 const movieRecommendationsCache = createRequestCache<TMDBMovieRecommendations>(40);
 const movieSimilarCache = createRequestCache<TMDBMovieRecommendations>(40);
@@ -177,6 +180,15 @@ export function getPersonImages(personId: number): Promise<TMDBPersonImages> {
         const res = await tmdbAxios.get<TMDBPersonImages>(`/person/${personId}/images`);
         if (!Array.isArray(res.data.profiles)) throw new Error('人物相册格式错误');
         return res.data;
+    });
+}
+
+/** 相册元数据独立缓存五分钟，不缓存原图文件、不写入本地观看记录。 */
+export function getMediaImages(mediaType: 'movie' | 'tv', mediaId: number): Promise<TMDBMediaImages> {
+    const path = getMediaImagesPath(mediaType, mediaId);
+    return mediaImagesCache.load(path, async () => {
+        const res = await tmdbAxios.get<TMDBMediaImages>(path);
+        return normalizeMediaImages(res.data);
     });
 }
 

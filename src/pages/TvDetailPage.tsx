@@ -4,6 +4,7 @@ import {
     Alert,
     Box,
     Button,
+    ButtonBase,
     Chip,
     Container,
     IconButton,
@@ -11,13 +12,14 @@ import {
     Typography,
 } from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getPosterUrl, getTVShow} from '../api/tmdb';
 import SeasonBlock from '../components/SeasonBlock';
 import ExpandableOverview from '../components/ExpandableOverview';
 import ProductionInfo from '../components/ProductionInfo';
 import MediaCredits from '../components/MediaCredits';
+import MediaImageGallery from '../components/MediaImageGallery';
 import MediaRecommendations from '../components/MediaRecommendations';
 import {useProgressStore} from '../store/useProgressStore';
 import {useAsyncResource} from '../hooks/useAsyncResource';
@@ -26,6 +28,7 @@ import {useAsyncResource} from '../hooks/useAsyncResource';
 const TvDetailPage: React.FC = () => {
     const {id} = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const [posterOpenId, setPosterOpenId] = useState<number | null>(null);
     // 详情请求使用共享缓存；页面切换后由 Hook 忽略旧结果，不中断其他组件复用的请求。
     const load = useCallback(() => getTVShow(Number(id)), [id]);
     const {data: show, loading, error, retry} = useAsyncResource(`tv:${id}`, load);
@@ -121,23 +124,27 @@ const TvDetailPage: React.FC = () => {
                                 alignItems: {xs: 'center', sm: 'flex-start'}
                             }}>
                                 {/* 整部剧的海报，季海报由季摘要单独提供。 */}
-                                <Box
-                                    component="img"
-                                    src={getPosterUrl(show.poster_path, 'w342')}
-                                    alt={show.name}
+                                <ButtonBase
+                                    disabled={!show.poster_path}
+                                    aria-label={`查看${show.name}的海报相册`}
+                                    onClick={() => setPosterOpenId(show.id)}
                                     sx={{
                                         width: {xs: 160, sm: 140},
                                         maxWidth: {xs: '55vw', sm: 'none'},
                                         aspectRatio: '2/3',
                                         objectFit: 'cover',
                                         borderRadius: 2,
+                                        overflow: 'hidden',
                                         boxShadow: `0 8px 32px ${alpha(primary, 0.4)}`,
                                         flexShrink: 0,
                                         mt: -4,
                                         position: 'relative',
                                         zIndex: 2,
                                     }}
-                                />
+                                >
+                                    <Box component="img" src={getPosterUrl(show.poster_path, 'w342')} alt={show.name}
+                                         sx={{display: 'block', width: '100%', height: '100%', objectFit: 'cover'}}/>
+                                </ButtonBase>
                                 {/* 剧名、首播日期、评分、类型和简介均取自整剧详情接口。 */}
                                 <Box sx={{flex: 1, minWidth: 0, width: {xs: '100%', sm: 'auto'}, pt: {xs: 0, sm: 1}}}>
                                     <Typography variant="h4" fontWeight={800} gutterBottom sx={{lineHeight: 1.2}}>
@@ -195,6 +202,11 @@ const TvDetailPage: React.FC = () => {
                             </Box>
 
                             <MediaCredits key={show.id} mediaId={show.id} mediaType="tv"/>
+                            <MediaImageGallery key={`images:${show.id}`} mediaId={show.id} mediaType="tv"
+                                               name={show.name} posterPath={show.poster_path}
+                                               backdropPath={show.backdrop_path}
+                                               posterOpen={posterOpenId === show.id}
+                                               onPosterClose={() => setPosterOpenId(null)}/>
 
                             {/* 每季独立管理展开和加载状态，默认展开第一项。 */}
                             <Typography variant="h6" fontWeight={700} sx={{mt: 3, mb: 2, color: primary}}>
