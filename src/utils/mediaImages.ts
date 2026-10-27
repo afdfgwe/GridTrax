@@ -13,10 +13,15 @@ function imageCountryName(code: string, countries: readonly TMDBCountry[]): stri
     return country?.native_name?.trim() || country?.english_name?.trim() || code || '未提供';
 }
 
-/** 按相册出现顺序列出国家；缺少国家信息的图片单独归类，不根据语言推断。 */
-export function getMediaImageCountries(photos: readonly TMDBMediaImage[], countries: readonly TMDBCountry[] = []): { code: string; name: string }[] {
-    return [...new Set(photos.map(imageCountryCode))].map(code => ({
-        code, name: code ? imageCountryName(code, countries) : '未提供国家',
+/** 按相册出现顺序统计各国家图片数量；缺少国家信息的图片单独归类，不根据语言推断。 */
+export function getMediaImageCountries(photos: readonly TMDBMediaImage[], countries: readonly TMDBCountry[] = []): { code: string; name: string; count: number }[] {
+    const counts = new Map<string, number>();
+    for (const photo of photos) {
+        const code = imageCountryCode(photo);
+        counts.set(code, (counts.get(code) ?? 0) + 1);
+    }
+    return [...counts].map(([code, count]) => ({
+        code, name: code ? imageCountryName(code, countries) : '未提供国家', count,
     }));
 }
 

@@ -57,6 +57,8 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
     // 只筛选已加载图片；滚动更新当前索引时保持数组引用稳定，避免触发重新定位。
     const photos = useMemo(() => filterMediaImagesByCountry(images[selection.kind], country), [images, selection.kind, country]);
     const countryOptions = useMemo(() => getMediaImageCountries([...images.backdrops, ...images.posters], countries), [images, countries]);
+    // 国家选项保持不变，数量只统计当前剧照或海报分类，不受已选国家影响。
+    const countryCounts = useMemo(() => new Map(getMediaImageCountries(images[selection.kind]).map(option => [option.code, option.count])), [images, selection.kind]);
     const index = Math.max(0, photos.findIndex(photo => photo.file_path === selection.path));
     const changeCountry = (value: string) => {
         setCountry(value);
@@ -101,8 +103,10 @@ function MediaImageViewer({name, images, initial, loading, error, retry, onClose
             <Select size="small" displayEmpty value={country} onChange={event => changeCountry(event.target.value)}
                     inputProps={{'aria-label': '图片国家'}} MenuProps={{slotProps: {paper: {sx: {maxHeight: 320}}}}}
                     sx={{minWidth: 120, maxWidth: 180, fontSize: '0.75rem', '& .MuiSelect-select': {py: 0.5}}}>
-                <MenuItem value="*">全部国家</MenuItem>
-                {countryOptions.map(option => <MenuItem key={option.code} value={option.code}>{option.name}</MenuItem>)}
+                <MenuItem value="*">全部国家 ({images[selection.kind].length})</MenuItem>
+                {countryOptions.map(option => <MenuItem key={option.code} value={option.code}>
+                    {option.name} ({countryCounts.get(option.code) ?? 0})
+                </MenuItem>)}
             </Select>
         </Box>
         {error && <Alert severity="warning" sx={{mx: 2, mb: 1}} action={<Button color="inherit" size="small"

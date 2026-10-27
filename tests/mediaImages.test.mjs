@@ -22,10 +22,37 @@ test('国家分类合并重复代码并使用中文名称，不从图片语言�
         native_name: '美国',
         english_name: 'United States'
     }]), [
-        {code: 'US', name: '美国'}, {code: '', name: '未提供国家'}, {code: 'DE', name: 'DE'},
+        {code: 'US', name: '美国', count: 2}, {code: '', name: '未提供国家', count: 2}, {code: 'DE', name: 'DE', count: 1},
     ]);
     assert.deepEqual(getMediaImageCountries(photos).map(item => item.name), ['US', '未提供国家', 'DE']);
     assert.deepEqual(getMediaImageCountries([]), []);
+});
+
+test('国家数量与当前分类筛选结果一致，不把剧照和海报合并统计', () => {
+    const images = {
+        backdrops: [
+            {file_path: '/a.jpg', iso_3166_1: 'US'},
+            {file_path: '/b.jpg', iso_3166_1: ' us '},
+            {file_path: '/c.jpg', iso_3166_1: 'CN'},
+            {file_path: '/d.jpg', iso_639_1: 'en'},
+        ],
+        posters: [
+            {file_path: '/e.jpg', iso_3166_1: 'CN'},
+            {file_path: '/f.jpg', iso_3166_1: 'CN'},
+            {file_path: '/g.jpg', iso_3166_1: null},
+        ],
+    };
+    for (const photos of Object.values(images)) {
+        const options = getMediaImageCountries(photos);
+        assert.equal(options.reduce((sum, option) => sum + option.count, 0), photos.length);
+        for (const option of options) {
+            assert.equal(option.count, filterMediaImagesByCountry(photos, option.code).length);
+        }
+    }
+    const counts = new Map(getMediaImageCountries(images.posters).map(option => [option.code, option.count]));
+    assert.equal(counts.get('US') ?? 0, 0);
+    assert.equal(counts.get('CN'), 2);
+    assert.equal(counts.get(''), 1);
 });
 
 test('国家筛选保留图片顺序和全部国家引用，区分未提供国家与无匹配项', () => {
