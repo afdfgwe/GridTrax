@@ -46,10 +46,10 @@ const MovieDetailPage: React.FC = () => {
     }, [movie, ensureMovieRecord]);
 
     const primary = theme.palette.primary.main;
-    const releaseYear = movie?.release_date?.trim().slice(0, 4);
+    const releaseDate = movie?.release_date?.trim();
     const tagline = movie?.tagline?.trim();
 
-    // 接口评分与年份等信息来自 movie，观看状态来自浏览器中的 record。
+    // 接口评分与上映日期等信息来自 movie，观看状态来自浏览器中的 record。
 
     return (
         <React.Fragment>
@@ -173,9 +173,9 @@ const MovieDetailPage: React.FC = () => {
                                                 }}
                                             />
                                         )}
-                                        {releaseYear && (
+                                        {releaseDate && (
                                             <Chip
-                                                label={releaseYear}
+                                                label={releaseDate}
                                                 size="small"
                                                 sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
                                             />

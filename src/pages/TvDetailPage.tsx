@@ -42,7 +42,7 @@ const TvDetailPage: React.FC = () => {
 
     const theme = useTheme();
     const primary = theme.palette.primary.main;
-    const releaseYear = show?.first_air_date?.trim().slice(0, 4);
+    const firstAirDate = show?.first_air_date?.trim();
     const tagline = show?.tagline?.trim();
 
     const backdropUrl = show?.backdrop_path ? getBackdropUrl(show.backdrop_path) : '';
@@ -186,9 +186,9 @@ const TvDetailPage: React.FC = () => {
                                                 }}
                                             />
                                         )}
-                                        {releaseYear && (
+                                        {firstAirDate && (
                                             <Chip
-                                                label={releaseYear}
+                                                label={firstAirDate}
                                                 size="small"
                                                 sx={{backgroundColor: alpha(primary, 0.15), color: primary}}
                                             />
