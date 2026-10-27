@@ -91,6 +91,7 @@ export interface TMDBPersonImages {
 /** 影视图片沿用 TMDB 字段；语言为空通常表示图片不含文字。 */
 export interface TMDBMediaImage extends TMDBPersonImage {
     iso_639_1?: string | null;
+    iso_3166_1?: string | null;
     vote_average?: number;
     vote_count?: number;
 }

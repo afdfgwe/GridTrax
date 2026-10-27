@@ -1,6 +1,28 @@
 import type {TMDBMediaImage, TMDBMediaImages} from '../types/index.ts';
+import {discoveryLanguageLabel} from './movieDiscovery.ts';
 
 export type MediaImageKind = 'backdrops' | 'posters';
+
+/** 图片语言不等于发行国家；不根据语言或影片产地推测图片国家。 */
+export function getMediaImageMetadata(photo: TMDBMediaImage): { label: string; value: string }[] {
+    const code = photo.iso_3166_1?.trim().toUpperCase();
+    let country = code || '未提供';
+    if (code && /^[A-Z]{2}$/.test(code)) {
+        try {
+            country = new Intl.DisplayNames(['zh-CN'], {type: 'region'}).of(code) || code;
+        } catch {
+            // 浏览器不支持地区本地化时保留接口代码。
+        }
+    }
+    const language = photo.iso_639_1?.trim().toLowerCase();
+    const dimension = (value: number | undefined) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? `${value} px` : '未提供';
+    return [
+        {label: '国家', value: country},
+        {label: '语言', value: language ? discoveryLanguageLabel(language) : photo.iso_639_1 === null ? '无语言' : '未提供'},
+        {label: '宽度', value: dimension(photo.width)},
+        {label: '高度', value: dimension(photo.height)},
+    ];
+}
 
 /** 图片请求不带语言过滤，保留全部横图和各语言版本海报。 */
 export function getMediaImagesPath(mediaType: 'movie' | 'tv', mediaId: number): string {

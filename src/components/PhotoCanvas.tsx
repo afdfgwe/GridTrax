@@ -10,8 +10,17 @@ import {getPosterUrl} from '../api/tmdb';
 import {clampPhotoPan} from '../utils/personImages';
 
 /** 按照片重建画布，切图时自然重置缩放、拖拽和加载状态。 */
-export default function PhotoCanvas({path, name, previous, next, label = '人物照片大图', fallbackSize = 'h632'}: {
+export default function PhotoCanvas({
+                                        path,
+                                        name,
+                                        previous,
+                                        next,
+                                        label = '人物照片大图',
+                                        fallbackSize = 'h632',
+                                        nativeSwipe = false
+                                    }: {
     path: string; name: string; previous?: () => void; next?: () => void; label?: string; fallbackSize?: string;
+    nativeSwipe?: boolean;
 }) {
     const viewportRef = useRef<HTMLDivElement>(null);
     const gesture = useRef<{ id: number; x: number; y: number; panX: number; panY: number } | null>(null);
@@ -70,6 +79,8 @@ export default function PhotoCanvas({path, name, previous, next, label = '人物
                          return;
                      }
                      if (event.button !== 0) return;
+                     // 影视轮播在原始比例下交给浏览器处理触摸滑动，放大后仍可拖拽看图。
+                     if (nativeSwipe && scale === 1 && event.pointerType !== 'mouse') return;
                      gesture.current = {
                          id: event.pointerId, x: event.clientX, y: event.clientY,
                          panX: position.x, panY: position.y
@@ -91,9 +102,13 @@ export default function PhotoCanvas({path, name, previous, next, label = '人物
                      if (ready) zoom(scale > 1 ? 1 : 2);
                  }}
                  sx={{
-                     position: 'absolute', inset: 0, overflow: 'hidden', touchAction: 'none',
+                     position: 'absolute',
+                     inset: 0,
+                     overflow: 'hidden',
+                     touchAction: nativeSwipe && scale === 1 ? 'pan-x pan-y' : 'none',
                      '&:focus-visible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2},
-                     userSelect: 'none', cursor: ready && scale > 1 ? 'grab' : 'default',
+                     userSelect: 'none',
+                     cursor: ready && scale > 1 ? 'grab' : 'default',
                      '&:active': {cursor: ready && scale > 1 ? 'grabbing' : 'default'}
                  }}>
                 {!failed && <Box component="img" src={getPosterUrl(path, quality)} alt={`${name}的照片`}

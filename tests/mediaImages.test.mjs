@@ -1,6 +1,24 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getMediaImagesPath, normalizeMediaImages, withCurrentMediaImage} from '../src/utils/mediaImages.ts';
+import {
+    getMediaImageMetadata,
+    getMediaImagesPath,
+    normalizeMediaImages,
+    withCurrentMediaImage
+} from '../src/utils/mediaImages.ts';
+
+test('图片元数据按中文展示，不用语言推断国家，尺寸仅接受正整数', () => {
+    assert.deepEqual(getMediaImageMetadata({file_path: '/a.jpg', iso_639_1: 'zh', width: 1920, height: 1080}), [
+        {label: '国家', value: '未提供'}, {label: '语言', value: '中文'},
+        {label: '宽度', value: '1920 px'}, {label: '高度', value: '1080 px'},
+    ]);
+    assert.equal(getMediaImageMetadata({file_path: '/a.jpg', iso_3166_1: 'cn', iso_639_1: 'en'})[0].value, '中国');
+    assert.equal(getMediaImageMetadata({file_path: '/a.jpg', iso_639_1: null})[1].value, '无语言');
+    assert.equal(getMediaImageMetadata({file_path: '/a.jpg'})[1].value, '未提供');
+    for (const width of [0, -1, Infinity, NaN, 1.2, '100', undefined]) {
+        assert.equal(getMediaImageMetadata({file_path: '/a.jpg', width})[2].value, '未提供');
+    }
+});
 
 test('电影与同编号电视剧使用不同相册路径，不传图片语言筛选', () => {
     assert.equal(getMediaImagesPath('movie', 12), '/movie/12/images');
