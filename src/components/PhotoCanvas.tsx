@@ -163,11 +163,11 @@ export default function PhotoCanvas({
         <Box role="group" aria-label="照片缩放工具" sx={{
             display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, py: 0.5, flexShrink: 0,
             ...(overlayControls ? {
-                position: 'absolute', bottom: 8, right: 8, gap: 0.25, py: 0.25, px: 0.25,
-                bgcolor: theme => alpha(theme.palette.background.paper, 0.64),
+                position: 'absolute', bottom: 8, right: 8, gap: 0.25, py: 0.125, px: 0.125,
+                bgcolor: theme => alpha(theme.palette.background.paper, 0.42),
                 backdropFilter: 'blur(6px)', borderRadius: 1,
                 transition: 'background-color 150ms ease',
-                '&:hover, &:focus-within': {bgcolor: theme => alpha(theme.palette.background.paper, 0.88)},
+                '&:hover, &:focus-within': {bgcolor: theme => alpha(theme.palette.background.paper, 0.68)},
                 '& .MuiIconButton-root': {width: 28, height: 28},
                 '& .MuiSvgIcon-root': {fontSize: 18},
             } : {}),
