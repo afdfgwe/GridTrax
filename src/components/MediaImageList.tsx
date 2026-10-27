@@ -59,10 +59,13 @@ export default function MediaImageList({photos, index, name, kind, countries, on
         overflowY: 'auto',
         overflowX: 'hidden',
         display: 'grid',
-        gridTemplateColumns: {xs: 'minmax(0, 1fr)', md: `repeat(${kind === 'posters' ? 4 : 2}, minmax(0, 1fr))`},
+        gridTemplateColumns: {
+            xs: `repeat(${kind === 'posters' ? 2 : 1}, minmax(0, 1fr))`,
+            md: `repeat(${kind === 'posters' ? 4 : 2}, minmax(0, 1fr))`,
+        },
         alignContent: 'start',
         alignItems: 'start',
-        columnGap: 2,
+        columnGap: {xs: 1, sm: 2},
         rowGap: 2,
         px: {xs: 0, sm: 2},
         pb: 2,
@@ -80,16 +83,17 @@ export default function MediaImageList({photos, index, name, kind, countries, on
                         sx={{m: 0, minWidth: 0}}>
                 <Box sx={{
                     display: 'flex', width: '100%', minHeight: 140, maxHeight: '72dvh',
-                    aspectRatio: {xs: ratio, md: kind === 'posters' ? '2 / 3' : '16 / 9'},
+                    aspectRatio: {xs: kind === 'posters' ? '2 / 3' : ratio, md: kind === 'posters' ? '2 / 3' : '16 / 9'},
                 }}>
                     {nearby.has(photo.file_path)
                         ? <PhotoCanvas path={photo.file_path} name={name} label={`第${photoIndex + 1}张影视图片大图`}
                                        fallbackSize="w780" nativeSwipe overlayControls/>
                         : <Skeleton variant="rectangular" width="100%" height="100%" animation={false}/>}
                 </Box>
-                <Box component="figcaption" sx={{px: {xs: 1, sm: 0.5}, pt: 0.75}}>
+                <Box component="figcaption" sx={{px: {xs: kind === 'posters' ? 0.25 : 1, sm: 0.5}, pt: 0.75}}>
                     <Box aria-label={`第${photoIndex + 1}张图片信息`} sx={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, minWidth: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        gap: {xs: kind === 'posters' ? 0.5 : 1, md: 1}, minWidth: 0,
                     }}>
                         {getMediaImageMetadata(photo, countries).map(item => <Tooltip key={item.label}
                                                                                       title={`${item.label}：${item.value}`}>
@@ -97,7 +101,7 @@ export default function MediaImageList({photos, index, name, kind, countries, on
                                         color="text.secondary" sx={{
                                 minWidth: 0,
                                 flexShrink: item.label === '尺寸' ? 0 : 1,
-                                fontSize: '0.75rem',
+                                fontSize: {xs: kind === 'posters' ? '0.625rem' : '0.75rem', md: '0.75rem'},
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
