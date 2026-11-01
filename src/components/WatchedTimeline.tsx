@@ -99,7 +99,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                     {month.days.map(day => (
                         <Box key={day.key} sx={{
                             display: 'grid',
-                            gridTemplateColumns: {xs: '52px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'},
+                            gridTemplateColumns: {xs: '48px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'},
                             columnGap: {xs: 1.5, sm: 2}
                         }}>
                             <Box sx={{textAlign: 'center', pt: 0.75}}>

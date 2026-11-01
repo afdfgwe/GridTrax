@@ -487,6 +487,8 @@ const HomePage: React.FC = () => {
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
+                        // 与时间线的固定标题栏等高，避免切换视图时标题上下跳动。
+                        ...(status === 'Collect' ? {height: 44} : {}),
                         width: {xs: status === 'Do' || status === 'Collect' ? 'auto' : '100%', sm: 'auto'},
                         flexShrink: 0,
                         '&::before': {
