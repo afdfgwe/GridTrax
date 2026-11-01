@@ -99,7 +99,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                     {month.days.map(day => (
                         <Box key={day.key} sx={{
                             display: 'grid',
-                            gridTemplateColumns: {xs: '40px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'},
+                            gridTemplateColumns: {xs: '52px minmax(0, 1fr)', sm: '72px minmax(0, 1fr)'},
                             columnGap: {xs: 1.5, sm: 2}
                         }}>
                             <Box sx={{textAlign: 'center', pt: 0.75}}>
@@ -113,7 +113,7 @@ export default function WatchedTimeline({records, scores, years, headerActions}:
                                             aria-label={`当天观看数量：${day.entries.length}`}
                                             sx={{
                                                 display: 'block', mt: 0.25, fontSize: '0.7rem',
-                                                fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere'
+                                                fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'
                                             }}>（{day.entries.length}）</Typography>
                             </Box>
                             <Box component="ol" sx={{
