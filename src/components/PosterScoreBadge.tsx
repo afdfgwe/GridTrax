@@ -1,7 +1,7 @@
 import {Typography} from '@mui/material';
 
 /** 海报右下角的 TMDB 评分，不使用本地备份中保留的历史个人评分。 */
-const PosterScoreBadge = ({score}: { score?: number }) => {
+const PosterScoreBadge = ({score, compact = false}: { score?: number; compact?: boolean }) => {
     // 未返回、非有限数或没有有效评分时不占据海报空间。
     if (score === undefined || !Number.isFinite(score) || score <= 0) return null;
 
@@ -14,12 +14,12 @@ const PosterScoreBadge = ({score}: { score?: number }) => {
                 position: 'absolute',
                 right: 2,
                 bottom: 2,
-                px: 0.5,
-                py: 0.25,
+                px: compact ? 0.375 : 0.5,
+                py: compact ? 0.2 : 0.25,
                 borderRadius: 0.75,
                 backgroundColor: 'rgba(0, 0, 0, 0.78)',
                 color: '#FFE082',
-                fontSize: '0.75rem',
+                fontSize: compact ? '0.65rem' : '0.75rem',
                 fontWeight: 700,
                 lineHeight: 1,
                 pointerEvents: 'none',

@@ -236,12 +236,12 @@ export default function WatchedStatsPage() {
                                                  }}/>
                                             {year && <Typography component="span" variant="caption" sx={{
                                                 position: 'absolute', top: 2, left: 2,
-                                                px: 0.5, py: 0.25, borderRadius: 0.75,
+                                                px: 0.375, py: 0.2, borderRadius: 0.75,
                                                 bgcolor: 'rgba(0, 0, 0, 0.72)', color: '#fff',
-                                                fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.25,
+                                                fontSize: '0.65rem', fontWeight: 600, lineHeight: 1.25,
                                                 whiteSpace: 'nowrap', pointerEvents: 'none',
                                             }}>{year}年</Typography>}
-                                            <PosterScoreBadge score={getMediaScore(record, itemMetadata?.scores ?? {})}/>
+                                            <PosterScoreBadge compact score={getMediaScore(record, itemMetadata?.scores ?? {})}/>
                                         </Box>
                                         <Box sx={{pt: 1, pb: 0.5, minWidth: 0}}>
                                             <Typography variant="body2" fontWeight={650} noWrap
