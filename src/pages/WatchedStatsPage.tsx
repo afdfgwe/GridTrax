@@ -4,7 +4,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {
     Alert, Box, Button, CardActionArea, Container, IconButton, LinearProgress,
-    Pagination, Tab, Tabs, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
+    Pagination, Tab, Tabs, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useMediaQuery,
 } from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import {useCallback, useMemo} from 'react';
@@ -22,7 +22,6 @@ import {getMediaYearKey} from '../utils/mediaYears';
 import {getWatchedRecordKey, getWatchedRecords, type WatchedKind} from '../utils/watchedGenres';
 import {buildWatchedStats, type WatchedDimension} from '../utils/watchedStats';
 
-const PAGE_SIZE = 12;
 const dimensions = {
     genre: {label: '类型', title: '类型分布', metric: '类型覆盖', unit: '类'},
     country: {label: '地区', title: '制片地区分布', metric: '地区覆盖', unit: '个'},
@@ -32,6 +31,8 @@ const dimensions = {
 /** 只读的观看画像：统计以本地“看过”为准，三种维度共用缓存资料与作品列表。 */
 export default function WatchedStatsPage() {
     const theme = useTheme();
+    const desktop = useMediaQuery(theme.breakpoints.up('md'));
+    const pageSize = desktop ? 16 : 12;
     const records = useProgressStore(state => state.data.records);
     const watched = useMemo(() => getWatchedRecords(Object.values(records)), [records]);
     const {metadata, pendingCount, failedCount, retry} = useWatchedGenres(watched);
@@ -46,10 +47,10 @@ export default function WatchedStatsPage() {
     const config = dimensions[dimension];
     const selection = stats.rows.find(row => row.key === params.get(dimension));
     const items = selection?.records ?? stats.records;
-    const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
     const requestedPage = Number(params.get('page'));
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, pageCount) : 1;
-    const visibleItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const visibleItems = items.slice((page - 1) * pageSize, page * pageSize);
     const filmColor = theme.palette.mode === 'dark' ? '#eda47d' : '#ae4b25';
     const tvColor = theme.palette.mode === 'dark' ? '#6bd6be' : '#087f71';
 
