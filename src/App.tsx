@@ -9,6 +9,7 @@ import {getThemeConfig} from './theme/themes';
 
 // 页面按路由延迟加载，首次访问时再下载对应模块，等待期间显示统一加载状态。
 const HomePage = React.lazy(() => import('./pages/HomePage'));
+const WatchedStatsPage = React.lazy(() => import('./pages/WatchedStatsPage'));
 const SearchPage = React.lazy(() => import('./pages/SearchPage'));
 const HotMoviesPage = React.lazy(() => import('./pages/HotMoviesPage'));
 const MediaListsPage = React.lazy(() => import('./pages/MediaListsPage'));
@@ -44,6 +45,7 @@ const App: React.FC = () => {
                         {/* 首页为追踪面板；作品与人物编号使用不同路由，避免相同编号串数据。 */}
                         <Routes>
                             <Route path="/" element={<HomePage/>}/>
+                            <Route path="/stats" element={<WatchedStatsPage/>}/>
                             <Route path="/search" element={<SearchPage/>}/>
                             <Route path="/hot" element={<HotMoviesPage/>}/>
                             <Route path="/lists" element={<MediaListsPage/>}/>

@@ -1,4 +1,4 @@
-import type {ProgressRecord, TMDBMovie, TMDBTVShow} from '../types/index.ts';
+import type {ProgressRecord, TMDBGenre, TMDBMovie, TMDBTVShow} from '../types/index.ts';
 import {getMediaScores} from './mediaScores.ts';
 import {getMediaYears} from './mediaYears.ts';
 
@@ -13,6 +13,8 @@ export interface MediaMetadata {
     scores: Record<string, number>;
     years: Record<string, string>;
     posterPath?: string;
+    /** 旧缓存没有此字段，空数组则表示接口已确认没有类型资料。 */
+    genres?: TMDBGenre[];
     fetchedAt: number;
 }
 
@@ -22,6 +24,11 @@ export function toMediaMetadata(detail: TMDBMovie | TMDBTVShow, now = Date.now()
     return {
         scores: getMediaScores(detail), years: getMediaYears(detail),
         posterPath: detail.poster_path || undefined, fetchedAt: now,
+        ...(Array.isArray(detail.genres) ? {
+            genres: detail.genres.filter(genre =>
+                Number.isSafeInteger(genre.id) && genre.id > 0 && typeof genre.name === 'string' && genre.name.trim()
+            ).map(genre => ({id: genre.id, name: genre.name.trim()}))
+        } : {}),
     };
 }
 
@@ -33,6 +40,8 @@ function validMetadata(key: string, value: unknown): value is MediaMetadata {
         (key.startsWith('tv_season-') && field.startsWith(`${key}-`) && /^\d+$/.test(field.slice(key.length + 1)));
     return Number.isFinite(item.fetchedAt) && item.fetchedAt > 0 &&
         (item.posterPath === undefined || typeof item.posterPath === 'string') &&
+        (item.genres === undefined || (Array.isArray(item.genres) && item.genres.every(genre =>
+            genre && Number.isSafeInteger(genre.id) && genre.id > 0 && typeof genre.name === 'string' && !!genre.name.trim()))) &&
         !!item.scores && typeof item.scores === 'object' && !Array.isArray(item.scores) &&
         Object.entries(item.scores).every(([field, score]) => validKey(field) && Number.isFinite(score) && score >= 0 && score <= 10) &&
         !!item.years && typeof item.years === 'object' && !Array.isArray(item.years) &&
@@ -60,7 +69,8 @@ export function createMediaMetadataCache(access: () => StorageAccess, now = Date
                 const [key, item] = pair;
                 if (typeof key === 'string' && validMetadata(key, item)) entries.set(key, item);
             }
-        } catch { /* 损坏或禁用的缓存不影响观影记录，也不阻止重新请求接口。 */ }
+        } catch { /* 损坏或禁用的缓存不影响观影记录，也不阻止重新请求接口。 */
+        }
     }
 
     function flush() {
@@ -83,7 +93,10 @@ export function createMediaMetadataCache(access: () => StorageAccess, now = Date
             access().setItem(MEDIA_METADATA_STORAGE_KEY, JSON.stringify({version: 1, entries: kept.reverse()}));
         } catch {
             writeDisabled = true;
-            try { access().removeItem(MEDIA_METADATA_STORAGE_KEY); } catch { /* 仅尝试释放本缓存占用的空间。 */ }
+            try {
+                access().removeItem(MEDIA_METADATA_STORAGE_KEY);
+            } catch { /* 仅尝试释放本缓存占用的空间。 */
+            }
         }
     }
 

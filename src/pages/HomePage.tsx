@@ -1,4 +1,5 @@
 import SortIcon from '@mui/icons-material/Sort';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
@@ -285,7 +286,13 @@ const HomePage: React.FC = () => {
         } catch { /* 写入失败不影响当前切换，也不修改观看记录。 */
         }
     };
-    const watchedViewToggle = <WatchedViewToggle view={watchedView} onChange={handleWatchedViewChange}/>;
+    const watchedViewToggle = <Box sx={{display: 'flex', alignItems: 'center', gap: 0.75}}>
+        <Tooltip title="观看统计"><IconButton size="small" aria-label="观看统计" onClick={() => navigate('/stats')}
+                                          sx={{width: 26, height: 26, color: 'text.secondary', borderRadius: 1}}>
+            <BarChartIcon sx={{fontSize: 18}}/>
+        </IconButton></Tooltip>
+        <WatchedViewToggle view={watchedView} onChange={handleWatchedViewChange}/>
+    </Box>;
 
     // 排序或类型变化后仅重置当前板块页码，其他板块的浏览位置保持不变。
     const handleSortChange = useCallback((status: WatchStatus, mode: SortMode) => {
