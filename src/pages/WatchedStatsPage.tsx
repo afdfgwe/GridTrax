@@ -200,8 +200,8 @@ export default function WatchedStatsPage() {
                         </Box>
                         <Box sx={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                            gap: {xs: 1.25, sm: 2}
+                            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                            gap: {xs: 1, sm: 1.5}
                         }}>
                             {visibleItems.map(record => {
                                 const itemMetadata = metadata[getMediaMetadataKey(record)];
