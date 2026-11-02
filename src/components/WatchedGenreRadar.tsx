@@ -1,13 +1,12 @@
-import MovieOutlinedIcon from '@mui/icons-material/MovieOutlined';
-import TvOutlinedIcon from '@mui/icons-material/TvOutlined';
-import {Box, ToggleButton, ToggleButtonGroup, Typography} from '@mui/material';
+import {Box, Typography} from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
-import {useId, useMemo, useState} from 'react';
+import {useId, useMemo} from 'react';
 import type {ProgressRecord} from '../types';
 import type {MediaMetadata} from '../utils/mediaMetadataCache';
 import {buildWatchedRadarStats, type WatchedRadarAxis, type WatchedRadarKind} from '../utils/watchedRadar';
 
 interface Props {
+    kind: WatchedRadarKind;
     records: readonly ProgressRecord[];
     metadata: Record<string, MediaMetadata>;
     pending: boolean;
@@ -59,10 +58,9 @@ function createRadarLayout(axes: (WatchedRadarAxis | null)[]) {
     return {center, height, dense, labels, point, points};
 }
 
-/** 电影、电视剧独立切换，不受上方条形图的类别和类型选择影响，也不额外请求资料。 */
-export default function WatchedGenreRadar({records, metadata, pending, filmColor, tvColor}: Props) {
+/** 跟随页面的影视类别统计，包含未标注类型，不额外请求资料。 */
+export default function WatchedGenreRadar({kind, records, metadata, pending, filmColor, tvColor}: Props) {
     const theme = useTheme();
-    const [kind, setKind] = useState<WatchedRadarKind>('movie');
     const id = useId();
     const stats = useMemo(() => buildWatchedRadarStats(records, metadata, kind), [records, metadata, kind]);
     const layout = useMemo(() => createRadarLayout(stats.axes), [stats.axes]);
@@ -76,19 +74,10 @@ export default function WatchedGenreRadar({records, metadata, pending, filmColor
 
     return <Box component="section" aria-labelledby={`${id}-heading`}
                 sx={{mt: 3, pt: 3, borderTop: 1, borderColor: 'divider', minWidth: 0}}>
-        <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap'}}>
-            <Typography id={`${id}-heading`} component="h3" fontSize={18} fontWeight={750}>类型偏好</Typography>
-            <ToggleButtonGroup value={kind} exclusive size="small" aria-label="雷达图影视类别"
-                               onChange={(_, value: WatchedRadarKind | null) => {
-                                   if (value) setKind(value);
-                               }}
-                               sx={{height: 32, '& .MuiToggleButton-root': {px: 1.25, gap: 0.5, fontSize: 12}}}>
-                <ToggleButton value="movie"><MovieOutlinedIcon sx={{fontSize: 15}}/>电影</ToggleButton>
-                <ToggleButton value="tv_season"><TvOutlinedIcon sx={{fontSize: 15}}/>电视剧</ToggleButton>
-            </ToggleButtonGroup>
-        </Box>
+        <Typography id={`${id}-heading`} component="h3" fontSize={18} fontWeight={750}>类型偏好</Typography>
         <Typography variant="caption" color="text.secondary" sx={{display: 'block', mt: 1}} aria-live="polite">
             {stats.total} {unit}{label} · {stats.genreCount} 个类型
+            {stats.unknownCount > 0 && ` · ${stats.unknownCount} ${unit}未标注类型`}
         </Typography>
         <Box sx={{
             width: '100%',
@@ -103,7 +92,7 @@ export default function WatchedGenreRadar({records, metadata, pending, filmColor
                             sx={{display: 'block', width: '100%', height: '100%', overflow: 'hidden'}}>
                 <title id={`${id}-title`}>{label}类型偏好雷达图</title>
                 <desc
-                    id={`${id}-description`}>{summary}。展示全部 {stats.genreCount} 种类型，刻度上限 {stats.maximum} {unit}，空轴表示没有其他类型数据。
+                    id={`${id}-description`}>{summary}。展示全部 {stats.genreCount} 种类型{stats.unknownCount > 0 ? '及未标注类型' : ''}，刻度上限 {stats.maximum} {unit}，空轴表示没有其他类型数据。
                 </desc>
                 {[1, 2, 3, 4].map(level => <polygon key={level}
                                                     points={layout.points(Array(stats.axes.length).fill(level / 4))}

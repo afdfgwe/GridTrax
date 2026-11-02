@@ -186,7 +186,7 @@ export default function WatchedStatsPage() {
                             onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
                             filmColor={filmColor} tvColor={tvColor}
                         />}
-                        {dimension === 'genre' && <WatchedGenreRadar records={watched} metadata={metadata}
+                        {dimension === 'genre' && kind !== 'all' && <WatchedGenreRadar kind={kind} records={watched} metadata={metadata}
                             pending={pendingCount > 0} filmColor={filmColor} tvColor={tvColor}/>}
                     </Box>
 

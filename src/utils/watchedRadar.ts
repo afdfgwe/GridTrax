@@ -17,11 +17,12 @@ export function buildWatchedRadarStats(
     records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedRadarKind,
 ) {
     const stats = buildWatchedGenreStats(records, metadata, kind);
-    const rows = stats.rows.filter(row => row.key !== UNKNOWN_GENRE);
+    const rows = stats.rows;
+    const unknownCount = rows.find(row => row.key === UNKNOWN_GENRE)?.records.length ?? 0;
     const axes = Array.from({length: Math.max(MIN_RADAR_AXIS_COUNT, rows.length)}, (_, index): WatchedRadarAxis | null => {
         const row = rows[index];
         return row ? {key: row.key, name: row.name, count: row.records.length, share: row.share} : null;
     });
     const step = Math.max(1, Math.ceil((rows[0]?.records.length ?? 0) / 4));
-    return {axes, step, maximum: step * 4, total: stats.total, resolved: stats.resolved, genreCount: stats.genreCount};
+    return {axes, step, maximum: step * 4, total: stats.total, resolved: stats.resolved, genreCount: stats.genreCount, unknownCount};
 }

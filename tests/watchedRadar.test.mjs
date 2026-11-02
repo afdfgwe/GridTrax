@@ -38,23 +38,43 @@ test('电影和电视剧独立统计，同剧多季按季计数、重复记录�
     assert.equal(series.axes[0].count, 2);
 });
 
-test('不足六种类型保留空轴，不把未知类型或尚未加载的资料伪装为偏好', () => {
+test('未标注类型保留独立轴，尚未加载的资料不计入任何类型，不足六轴补空轴', () => {
     const stats = buildWatchedRadarStats([movie(1), movie(2), movie(3)], {
         'movie-1': detail([genre(18)]), 'movie-2': detail([]),
     }, 'movie');
     assert.equal(stats.total, 3);
     assert.equal(stats.resolved, 2);
     assert.equal(stats.genreCount, 1);
-    assert.equal(stats.axes[0].share, 1 / 3);
-    assert.deepEqual(stats.axes.slice(1), Array(MIN_RADAR_AXIS_COUNT - 1).fill(null));
+    assert.equal(stats.unknownCount, 1);
+    const known = stats.axes.find(axis => axis?.key === '18');
+    const unknown = stats.axes.find(axis => axis?.key === 'unknown');
+    assert.equal(known.share, 1 / 3);
+    assert.equal(unknown.name, '未标注类型');
+    assert.equal(unknown.count, 1);
+    assert.equal(unknown.share, 1 / 3);
+    assert.equal(stats.axes.filter(axis => axis === null).length, MIN_RADAR_AXIS_COUNT - 2);
 });
 
-test('空记录和全部缺失类型时不生成虚构维度', () => {
-    for (const [records, metadata] of [[[], {}], [[movie(1)], {'movie-1': detail([])}]]) {
+test('空记录和全部未加载时不生成虚构维度', () => {
+    for (const records of [[], [movie(1)]]) {
+        const metadata = {};
         const stats = buildWatchedRadarStats(records, metadata, 'movie');
         assert.deepEqual(stats.axes, Array(MIN_RADAR_AXIS_COUNT).fill(null));
         assert.equal(stats.genreCount, 0);
+        assert.equal(stats.unknownCount, 0);
         assert.equal(stats.maximum, 4);
+    }
+});
+
+test('全部为未标注类型时仍展示雷达图，并且电影、电视剧计数隔离', () => {
+    const records = [movie(1), season(1, 1), season(1, 2)];
+    const metadata = {'movie-1': detail([]), 'tv_season-1': detail([])};
+    for (const [kind, count] of [['movie', 1], ['tv_season', 2]]) {
+        const stats = buildWatchedRadarStats(records, metadata, kind);
+        assert.equal(stats.genreCount, 0);
+        assert.equal(stats.unknownCount, count);
+        assert.deepEqual(stats.axes[0], {key: 'unknown', name: '未标注类型', count, share: 1});
+        assert.deepEqual(stats.axes.slice(1), Array(MIN_RADAR_AXIS_COUNT - 1).fill(null));
     }
 });
 
