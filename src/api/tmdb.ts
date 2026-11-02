@@ -12,16 +12,20 @@ import type {
     TVListKind,
     TVListResponse
 } from '../types/hotMovies';
-import {createRequestCache} from '../utils/requestCache';
-import {normalizeTVAggregateCredits} from '../utils/movieCredits';
-import {normalizePersonCredits, type PersonWork} from '../utils/personCredits';
+import {createRequestCache} from '../utils/network/requestCache';
+import {normalizeTVAggregateCredits} from '../utils/media/movieCredits';
+import {normalizePersonCredits, type PersonWork} from '../utils/person/personCredits';
 import {loadPersonDetails} from './personDetails';
 import {loadCollectionDetails} from './collectionDetails';
-import {normalizeCategorySearchPage, type MediaSearchCategory} from '../utils/searchResults';
-import {getMediaImagesPath, normalizeMediaImages} from '../utils/mediaImages';
-import {getTVListRequest, normalizeTVListResponse} from '../utils/tvLists';
-import {getMovieListRequest, normalizeMovieListResponse} from '../utils/movieLists';
-import {getMovieDiscoveryRequest, getTVDiscoveryRequest, type MovieDiscoveryFilters} from '../utils/movieDiscovery';
+import {normalizeCategorySearchPage, type MediaSearchCategory} from '../utils/browse/searchResults';
+import {getMediaImagesPath, normalizeMediaImages} from '../utils/media/mediaImages';
+import {getTVListRequest, normalizeTVListResponse} from '../utils/browse/tvLists';
+import {getMovieListRequest, normalizeMovieListResponse} from '../utils/browse/movieLists';
+import {
+    getMovieDiscoveryRequest,
+    getTVDiscoveryRequest,
+    type MovieDiscoveryFilters
+} from '../utils/browse/movieDiscovery';
 import type {
     TMDBCountry,
     TMDBCollection,

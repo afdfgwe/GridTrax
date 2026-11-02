@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {buildWatchedStats, UNKNOWN_STAT} from '../src/utils/watchedStats.ts';
-import {buildWatchedGenreStats} from '../src/utils/watchedGenres.ts';
-import {createWatchedGenresLoader} from '../src/utils/watchedGenresLoader.ts';
+import {buildWatchedStats, UNKNOWN_STAT} from '../src/utils/stats/watchedStats.ts';
+import {buildWatchedGenreStats} from '../src/utils/stats/watchedGenres.ts';
+import {createWatchedGenresLoader} from '../src/utils/stats/watchedGenresLoader.ts';
 import {
     createMediaMetadataCache,
     MEDIA_METADATA_STORAGE_KEY,
     toMediaMetadata
-} from '../src/utils/mediaMetadataCache.ts';
+} from '../src/utils/media/mediaMetadataCache.ts';
 
 const movie = (id, status = 'Collect') => ({
     type: 'movie',

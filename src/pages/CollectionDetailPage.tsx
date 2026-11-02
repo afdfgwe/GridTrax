@@ -6,10 +6,10 @@ import {alpha} from '@mui/material/styles';
 import {useCallback, useState} from 'react';
 import {Link as RouterLink, useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getGenres, getMovieCollection, getPosterUrl} from '../api/tmdb';
-import ExpandableOverview from '../components/ExpandableOverview';
+import ExpandableOverview from '../components/common/ExpandableOverview';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import type {TMDBGenre, TMDBMovieRecommendation} from '../types';
-import {getCollectionMovies} from '../utils/movieCollection';
+import {getCollectionMovies} from '../utils/media/movieCollection';
 
 /** 图片路径缺失或加载失败时统一使用海报占位，保持列表尺寸稳定。 */
 function CollectionPoster({path, title}: { path?: string | null; title: string }) {
@@ -71,7 +71,12 @@ function CollectionMovie({movie, genres}: { movie: TMDBMovieRecommendation; genr
             </Box>}
             {genreNames.length > 0 && <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1}}>
                 {genreNames.map(name => <Chip key={name} label={name} size="small" variant="outlined"
-                    sx={{height: 22, borderRadius: 1, color: 'text.secondary', '& .MuiChip-label': {px: 1}}}/>)}
+                                              sx={{
+                                                  height: 22,
+                                                  borderRadius: 1,
+                                                  color: 'text.secondary',
+                                                  '& .MuiChip-label': {px: 1}
+                                              }}/>)}
             </Box>}
         </Box>
         {movie.overview?.trim() && <Box sx={{gridColumn: '1 / -1', minWidth: 0}}>
@@ -114,7 +119,12 @@ export default function CollectionDetailPage() {
             overflow: 'hidden', bgcolor: 'background.paper'
         }}>
             {collection?.backdrop_path && <Box component="img" src={getBackdropUrl(collection.backdrop_path)} alt=""
-                 sx={{width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.55)'}}/>}
+                                               sx={{
+                                                   width: '100%',
+                                                   height: '100%',
+                                                   objectFit: 'cover',
+                                                   filter: 'brightness(0.55)'
+                                               }}/>}
             <Box aria-hidden="true" sx={{
                 position: 'absolute', inset: 0, background: theme =>
                     `linear-gradient(to bottom, ${alpha(theme.palette.background.default, 0.12)}, ${alpha(theme.palette.background.default, 0.55)} 65%, ${theme.palette.background.default})`
@@ -124,7 +134,7 @@ export default function CollectionDetailPage() {
                 bgcolor: alpha('#000', 0.5), color: '#fff',
                 '&:hover': {bgcolor: alpha('#000', 0.7)}
             }}>
-                    <ArrowBackIcon fontSize="small"/>
+                <ArrowBackIcon fontSize="small"/>
             </IconButton></Tooltip>
         </Box>
         <Container maxWidth="lg" sx={{
@@ -139,7 +149,8 @@ export default function CollectionDetailPage() {
             {loading && <Box aria-label="正在加载合集详情" sx={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2.5
             }}>
-                <Skeleton variant="rounded" sx={{width: {xs: 160, sm: 190, md: 210}, aspectRatio: '2/3', height: 'auto'}}/>
+                <Skeleton variant="rounded"
+                          sx={{width: {xs: 160, sm: 190, md: 210}, aspectRatio: '2/3', height: 'auto'}}/>
                 <Box sx={{width: '100%', maxWidth: 800}}><Skeleton width="60%" height={48} sx={{mx: 'auto'}}/>
                     <Skeleton width="35%" height={28} sx={{mx: 'auto'}}/>
                     <Skeleton/><Skeleton/><Skeleton width="70%"/></Box>

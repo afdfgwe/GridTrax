@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHotHandler, createHotMoviesHandler, parseHotItems, parseHotMovies} from '../server/hotMovies.ts';
-import {matchHotMovie, normalizeMovieTitle, resolveHotMovie} from '../src/utils/hotMovieMatch.ts';
-import {parseHotMovieInfo} from '../src/utils/hotMovieInfo.ts';
+import {matchHotMovie, normalizeMovieTitle, resolveHotMovie} from '../src/utils/browse/hotMovieMatch.ts';
+import {parseHotMovieInfo} from '../src/utils/browse/hotMovieInfo.ts';
 
 // 覆盖豆瓣实时榜单：服务端处理器的解析/字段过滤/固定上游/并发缓存/错误码，以及同名影片匹配与搜索回退。
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createProgressStorage, PROGRESS_STORAGE_KEY as key} from '../src/utils/progressStorage.ts';
+import {createProgressStorage, PROGRESS_STORAGE_KEY as key} from '../src/utils/storage/progressStorage.ts';
 
 // 覆盖持久化适配器容错：保存失败提示与重试、损坏数据保护、导入前快照与写入失败不覆盖现有数据。
 

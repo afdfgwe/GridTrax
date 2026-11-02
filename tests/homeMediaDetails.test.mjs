@@ -1,16 +1,29 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createMediaMetadataCache, MEDIA_METADATA_STORAGE_KEY, MEDIA_METADATA_TTL, toMediaMetadata} from '../src/utils/mediaMetadataCache.ts';
-import {createHomeMediaDetailsLoader} from '../src/utils/homeMediaDetailsLoader.ts';
+import {
+    createMediaMetadataCache,
+    MEDIA_METADATA_STORAGE_KEY,
+    MEDIA_METADATA_TTL,
+    toMediaMetadata
+} from '../src/utils/media/mediaMetadataCache.ts';
+import {createHomeMediaDetailsLoader} from '../src/utils/tracking/homeMediaDetailsLoader.ts';
 
 // 覆盖首页媒体资料缓存与后台补全加载器：缓存跨实例恢复/过期/容量淘汰、按可见性优先级并发补位、失败重试与订阅取消等边界。
 const movie = id => ({type: 'movie', tmdb_id: id, global_status: 'Collect', poster_path: '/saved.jpg'});
 const season = (id, season_number) => ({type: 'tv_season', tmdb_id: id, season_number, global_status: 'Do'});
-const detail = (id, vote_average = 8, release_date = '2020-01-01') => ({id, vote_average, release_date, poster_path: '/poster.jpg'});
+const detail = (id, vote_average = 8, release_date = '2020-01-01') => ({
+    id,
+    vote_average,
+    release_date,
+    poster_path: '/poster.jpg'
+});
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => {
     let resolve, reject;
-    const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+    const promise = new Promise((yes, no) => {
+        resolve = yes;
+        reject = no;
+    });
     return {promise, resolve, reject};
 };
 const storage = () => {
@@ -48,19 +61,33 @@ test('损坏缓存、非法字段、存储禁用和空间不足不影响原始�
         disk.setItem(MEDIA_METADATA_STORAGE_KEY, raw);
         assert.equal(createMediaMetadataCache(() => disk).get('movie-1'), undefined);
     }
-    disk.setItem(MEDIA_METADATA_STORAGE_KEY, JSON.stringify({version: 1, entries: [
-        ['movie-1', toMediaMetadata(detail(1))],
-        ['movie-2', {...toMediaMetadata(detail(2)), scores: {'movie-1': 9}}],
-        ['movie-3', {...toMediaMetadata(detail(3)), years: {'movie-3': 'bad'}}],
-    ]}));
+    disk.setItem(MEDIA_METADATA_STORAGE_KEY, JSON.stringify({
+        version: 1, entries: [
+            ['movie-1', toMediaMetadata(detail(1))],
+            ['movie-2', {...toMediaMetadata(detail(2)), scores: {'movie-1': 9}}],
+            ['movie-3', {...toMediaMetadata(detail(3)), years: {'movie-3': 'bad'}}],
+        ]
+    }));
     const cache = createMediaMetadataCache(() => disk);
     assert.equal(cache.get('movie-1').scores['movie-1'], 8);
     assert.equal(cache.get('movie-2'), undefined);
     assert.equal(cache.get('movie-3'), undefined);
-    const blocked = createMediaMetadataCache(() => { throw new Error('disabled'); });
-    assert.doesNotThrow(() => { blocked.set('movie-1', toMediaMetadata(detail(1))); blocked.flush(); });
-    const full = createMediaMetadataCache(() => ({...disk, setItem() { throw new Error('quota'); }}));
-    assert.doesNotThrow(() => { full.set('movie-1', toMediaMetadata(detail(1))); full.flush(); });
+    const blocked = createMediaMetadataCache(() => {
+        throw new Error('disabled');
+    });
+    assert.doesNotThrow(() => {
+        blocked.set('movie-1', toMediaMetadata(detail(1)));
+        blocked.flush();
+    });
+    const full = createMediaMetadataCache(() => ({
+        ...disk, setItem() {
+            throw new Error('quota');
+        }
+    }));
+    assert.doesNotThrow(() => {
+        full.set('movie-1', toMediaMetadata(detail(1)));
+        full.flush();
+    });
     assert.equal(disk.getItem('gridtrax-progress'), '原始观影记录');
 });
 
@@ -85,7 +112,10 @@ test('评分和年份首次快照同步恢复，新鲜缓存不重复请求，�
     const filled = [];
     const records = [{...movie(1), poster_path: undefined}];
     const loader = createHomeMediaDetailsLoader(records, {
-        cache, load: async () => { calls++; return detail(1); }, fillPoster: (...args) => filled.push(args),
+        cache, load: async () => {
+            calls++;
+            return detail(1);
+        }, fillPoster: (...args) => filled.push(args),
     });
     assert.equal(loader.getSnapshot().scores['movie-1'], 8);
     assert.equal(loader.getSnapshot().years['movie-1'], '2020');
@@ -114,7 +144,8 @@ test('四路持续补位，可见影片优先且支持滚动后的新优先级�
             jobs.set(record.tmdb_id, job);
             return job.promise.finally(() => active--);
         },
-        fillPoster() {},
+        fillPoster() {
+        },
     });
     loader.update(records, () => priority);
     loader.start();
@@ -144,15 +175,21 @@ test('四路持续补位，可见影片优先且支持滚动后的新优先级�
 
 test('多季去重，保留每季年份及评分回退规则；后台更新会移除过时字段', async () => {
     const cache = createMediaMetadataCache(storage);
-    const old = {id: 5, number_of_seasons: 2, vote_average: 8, seasons: [
-        {season_number: 1, vote_average: 9, air_date: '2004-08-05'},
-        {season_number: 2, vote_average: 7, air_date: '2006-11-20'},
-    ]};
+    const old = {
+        id: 5, number_of_seasons: 2, vote_average: 8, seasons: [
+            {season_number: 1, vote_average: 9, air_date: '2004-08-05'},
+            {season_number: 2, vote_average: 7, air_date: '2006-11-20'},
+        ]
+    };
     cache.set('tv_season-5', toMediaMetadata(old, Date.now() - MEDIA_METADATA_TTL - 1));
     const records = [season(5, 1), season(5, 2)];
     let calls = 0;
     const loader = createHomeMediaDetailsLoader(records, {
-        cache, load: async () => { calls++; return {...old, number_of_seasons: 1, seasons: [{season_number: 1}]}; }, fillPoster() {},
+        cache, load: async () => {
+            calls++;
+            return {...old, number_of_seasons: 1, seasons: [{season_number: 1}]};
+        }, fillPoster() {
+        },
     });
     assert.equal(loader.getSnapshot().years['tv_season-5-2'], '2006');
     assert.equal(loader.getSnapshot().scores['tv_season-5-1'], 9);
@@ -172,7 +209,10 @@ test('同剧部分季缺海报时，即使去重代表记录已有海报，也�
     const filled = [];
     let calls = 0;
     const loader = createHomeMediaDetailsLoader(records, {
-        cache, load: async () => { calls++; throw new Error('不应请求接口'); },
+        cache, load: async () => {
+            calls++;
+            throw new Error('不应请求接口');
+        },
         fillPoster: (record, posterPath) => filled.push([record.tmdb_id, posterPath]),
     });
     loader.update(records, () => []);
@@ -195,7 +235,8 @@ test('后台失败保留过期资料，重试只请求失败影片，不重发�
             if (record.tmdb_id === 1 && calls.filter(id => id === 1).length === 1) throw new Error('offline');
             return detail(record.tmdb_id, 9);
         },
-        fillPoster() {},
+        fillPoster() {
+        },
     });
     loader.update(records, () => []);
     loader.start();

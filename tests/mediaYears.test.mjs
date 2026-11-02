@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getMediaYearKey, getMediaYears} from '../src/utils/mediaYears.ts';
+import {getMediaYearKey, getMediaYears} from '../src/utils/media/mediaYears.ts';
 
 // 年份与评分的回退策略不同：季年份缺失就隐藏，不能借用整剧首播年。
 test('同剧多季按季号读取各自年份，不依赖摘要顺序或整部剧首播年', () => {

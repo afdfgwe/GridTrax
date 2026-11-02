@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getProductionCountriesText, getSpokenLanguagesText} from '../src/utils/movieProduction.ts';
+import {getProductionCountriesText, getSpokenLanguagesText} from '../src/utils/media/movieProduction.ts';
 
 // 覆盖语言与制片地区的文本格式化：本地/中文名称优先、按接口顺序去重、字典缺失时回退英文名或代码。
 

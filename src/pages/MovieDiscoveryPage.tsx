@@ -11,13 +11,13 @@ import type {Theme} from '@mui/material/styles';
 import {useCallback, useMemo, useState} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {discoverMovies, discoverTVShows, getCountries, getGenres, getLanguages, getPosterUrl} from '../api/tmdb';
-import MovieDiscoveryFilters from '../components/MovieDiscoveryFilters';
-import PosterScoreBadge from '../components/PosterScoreBadge';
+import MovieDiscoveryFilters from '../components/browse/MovieDiscoveryFilters';
+import PosterScoreBadge from '../components/common/PosterScoreBadge';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {
     DEFAULT_DISCOVERY_FILTERS, getDiscoverySorts, discoveryLanguageLabel, parseMovieDiscovery,
     resolveDiscoveryKind, resolveDiscoveryPage, serializeMovieDiscovery, type MovieDiscoveryFilters as Filters,
-} from '../utils/movieDiscovery';
+} from '../utils/browse/movieDiscovery';
 
 /** 高级找片独立于榜单；已应用条件与页码写入网址，沿用全站历史滚动恢复。 */
 export default function MovieDiscoveryPage() {
@@ -122,7 +122,13 @@ export default function MovieDiscoveryPage() {
                                    setDrawerOpen(false);
                                }} sx={{
                 flexShrink: 0,
-                '& .MuiToggleButton-root': {px: {xs: 0.75, sm: 1}, py: 0.25, minHeight: 28, fontSize: 12, lineHeight: 1.5}
+                '& .MuiToggleButton-root': {
+                    px: {xs: 0.75, sm: 1},
+                    py: 0.25,
+                    minHeight: 28,
+                    fontSize: 12,
+                    lineHeight: 1.5
+                }
             }}>
                 <ToggleButton value="movie">电影</ToggleButton>
                 <ToggleButton value="tv">电视剧</ToggleButton>

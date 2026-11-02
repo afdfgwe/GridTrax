@@ -1,8 +1,8 @@
 import {useEffect, useState, useSyncExternalStore} from 'react';
 import {getMovie, getTVShow} from '../api/tmdb';
 import type {ProgressRecord} from '../types';
-import {mediaMetadataCache} from '../utils/mediaMetadataCache';
-import {createWatchedGenresLoader} from '../utils/watchedGenresLoader';
+import {mediaMetadataCache} from '../utils/media/mediaMetadataCache';
+import {createWatchedGenresLoader} from '../utils/stats/watchedGenresLoader';
 
 /** 观看统计复用首页的小字段缓存；类型、地区与年份共用详情，离开页面后停止队列。 */
 export function useWatchedGenres(records: ProgressRecord[]) {

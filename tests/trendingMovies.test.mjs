@@ -1,12 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {getTrendingInfo, getTrendingPersonWorks, resolveHotCategory, toTrendingPersonRows, toTrendingRows} from '../src/utils/trendingMovies.ts';
+import {
+    getTrendingInfo,
+    getTrendingPersonWorks,
+    resolveHotCategory,
+    toTrendingPersonRows,
+    toTrendingRows
+} from '../src/utils/browse/trendingMovies.ts';
 
 test('人物榜保留接口顺序、头像、职业和作品，不把热度或作品评分作为人物评分', () => {
     const people = [
-        {id: 224513, name: ' 安娜 ', original_name: 'Ana de Armas', profile_path: '/portrait.jpg',
+        {
+            id: 224513, name: ' 安娜 ', original_name: 'Ana de Armas', profile_path: '/portrait.jpg',
             known_for_department: 'Acting', popularity: 349.766,
-            known_for: [{id: 335984, media_type: 'movie', title: '银翼杀手2049', vote_average: 7.531}]},
+            known_for: [{id: 335984, media_type: 'movie', title: '银翼杀手2049', vote_average: 7.531}]
+        },
         {id: 1158, name: '阿尔·帕西诺', original_name: 'Al Pacino'},
     ];
     const before = structuredClone(people);
@@ -30,14 +38,16 @@ test('人物空榜单或可选资料缺失时不伪造评分、年份或作品',
 });
 
 test('人物代表作品按类型和编号去重，过滤无效条目并保留正确详情类别', () => {
-    const person = {id: 1, name: '演员', known_for: [
-        {id: 10, media_type: 'movie', title: ' 电影 '},
-        {id: 10, media_type: 'tv', name: '电视剧'},
-        {id: 10, media_type: 'movie', title: '重复电影'},
-        {id: 11, media_type: 'person', name: '不应显示的人物'},
-        {id: 0, media_type: 'movie', title: '编号错误'},
-        {id: 12, media_type: 'tv', name: ' '},
-    ]};
+    const person = {
+        id: 1, name: '演员', known_for: [
+            {id: 10, media_type: 'movie', title: ' 电影 '},
+            {id: 10, media_type: 'tv', name: '电视剧'},
+            {id: 10, media_type: 'movie', title: '重复电影'},
+            {id: 11, media_type: 'person', name: '不应显示的人物'},
+            {id: 0, media_type: 'movie', title: '编号错误'},
+            {id: 12, media_type: 'tv', name: ' '},
+        ]
+    };
     const before = structuredClone(person);
     assert.deepEqual(getTrendingPersonWorks(person), [
         {id: 10, kind: 'movie', title: '电影'}, {id: 10, kind: 'tv', title: '电视剧'},

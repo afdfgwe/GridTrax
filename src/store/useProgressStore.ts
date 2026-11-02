@@ -5,7 +5,7 @@
  */
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
-import {progressStorage, PROGRESS_STORAGE_KEY} from '../utils/progressStorage.ts';
+import {progressStorage, PROGRESS_STORAGE_KEY} from '../utils/storage/progressStorage.ts';
 import type {
     EpisodeRecord,
     MovieRecord,

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {getCollectionMovies} from '../src/utils/movieCollection.ts';
+import {getCollectionMovies} from '../src/utils/media/movieCollection.ts';
 
 test('同系列电影按上映日期排列，未知及无效日期放在最后，不修改接口数据', () => {
     const parts = [

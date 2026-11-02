@@ -1,0 +1,47 @@
+import {Box, Typography} from '@mui/material';
+import type {ReactNode} from 'react';
+import type {TMDBEpisode} from '../../types';
+import {getEpisodeDetails} from '../../utils/media/episodeDetails';
+import {getEpisodeTitle} from '../../utils/media/episodeTitle';
+import ExpandableOverview from '../common/ExpandableOverview';
+
+/** 详情文字与集号按钮分离，阅读或展开简介不会改变观看记录。 */
+export default function EpisodeDetails({episode, children}: { episode: TMDBEpisode; children: ReactNode }) {
+    const title = getEpisodeTitle(episode);
+    const {airDate, runtime, overview} = getEpisodeDetails(episode);
+
+    return (
+        <Box component="li" aria-label={`第 ${episode.episode_number} 集详情`} sx={{
+            display: 'grid',
+            gridTemplateColumns: 'auto minmax(0, 1fr)',
+            columnGap: {xs: 1.25, sm: 1.5},
+            rowGap: 1,
+            alignItems: 'start',
+            py: 1.5,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            '&:first-of-type': {pt: 0.5},
+            '&:last-of-type': {borderBottom: 0, pb: 0},
+        }}>
+            {/* 父组件传入真正的集号操作按钮；文字区不绑定整行点击，避免阅读时误标记。 */}
+            <Box sx={{alignSelf: 'center'}}>{children}</Box>
+            <Box sx={{minWidth: 0}}>
+                <Typography variant="body2" component="h3" sx={{fontWeight: 600, overflowWrap: 'anywhere'}}>
+                    {title || `第 ${episode.episode_number} 集`}
+                </Typography>
+                {(airDate || runtime !== undefined) && (
+                    <Typography variant="caption" color="text.secondary"
+                                sx={{display: 'block', mt: 0.25, overflowWrap: 'anywhere'}}>
+                        {airDate && <>首播：<Box component="time" dateTime={airDate}>{airDate}</Box></>}
+                        {airDate && runtime !== undefined ? ' · ' : ''}
+                        {runtime !== undefined && `${runtime} 分钟`}
+                    </Typography>
+                )}
+            </Box>
+            {/* 简介独占下一行并横跨两列，不受左侧集号按钮宽度影响。 */}
+            {overview && <Box sx={{gridColumn: '1 / -1', minWidth: 0}}>
+                <ExpandableOverview text={overview} collapsedLines={4} indentFirstLine/>
+            </Box>}
+        </Box>
+    );
+}

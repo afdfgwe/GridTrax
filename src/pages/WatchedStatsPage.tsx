@@ -10,17 +10,17 @@ import {useTheme} from '@mui/material/styles';
 import {useCallback, useMemo} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {getCountries, getPosterUrl} from '../api/tmdb';
-import PosterScoreBadge from '../components/PosterScoreBadge';
-import WatchedDistributionChart from '../components/WatchedDistributionChart';
-import WatchedGenreRadar from '../components/WatchedGenreRadar';
+import PosterScoreBadge from '../components/common/PosterScoreBadge';
+import WatchedDistributionChart from '../components/stats/WatchedDistributionChart';
+import WatchedGenreRadar from '../components/stats/WatchedGenreRadar';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {useWatchedGenres} from '../hooks/useWatchedGenres';
 import {useProgressStore} from '../store/useProgressStore';
-import {getMediaMetadataKey} from '../utils/mediaMetadataCache';
-import {getMediaScore} from '../utils/mediaScores';
-import {getMediaYearKey} from '../utils/mediaYears';
-import {getWatchedRecordKey, getWatchedRecords, type WatchedKind} from '../utils/watchedGenres';
-import {buildWatchedStats, type WatchedDimension} from '../utils/watchedStats';
+import {getMediaMetadataKey} from '../utils/media/mediaMetadataCache';
+import {getMediaScore} from '../utils/media/mediaScores';
+import {getMediaYearKey} from '../utils/media/mediaYears';
+import {getWatchedRecordKey, getWatchedRecords, type WatchedKind} from '../utils/stats/watchedGenres';
+import {buildWatchedStats, type WatchedDimension} from '../utils/stats/watchedStats';
 
 const dimensions = {
     genre: {label: '类型', title: '类型分布', metric: '类型覆盖', unit: '类'},
@@ -189,8 +189,9 @@ export default function WatchedStatsPage() {
                             onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
                             filmColor={filmColor} tvColor={tvColor}
                         />}
-                        {dimension === 'genre' && kind !== 'all' && <WatchedGenreRadar kind={kind} records={watched} metadata={metadata}
-                            pending={pendingCount > 0} filmColor={filmColor} tvColor={tvColor}/>}
+                        {dimension === 'genre' && kind !== 'all' &&
+                            <WatchedGenreRadar kind={kind} records={watched} metadata={metadata}
+                                               pending={pendingCount > 0} filmColor={filmColor} tvColor={tvColor}/>}
                     </Box>
 
                     <Box component="section" aria-labelledby="genre-films-title" sx={{minWidth: 0}}>
@@ -242,7 +243,8 @@ export default function WatchedStatsPage() {
                                                 fontSize: '0.65rem', fontWeight: 600, lineHeight: 1.25,
                                                 whiteSpace: 'nowrap', pointerEvents: 'none',
                                             }}>{year}年</Typography>}
-                                            <PosterScoreBadge compact score={getMediaScore(record, itemMetadata?.scores ?? {})}/>
+                                            <PosterScoreBadge compact
+                                                              score={getMediaScore(record, itemMetadata?.scores ?? {})}/>
                                         </Box>
                                         <Box sx={{pt: 1, pb: 0.5, minWidth: 0}}>
                                             <Typography variant="body2" fontWeight={650} noWrap

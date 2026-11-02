@@ -16,10 +16,10 @@ import {
     Typography
 } from '@mui/material';
 import {Link, useSearchParams} from 'react-router-dom';
-import RankingRow from '../components/RankingRow';
+import RankingRow from '../components/browse/RankingRow';
 import {useHotMovies} from '../hooks/useHotMovies';
 import type {HotCategory, HotSource, TrendingWindow} from '../types/hotMovies';
-import {resolveHotCategory} from '../utils/trendingMovies';
+import {resolveHotCategory} from '../utils/browse/trendingMovies';
 
 const categoryLabels: Record<HotCategory, string> = {movie: '电影', tv: '电视剧', person: '人物'};
 

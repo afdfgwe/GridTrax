@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {loadPersonDetails} from '../src/api/personDetails.ts';
-import {createRequestCache} from '../src/utils/requestCache.ts';
+import {createRequestCache} from '../src/utils/network/requestCache.ts';
 
 // 使用不同语言的模拟响应覆盖简介回退，不依赖真实接口或访问凭据。
 test('中文简介存在时不额外请求英文资料', async () => {

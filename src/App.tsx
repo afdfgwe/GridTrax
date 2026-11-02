@@ -1,8 +1,8 @@
 import {Box, CircularProgress, CssBaseline, ThemeProvider} from '@mui/material';
 import React, {Suspense, useMemo} from 'react';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
-import Layout from './components/Layout';
-import ScrollToTop from './components/ScrollToTop';
+import Layout from './components/layout/Layout';
+import ScrollToTop from './components/layout/ScrollToTop';
 import {useThemeStore} from './store/useThemeStore';
 import {createAppTheme} from './theme/theme';
 import {getThemeConfig} from './theme/themes';

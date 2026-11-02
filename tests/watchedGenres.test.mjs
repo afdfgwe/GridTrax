@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {buildWatchedGenreStats, getWatchedRecords, UNKNOWN_GENRE} from '../src/utils/watchedGenres.ts';
-import {createWatchedGenresLoader} from '../src/utils/watchedGenresLoader.ts';
+import {buildWatchedGenreStats, getWatchedRecords, UNKNOWN_GENRE} from '../src/utils/stats/watchedGenres.ts';
+import {createWatchedGenresLoader} from '../src/utils/stats/watchedGenresLoader.ts';
 import {
     createMediaMetadataCache,
     MEDIA_METADATA_STORAGE_KEY,
     MEDIA_METADATA_TTL,
     toMediaMetadata
-} from '../src/utils/mediaMetadataCache.ts';
+} from '../src/utils/media/mediaMetadataCache.ts';
 
 const movie = (id, status = 'Collect') => ({type: 'movie', tmdb_id: id, global_status: status, name: `电影 ${id}`});
 const season = (id, season_number, status = 'Collect') => ({
@@ -18,7 +18,13 @@ const season = (id, season_number, status = 'Collect') => ({
 });
 const drama = {id: 18, name: '剧情'};
 const action = {id: 28, name: '动作'};
-const detail = (id, genres = [drama]) => ({id, release_date: '2020-01-01', vote_average: 8, genres, production_countries: []});
+const detail = (id, genres = [drama]) => ({
+    id,
+    release_date: '2020-01-01',
+    vote_average: 8,
+    genres,
+    production_countries: []
+});
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => {
     let resolve, reject;

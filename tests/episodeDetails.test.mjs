@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getEpisodeDetails} from '../src/utils/episodeDetails.ts';
+import {getEpisodeDetails} from '../src/utils/media/episodeDetails.ts';
 
 // 保留真实段落，仅清理边缘空白；缺失字段由组件隐藏，而不是用虚构内容补齐。
 test('单集详情保留首播日期、时长与简介段落，不修改接口数据', () => {

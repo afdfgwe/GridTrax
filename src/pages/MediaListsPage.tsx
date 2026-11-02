@@ -16,11 +16,11 @@ import {
     Typography,
 } from '@mui/material';
 import {Link, useSearchParams} from 'react-router-dom';
-import RankingRow from '../components/RankingRow';
+import RankingRow from '../components/browse/RankingRow';
 import {useHotMovies} from '../hooks/useHotMovies';
 import type {HotKind, MovieListKind, TVListKind} from '../types/hotMovies';
-import {resolveTVListKind, resolveTVListPage, TV_LIST_LABELS} from '../utils/tvLists';
-import {MOVIE_LIST_LABELS, resolveMovieListKind} from '../utils/movieLists';
+import {resolveTVListKind, resolveTVListPage, TV_LIST_LABELS} from '../utils/browse/tvLists';
+import {MOVIE_LIST_LABELS, resolveMovieListKind} from '../utils/browse/movieLists';
 
 const tvLists: TVListKind[] = ['airing_today', 'on_the_air', 'popular', 'top_rated'];
 const movieLists: MovieListKind[] = ['now_playing', 'popular', 'top_rated', 'upcoming'];
@@ -81,7 +81,12 @@ export default function MediaListsPage() {
                 </Select>
                 <Select size="small" value={activeList} inputProps={{'aria-label': `${kindLabel}列表`}}
                         onChange={event => changeList(event.target.value as MovieListKind | TVListKind)}
-                        sx={{minWidth: {xs: 96, sm: 112}, flexShrink: 0, fontSize: 13, '& .MuiSelect-select': {py: 0.75, pl: 1}}}>
+                        sx={{
+                            minWidth: {xs: 96, sm: 112},
+                            flexShrink: 0,
+                            fontSize: 13,
+                            '& .MuiSelect-select': {py: 0.75, pl: 1}
+                        }}>
                     {lists.map(list => <MenuItem key={list} value={list}>
                         {kind === 'movie' ? MOVIE_LIST_LABELS[list as MovieListKind] : TV_LIST_LABELS[list as TVListKind]}
                     </MenuItem>)}

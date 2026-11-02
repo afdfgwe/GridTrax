@@ -7,7 +7,7 @@ import {
     getMediaImagesPath,
     normalizeMediaImages,
     withCurrentMediaImage
-} from '../src/utils/mediaImages.ts';
+} from '../src/utils/media/mediaImages.ts';
 
 test('国家分类合并重复代码并使用中文名称，不从图片语言推断国家', () => {
     const photos = Object.freeze([

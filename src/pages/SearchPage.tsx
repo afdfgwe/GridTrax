@@ -16,14 +16,14 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import React, {useCallback, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {searchCollections, searchMediaCategory, searchMulti} from '../api/tmdb';
-import MediaCard from '../components/MediaCard';
-import PersonSearchCard from '../components/PersonSearchCard';
-import CollectionSearchCard from '../components/CollectionSearchCard';
+import MediaCard from '../components/browse/MediaCard';
+import PersonSearchCard from '../components/browse/PersonSearchCard';
+import CollectionSearchCard from '../components/browse/CollectionSearchCard';
 import type {TMDBSearchResult} from '../types';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {
     getSearchCategory, loadSearchResults, SEARCH_CATEGORIES, type CombinedSearchPage, type SearchCategory,
-} from '../utils/searchResults';
+} from '../utils/browse/searchResults';
 
 /** 搜索结果页以地址栏 q 参数为查询来源，刷新或分享地址后仍能重新执行查询。 */
 const SearchPage: React.FC = () => {

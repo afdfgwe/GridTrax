@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createRequestCache} from '../src/utils/requestCache.ts';
-import {requestErrorMessage} from '../src/utils/requestError.ts';
+import {createRequestCache} from '../src/utils/network/requestCache.ts';
+import {requestErrorMessage} from '../src/utils/network/requestError.ts';
 
 // 覆盖请求缓存：并发去重、成功后才计时、失败立即淘汰、LRU 淘汰与竞态，以及网络错误提示文案。
 

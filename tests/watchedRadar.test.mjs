@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {buildWatchedRadarStats, getWatchedRadarRatio, MIN_RADAR_AXIS_COUNT} from '../src/utils/watchedRadar.ts';
-import {toMediaMetadata} from '../src/utils/mediaMetadataCache.ts';
+import {buildWatchedRadarStats, getWatchedRadarRatio, MIN_RADAR_AXIS_COUNT} from '../src/utils/stats/watchedRadar.ts';
+import {toMediaMetadata} from '../src/utils/media/mediaMetadataCache.ts';
 
 const movie = (id, global_status = 'Collect') => ({type: 'movie', tmdb_id: id, global_status});
 const season = (id, number) => ({type: 'tv_season', tmdb_id: id, season_number: number, global_status: 'Collect'});

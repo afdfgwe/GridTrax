@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getEpisodeTitle} from '../src/components/episodeTitle.ts';
+import {getEpisodeTitle} from '../src/utils/media/episodeTitle.ts';
 
 // 真实短标题保留原文，只去除首尾空白；含集号但有额外剧情文字也不能误删。
 test('keeps real titles and trims surrounding whitespace', () => {

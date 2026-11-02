@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getPersonDepartment, getPersonProfile} from '../src/utils/personProfile.ts';
+import {getPersonDepartment, getPersonProfile} from '../src/utils/person/personProfile.ts';
 
 // 覆盖人物资料的字段映射与展示规则：职业翻译、别名、出生/逝世日期校验、年龄与享年计算及外链白名单。
 

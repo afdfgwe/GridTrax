@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createBackup, parseBackup} from '../src/utils/dataBackup.ts';
+import {createBackup, parseBackup} from '../src/utils/storage/dataBackup.ts';
 
 // 备份兼容性测试：包含第 0 季、未设置状态的电影，以及界面已不再编辑的历史字段。
 const progress = {

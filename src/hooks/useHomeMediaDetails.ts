@@ -1,8 +1,8 @@
 import {useEffect, useState, useSyncExternalStore} from 'react';
 import {getMovie, getTVShow} from '../api/tmdb';
 import {useProgressStore} from '../store/useProgressStore';
-import {mediaMetadataCache} from '../utils/mediaMetadataCache';
-import {createHomeMediaDetailsLoader} from '../utils/homeMediaDetailsLoader';
+import {mediaMetadataCache} from '../utils/media/mediaMetadataCache';
+import {createHomeMediaDetailsLoader} from '../utils/tracking/homeMediaDetailsLoader';
 import type {ProgressRecord} from '../types';
 
 /** 先恢复独立资料缓存，再按视口优先级后台补齐；不修改观看状态和最近互动时间。 */

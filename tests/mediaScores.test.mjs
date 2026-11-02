@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getMediaScore, getMediaScores} from '../src/utils/mediaScores.ts';
+import {getMediaScore, getMediaScores} from '../src/utils/media/mediaScores.ts';
 
 // 展示与排序共用同一取分规则，覆盖单季整剧分、多季本季分及无效评分回退。
 

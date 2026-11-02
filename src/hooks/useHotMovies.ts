@@ -20,10 +20,10 @@ import type {
     TrendingWindow,
     TVListSelection
 } from '../types/hotMovies';
-import {resolveHotMovie} from '../utils/hotMovieMatch';
-import {requestErrorMessage} from '../utils/requestError';
-import {resolveHotCategory, toTrendingPersonRows, toTrendingRows} from '../utils/trendingMovies';
-import {resolveTVListPage} from '../utils/tvLists';
+import {resolveHotMovie} from '../utils/browse/hotMovieMatch';
+import {requestErrorMessage} from '../utils/network/requestError';
+import {resolveHotCategory, toTrendingPersonRows, toTrendingRows} from '../utils/browse/trendingMovies';
+import {resolveTVListPage} from '../utils/browse/tvLists';
 
 // 列表、页码和重试次数共同标识一次加载，避免翻页或切换后被旧响应覆盖。
 interface Result {

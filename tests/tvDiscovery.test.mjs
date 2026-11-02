@@ -4,7 +4,7 @@ import {
     DEFAULT_DISCOVERY_FILTERS, getDiscoverySortGroups, getDiscoverySorts,
     getMovieDiscoveryRequest, getTVDiscoveryRequest, parseMovieDiscovery,
     resolveDiscoveryKind, serializeMovieDiscovery,
-} from '../src/utils/movieDiscovery.ts';
+} from '../src/utils/browse/movieDiscovery.ts';
 
 const filters = overrides => ({...DEFAULT_DISCOVERY_FILTERS, genres: [], ...overrides});
 

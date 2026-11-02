@@ -5,7 +5,7 @@ import {
     loadSearchResults,
     normalizeCategorySearchPage,
     SEARCH_CATEGORIES
-} from '../src/utils/searchResults.ts';
+} from '../src/utils/browse/searchResults.ts';
 
 const response = (results = [], total_pages = 1, page = 1) => ({results, total_pages, page});
 

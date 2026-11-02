@@ -16,12 +16,12 @@ import {alpha, useTheme} from '@mui/material/styles';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getBackdropUrl, getPosterUrl, getTVShow} from '../api/tmdb';
-import SeasonBlock from '../components/SeasonBlock';
-import ExpandableOverview from '../components/ExpandableOverview';
-import ProductionInfo from '../components/ProductionInfo';
-import MediaCredits from '../components/MediaCredits';
-import MediaImageGallery from '../components/MediaImageGallery';
-import MediaRecommendations from '../components/MediaRecommendations';
+import SeasonBlock from '../components/tv/SeasonBlock';
+import ExpandableOverview from '../components/common/ExpandableOverview';
+import ProductionInfo from '../components/media/ProductionInfo';
+import MediaCredits from '../components/media/MediaCredits';
+import MediaImageGallery from '../components/media/MediaImageGallery';
+import MediaRecommendations from '../components/media/MediaRecommendations';
 import {useProgressStore} from '../store/useProgressStore';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 

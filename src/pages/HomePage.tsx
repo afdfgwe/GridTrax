@@ -21,18 +21,18 @@ import {
 import {alpha, useTheme} from '@mui/material/styles';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
-import {navigationMemory} from '../utils/navigationMemory';
+import {navigationMemory} from '../utils/storage/navigationMemory';
 import {getPosterUrl} from '../api/tmdb';
-import HomeActiveCard from '../components/HomeActiveCard';
-import HomeMovieActiveCard from '../components/HomeMovieActiveCard';
-import PosterScoreBadge from '../components/PosterScoreBadge';
-import CompactCardTitle from '../components/CompactCardTitle';
-import WatchedTimeline from '../components/WatchedTimeline';
-import WatchedViewToggle from '../components/WatchedViewToggle';
+import HomeActiveCard from '../components/tracking/HomeActiveCard';
+import HomeMovieActiveCard from '../components/tracking/HomeMovieActiveCard';
+import PosterScoreBadge from '../components/common/PosterScoreBadge';
+import CompactCardTitle from '../components/common/CompactCardTitle';
+import WatchedTimeline from '../components/tracking/WatchedTimeline';
+import WatchedViewToggle from '../components/tracking/WatchedViewToggle';
 import {useHomeMediaDetails} from '../hooks/useHomeMediaDetails';
 import {useMediaVisibility} from '../hooks/useMediaVisibility';
-import {getMediaYearKey} from '../utils/mediaYears';
-import {getMediaScore} from '../utils/mediaScores';
+import {getMediaYearKey} from '../utils/media/mediaYears';
+import {getMediaScore} from '../utils/media/mediaScores';
 import {useProgressStore} from '../store/useProgressStore';
 import {
     STATUS_LABELS,

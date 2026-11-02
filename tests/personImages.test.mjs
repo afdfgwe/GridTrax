@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {getPersonPhotos, clampPhotoPan} from '../src/utils/personImages.ts';
+import {getPersonPhotos, clampPhotoPan} from '../src/utils/person/personImages.ts';
 
 test('人物相册当前头像置顶并去重，保留后续照片顺序，不修改接口数据', () => {
     const profiles = [{file_path: '/b.jpg'}, {file_path: '/a.jpg'}, {file_path: '/b.jpg'}, {file_path: '/c.png'}];

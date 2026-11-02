@@ -251,17 +251,32 @@ GridTrax/
 ├─ public/             静态资源，_routes.json 限定只有榜单接口走 Functions
 ├─ src/
 │  ├─ api/             tmdb.ts，TMDB 请求封装
-│  ├─ components/      UI 组件（PascalCase），如 MediaCard、EpisodeGrid、MediaCredits；episodeTitle.ts 为集名工具
+│  ├─ components/      UI 组件按功能分组，文件名保持 PascalCase
+│  │  ├─ layout/      导航布局、主题、数据备份、存储提示与滚动控制
+│  │  ├─ common/      通用标题、简介折叠、评分角标与图片画布
+│  │  ├─ media/       影视演职人员、制片信息、推荐与剧照海报相册
+│  │  ├─ browse/      搜索卡片、搜索栏、榜单条目与筛选控件
+│  │  ├─ tracking/    追踪卡片、观看状态、快捷编辑与看过时间线
+│  │  ├─ tv/          季详情、单集单元格、集数视图与分页展示
+│  │  ├─ person/      人物作品与相册
+│  │  └─ stats/       观看分布图与类型偏好雷达图
 │  ├─ hooks/           复用逻辑：异步资源、榜单、首页资料补全、视口可见性
 │  ├─ pages/           路由页面：HomePage、HotMoviesPage、SearchPage、MovieDetailPage、TvDetailPage、PersonDetailPage
 │  ├─ store/           Zustand 状态：useProgressStore（观看进度）、useThemeStore（主题）
 │  ├─ theme/           MUI 主题与多套配色定义
 │  ├─ types/           数据类型定义：index.ts（业务模型）、hotMovies.ts（榜单模型）
-│  ├─ utils/           纯函数工具（camelCase）：缓存、榜单匹配、进度存储、备份、资料归一化等
+│  ├─ utils/           非 React 工具按职责分组，文件名保持 camelCase
+│  │  ├─ network/     请求缓存与错误处理
+│  │  ├─ storage/     进度持久化、数据备份与页面导航记忆
+│  │  ├─ media/       影视资料缓存、评分、年份、演职人员、季与单集信息
+│  │  ├─ browse/      搜索、榜单匹配、影视列表与高级筛选数据处理
+│  │  ├─ person/      人物资料、作品与照片数据处理
+│  │  ├─ tracking/    追踪资料加载队列与看过时间线分组
+│  │  └─ stats/       观看统计、类型资料加载与雷达图计算
 │  ├─ App.tsx          路由与布局装配
 │  ├─ main.tsx         应用入口
 │  └─ index.css        全局样式
-├─ tests/              Node.js 内置测试的回归用例，与 src/utils 下的工具模块一一对应
+├─ tests/              Node.js 内置测试的回归用例，覆盖工具模块、请求适配与存储逻辑
 ├─ vite.config.ts      开发与构建配置
 ├─ eslint.config.js    ESLint 配置
 ├─ tsconfig.json       TypeScript 配置（含 tsconfig.app.json、tsconfig.node.json）
@@ -272,7 +287,8 @@ GridTrax/
 说明：
 
 - `src/` 为纯前端代码，只依赖 TMDB。榜单是唯一需要服务端参与的部分：`server/hotMovies.ts` 存放抓取与解析逻辑，`functions/api/hot/*.ts` 将其暴露为 `/api/hot/movies`、`/api/hot/tv`，Vite 开发服务器也复用同一份逻辑，因此本地 `npm run dev` 与线上行为一致。
-- `src/utils/` 下的模块保持无副作用、不依赖 React，便于被 `tests/` 直接导入测试，无需构建或浏览器环境。
+- `components/` 与 `utils/` 仅增加一层功能分组，保留直接导入具体文件的方式；集名处理工具位于 `src/utils/media/episodeTitle.ts`，不再混放在组件目录中。
+- `src/utils/` 下的模块不依赖 React，便于被 `tests/` 直接导入测试；网络缓存、持久化与资料加载队列分别放在对应职责目录中。
 
 ## 部署
 

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
     getMovieListRequest, MOVIE_LIST_LABELS, normalizeMovieListResponse, resolveMovieListKind,
-} from '../src/utils/movieLists.ts';
-import {toTrendingRows} from '../src/utils/trendingMovies.ts';
+} from '../src/utils/browse/movieLists.ts';
+import {toTrendingRows} from '../src/utils/browse/trendingMovies.ts';
 
 test('电影列表仅接受四种类型，旧电视剧及非法参数回退到正在热映', () => {
     for (const list of ['now_playing', 'popular', 'top_rated', 'upcoming']) {

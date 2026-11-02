@@ -18,11 +18,11 @@ import {alpha} from '@mui/material/styles';
 import {useCallback, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getPerson, getPosterUrl} from '../api/tmdb';
-import ExpandableOverview from '../components/ExpandableOverview';
-import PersonFilmography from '../components/PersonFilmography';
-import PersonPhotoGallery from '../components/PersonPhotoGallery';
+import ExpandableOverview from '../components/common/ExpandableOverview';
+import PersonFilmography from '../components/person/PersonFilmography';
+import PersonPhotoGallery from '../components/person/PersonPhotoGallery';
 import {useAsyncResource} from '../hooks/useAsyncResource';
-import {getPersonProfile} from '../utils/personProfile';
+import {getPersonProfile} from '../utils/person/personProfile';
 
 /** 人物肖像保持固定比例；空头像或图片加载失败不影响资料展示。 */
 function Portrait({path, name, personId}: { path?: string | null; name: string; personId: number }) {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {getSeasonOverview, getSeasonTitle} from '../src/utils/seasonDetails.ts';
+import {getSeasonOverview, getSeasonTitle} from '../src/utils/media/seasonDetails.ts';
 
 // 常规季名可规范化，自定义篇章名必须保留；两者都不应改写接口原数据。
 test('常规季名不重复季号，支持中英文占位名称和缺失名称', () => {

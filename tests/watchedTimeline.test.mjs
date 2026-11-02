@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {groupWatchedTimeline} from '../src/utils/watchedTimeline.ts';
+import {groupWatchedTimeline} from '../src/utils/tracking/watchedTimeline.ts';
 
 const movie = (id, last_interacted, extra = {}) => ({
     type: 'movie', tmdb_id: id, name: `影片 ${id}`, global_status: 'Collect',

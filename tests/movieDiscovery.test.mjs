@@ -4,7 +4,7 @@ import {LANGUAGE_NAMES_ZH} from '../src/constants/languageNames.ts';
 import {
     DEFAULT_DISCOVERY_FILTERS, DISCOVERY_SORTS, discoveryLanguageLabel, getMovieDiscoveryRequest,
     parseMovieDiscovery, resolveDiscoveryPage, serializeMovieDiscovery, validateMovieDiscovery,
-} from '../src/utils/movieDiscovery.ts';
+} from '../src/utils/browse/movieDiscovery.ts';
 
 const filters = overrides => ({...DEFAULT_DISCOVERY_FILTERS, genres: [], ...overrides});
 
@@ -174,7 +174,9 @@ test('浏览器不识别或缺少中文数据时使用本地映射', context => 
 });
 
 test('浏览器功能不可用时全部187项仍可显示中文且筛选代码不变', context => {
-    context.mock.method(Intl, 'DisplayNames', function () { throw new Error('不可用'); });
+    context.mock.method(Intl, 'DisplayNames', function () {
+        throw new Error('不可用');
+    });
     for (const [code, label] of Object.entries(LANGUAGE_NAMES_ZH)) {
         assert.equal(discoveryLanguageLabel(code, 'API name'), label);
     }

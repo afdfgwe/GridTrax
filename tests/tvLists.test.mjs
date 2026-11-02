@@ -7,8 +7,8 @@ import {
     resolveTVListKind,
     resolveTVListPage,
     TV_LIST_LABELS
-} from '../src/utils/tvLists.ts';
-import {toTrendingRows} from '../src/utils/trendingMovies.ts';
+} from '../src/utils/browse/tvLists.ts';
+import {toTrendingRows} from '../src/utils/browse/trendingMovies.ts';
 
 test('电视剧列表只接受四种接口，未知网址参数回到趋势榜', () => {
     for (const list of ['airing_today', 'on_the_air', 'popular', 'top_rated']) {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {loadCollectionDetails} from '../src/api/collectionDetails.ts';
-import {createRequestCache} from '../src/utils/requestCache.ts';
+import {createRequestCache} from '../src/utils/network/requestCache.ts';
 
 // 模拟两种语言的响应，不依赖真实网络或访问凭据。
 test('合集有中文简介时只请求中文资料', async () => {

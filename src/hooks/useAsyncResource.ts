@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {requestErrorMessage} from '../utils/requestError';
+import {requestErrorMessage} from '../utils/network/requestError';
 
 /** 结果绑定本次资源和重试次数；清理时忽略旧结果，避免路由切换后串数据。 */
 export function useAsyncResource<T>(key: string, loader: (signal: AbortSignal) => Promise<T>) {
