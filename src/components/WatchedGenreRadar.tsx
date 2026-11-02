@@ -3,7 +3,7 @@ import {alpha, useTheme} from '@mui/material/styles';
 import {useId, useMemo} from 'react';
 import type {ProgressRecord} from '../types';
 import type {MediaMetadata} from '../utils/mediaMetadataCache';
-import {buildWatchedRadarStats, type WatchedRadarAxis, type WatchedRadarKind} from '../utils/watchedRadar';
+import {buildWatchedRadarStats, getWatchedRadarRatio, type WatchedRadarAxis, type WatchedRadarKind} from '../utils/watchedRadar';
 
 interface Props {
     kind: WatchedRadarKind;
@@ -91,24 +91,24 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                             sx={{display: 'block', width: '100%', height: '100%', overflow: 'hidden'}}>
                 <title id={`${id}-title`}>{label}类型偏好雷达图</title>
                 <desc
-                    id={`${id}-description`}>{summary}。展示全部 {stats.genreCount} 种类型{stats.unknownCount > 0 ? '及未标注类型' : ''}，刻度上限 {stats.maximum} {unit}，空轴表示没有其他类型数据。
+                    id={`${id}-description`}>{summary}。展示全部 {stats.genreCount} 种类型{stats.unknownCount > 0 ? '及未标注类型' : ''}，采用平方根刻度，标签为真实数量，刻度上限 {stats.maximum} {unit}，空轴表示没有其他类型数据。
                 </desc>
                 {[1, 2, 3, 4].map(level => <polygon key={level}
-                                                    points={layout.points(Array(stats.axes.length).fill(level / 4))}
+                                                    points={layout.points(Array(stats.axes.length).fill(getWatchedRadarRatio(stats.step * level, stats.maximum)))}
                                                     fill={level === 4 ? alpha(color, 0.025) : 'none'}
                                                     stroke={theme.palette.divider} strokeWidth="1"/>)}
                 {stats.axes.map((_, index) => <line key={index} x1={layout.center.x} y1={layout.center.y}
                                                     x2={layout.point(index).x} y2={layout.point(index).y}
                                                     stroke={theme.palette.divider} strokeWidth="1"/>)}
                 {[1, 2, 3, 4].map(level => <text key={level} x={layout.center.x + 7}
-                                                 y={layout.center.y - RADIUS * level / 4 + 4}
+                                                 y={layout.center.y - RADIUS * getWatchedRadarRatio(stats.step * level, stats.maximum) + 4}
                                                  fill={theme.palette.text.secondary} fontSize="10"
                                                  fontFamily="inherit">{stats.step * level}</text>)}
                 <polygon data-radar-shape="true"
-                         points={layout.points(stats.axes.map(axis => (axis?.count ?? 0) / stats.maximum))}
+                         points={layout.points(stats.axes.map(axis => getWatchedRadarRatio(axis?.count ?? 0, stats.maximum)))}
                          fill={alpha(color, 0.2)} stroke={color} strokeWidth="2" strokeLinejoin="round"/>
                 {stats.axes.map((axis, index) => {
-                    const position = layout.point(index, (axis?.count ?? 0) / stats.maximum);
+                    const position = layout.point(index, getWatchedRadarRatio(axis?.count ?? 0, stats.maximum));
                     const labelPosition = layout.labels[index];
                     const anchor = labelPosition.side === 0 ? 'middle' : labelPosition.side > 0 ? 'start' : 'end';
                     const start = layout.point(index, 1.04);

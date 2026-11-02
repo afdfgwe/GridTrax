@@ -25,7 +25,7 @@ import {buildWatchedStats, type WatchedDimension} from '../utils/watchedStats';
 const PAGE_SIZE = 12;
 const dimensions = {
     genre: {label: '类型', title: '类型分布', metric: '类型覆盖', unit: '类'},
-    country: {label: '国家或地区', title: '制片地区分布', metric: '地区覆盖', unit: '个'},
+    country: {label: '地区', title: '制片地区分布', metric: '地区覆盖', unit: '个'},
     year: {label: '年份', title: '上映 / 首播年份', metric: '年份覆盖', unit: '年'},
 } as const;
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {buildWatchedRadarStats, MIN_RADAR_AXIS_COUNT} from '../src/utils/watchedRadar.ts';
+import {buildWatchedRadarStats, getWatchedRadarRatio, MIN_RADAR_AXIS_COUNT} from '../src/utils/watchedRadar.ts';
 import {toMediaMetadata} from '../src/utils/mediaMetadataCache.ts';
 
 const movie = (id, global_status = 'Collect') => ({type: 'movie', tmdb_id: id, global_status});
@@ -8,7 +8,7 @@ const season = (id, number) => ({type: 'tv_season', tmdb_id: id, season_number: 
 const detail = genres => toMediaMetadata({id: 1, genres});
 const genre = id => ({id, name: `类型${id}`});
 
-test('雷达图按观看量排序展示全部类型，保留完整分母，不修改输入', () => {
+test('雷达图按类型编号展示全部类型，保留完整分母，不修改输入', () => {
     const records = Array.from({length: 8}, (_, index) => movie(index + 1));
     const metadata = Object.fromEntries(records.map(record => [`movie-${record.tmdb_id}`,
         detail(Array.from({length: record.tmdb_id}, (_, index) => genre(index + 1)))]));
@@ -23,6 +23,40 @@ test('雷达图按观看量排序展示全部类型，保留完整分母，不�
     assert.equal(stats.genreCount, 8);
     assert.equal(stats.total, 8);
     assert.deepEqual({records, metadata}, before);
+});
+
+test('观看量变化不改变类型顺序，未标注类型置后，刻度覆盖非首轴的最大值', () => {
+    const records = Array.from({length: 9}, (_, index) => movie(index + 1));
+    const metadata = Object.fromEntries(records.map(record => [`movie-${record.tmdb_id}`,
+        detail(record.tmdb_id === 9 ? [] : record.tmdb_id === 1 ? [genre(12), genre(28)] : [genre(28)])]));
+    const first = buildWatchedRadarStats(records, metadata, 'movie');
+    assert.deepEqual(first.axes.filter(Boolean).map(axis => axis.key), ['12', '28', 'unknown']);
+    assert.deepEqual(first.axes.filter(Boolean).map(axis => axis.count), [1, 8, 1]);
+    assert.equal(first.maximum, 8);
+    const second = buildWatchedRadarStats(records.slice(0, 2), metadata, 'movie');
+    assert.deepEqual(second.axes.filter(Boolean).map(axis => axis.key), ['12', '28']);
+    assert.equal(first.axes[1].share, 8 / 9);
+});
+
+test('平方根半径保留真实比例次序，低值更清晰，网格刻度可按数量反算', () => {
+    assert.equal(getWatchedRadarRatio(0, 100), 0);
+    assert.equal(getWatchedRadarRatio(4, 100), 0.2);
+    assert.equal(getWatchedRadarRatio(25, 100), 0.5);
+    assert.equal(getWatchedRadarRatio(100, 100), 1);
+    let previous = -1;
+    for (const count of [0, 1, 4, 25, 50, 75, 100]) {
+        const ratio = getWatchedRadarRatio(count, 100);
+        assert.ok(ratio > previous);
+        assert.ok(Math.abs(ratio ** 2 * 100 - count) < 1e-10);
+        previous = ratio;
+    }
+});
+
+test('平方根刻度对无效数量或上限不生成异常坐标，超出上限时限制半径', () => {
+    for (const [count, maximum] of [[-1, 100], [NaN, 100], [Infinity, 100], [1, 0], [1, -1], [1, NaN], [1, Infinity]]) {
+        assert.equal(getWatchedRadarRatio(count, maximum), 0);
+    }
+    assert.equal(getWatchedRadarRatio(101, 100), 1);
 });
 
 test('电影和电视剧独立统计，同剧多季按季计数、重复记录不重复累计', () => {
