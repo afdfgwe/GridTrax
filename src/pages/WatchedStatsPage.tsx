@@ -10,12 +10,14 @@ import {useTheme} from '@mui/material/styles';
 import {useCallback, useMemo} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {getCountries, getPosterUrl} from '../api/tmdb';
+import PosterScoreBadge from '../components/PosterScoreBadge';
 import WatchedDistributionChart from '../components/WatchedDistributionChart';
 import WatchedGenreRadar from '../components/WatchedGenreRadar';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {useWatchedGenres} from '../hooks/useWatchedGenres';
 import {useProgressStore} from '../store/useProgressStore';
 import {getMediaMetadataKey} from '../utils/mediaMetadataCache';
+import {getMediaScore} from '../utils/mediaScores';
 import {getMediaYearKey} from '../utils/mediaYears';
 import {getWatchedRecordKey, getWatchedRecords, type WatchedKind} from '../utils/watchedGenres';
 import {buildWatchedStats, type WatchedDimension} from '../utils/watchedStats';
@@ -220,23 +222,33 @@ export default function WatchedStatsPage() {
                                                         alignSelf: 'start',
                                                         overflow: 'hidden'
                                                     }}>
-                                        <Box component="img"
-                                             src={getPosterUrl(record.poster_path || itemMetadata?.posterPath)}
-                                             alt={title || '暂无海报'} loading="lazy"
-                                             sx={{
-                                                 width: '100%',
-                                                 aspectRatio: '2 / 3',
-                                                 display: 'block',
-                                                 objectFit: 'cover',
-                                                 borderRadius: 1,
-                                                 bgcolor: 'action.hover'
-                                             }}/>
+                                        <Box sx={{position: 'relative', borderRadius: 1, overflow: 'hidden'}}>
+                                            <Box component="img"
+                                                 src={getPosterUrl(record.poster_path || itemMetadata?.posterPath)}
+                                                 alt={title || '暂无海报'} loading="lazy"
+                                                 sx={{
+                                                     width: '100%',
+                                                     aspectRatio: '2 / 3',
+                                                     display: 'block',
+                                                     objectFit: 'cover',
+                                                     borderRadius: 1,
+                                                     bgcolor: 'action.hover'
+                                                 }}/>
+                                            {year && <Typography component="span" variant="caption" sx={{
+                                                position: 'absolute', top: 2, left: 2,
+                                                px: 0.5, py: 0.25, borderRadius: 0.75,
+                                                bgcolor: 'rgba(0, 0, 0, 0.72)', color: '#fff',
+                                                fontSize: '0.75rem', fontWeight: 600, lineHeight: 1.25,
+                                                whiteSpace: 'nowrap', pointerEvents: 'none',
+                                            }}>{year}年</Typography>}
+                                            <PosterScoreBadge score={getMediaScore(record, itemMetadata?.scores ?? {})}/>
+                                        </Box>
                                         <Box sx={{pt: 1, pb: 0.5, minWidth: 0}}>
                                             <Typography variant="body2" fontWeight={650} noWrap
                                                         title={title}>{title || '未命名作品'}</Typography>
                                             <Typography variant="caption" color="text.secondary" noWrap component="div"
                                                         title={seasonLabel} sx={{mt: 0.25}}>
-                                                {seasonLabel}{year ? ` · ${year}` : ''}
+                                                {seasonLabel}
                                             </Typography>
                                         </Box>
                                     </CardActionArea>

@@ -77,7 +77,6 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
         <Typography id={`${id}-heading`} component="h3" fontSize={18} fontWeight={750}>类型偏好</Typography>
         <Typography variant="caption" color="text.secondary" sx={{display: 'block', mt: 1}} aria-live="polite">
             {stats.total} {unit}{label} · {stats.genreCount} 个类型
-            {stats.unknownCount > 0 && ` · ${stats.unknownCount} ${unit}未标注类型`}
         </Typography>
         <Box sx={{
             width: '100%',
