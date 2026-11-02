@@ -18,7 +18,7 @@ const season = (id, season_number, status = 'Collect') => ({
 });
 const drama = {id: 18, name: '剧情'};
 const action = {id: 28, name: '动作'};
-const detail = (id, genres = [drama]) => ({id, release_date: '2020-01-01', vote_average: 8, genres});
+const detail = (id, genres = [drama]) => ({id, release_date: '2020-01-01', vote_average: 8, genres, production_countries: []});
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => {
     let resolve, reject;

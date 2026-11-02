@@ -4,7 +4,7 @@ import type {ProgressRecord} from '../types';
 import {mediaMetadataCache} from '../utils/mediaMetadataCache';
 import {createWatchedGenresLoader} from '../utils/watchedGenresLoader';
 
-/** 类型统计复用首页的小字段缓存；页面离开后停止队列，不修改用户观看数据。 */
+/** 观看统计复用首页的小字段缓存；类型、地区与年份共用详情，离开页面后停止队列。 */
 export function useWatchedGenres(records: ProgressRecord[]) {
     const [loader] = useState(() => createWatchedGenresLoader(records, {
         cache: mediaMetadataCache,

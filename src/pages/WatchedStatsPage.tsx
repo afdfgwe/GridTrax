@@ -3,23 +3,30 @@ import CloseIcon from '@mui/icons-material/Close';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {
-    Alert, Box, Button, ButtonBase, CardActionArea, Container, IconButton, LinearProgress,
-    Pagination, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
+    Alert, Box, Button, CardActionArea, Container, IconButton, LinearProgress,
+    Pagination, Tab, Tabs, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
 } from '@mui/material';
-import {alpha, useTheme} from '@mui/material/styles';
-import {useMemo} from 'react';
+import {useTheme} from '@mui/material/styles';
+import {useCallback, useMemo} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
-import {getPosterUrl} from '../api/tmdb';
+import {getCountries, getPosterUrl} from '../api/tmdb';
+import WatchedDistributionChart from '../components/WatchedDistributionChart';
+import {useAsyncResource} from '../hooks/useAsyncResource';
 import {useWatchedGenres} from '../hooks/useWatchedGenres';
 import {useProgressStore} from '../store/useProgressStore';
 import {getMediaMetadataKey} from '../utils/mediaMetadataCache';
 import {getMediaYearKey} from '../utils/mediaYears';
-import {buildWatchedGenreStats, getWatchedRecordKey, getWatchedRecords, type WatchedKind} from '../utils/watchedGenres';
+import {getWatchedRecordKey, getWatchedRecords, type WatchedKind} from '../utils/watchedGenres';
+import {buildWatchedStats, type WatchedDimension} from '../utils/watchedStats';
 
 const PAGE_SIZE = 12;
-const formatPercent = (share: number) => `${Math.round(share * 100)}%`;
+const dimensions = {
+    genre: {label: '类型', title: '类型分布', metric: '类型覆盖', unit: '类'},
+    country: {label: '国家或地区', title: '制片地区分布', metric: '地区覆盖', unit: '个'},
+    year: {label: '年份', title: '上映 / 首播年份', metric: '年份覆盖', unit: '年'},
+} as const;
 
-/** 只读的观看画像：统计以本地“看过”为准，详情资料仅补齐影片类型与海报。 */
+/** 只读的观看画像：统计以本地“看过”为准，三种维度共用缓存资料与作品列表。 */
 export default function WatchedStatsPage() {
     const theme = useTheme();
     const records = useProgressStore(state => state.data.records);
@@ -28,22 +35,26 @@ export default function WatchedStatsPage() {
     const [params, setParams] = useSearchParams();
     const kindParam = params.get('kind');
     const kind: WatchedKind = kindParam === 'movie' || kindParam === 'tv_season' ? kindParam : 'all';
-    const stats = useMemo(() => buildWatchedGenreStats(watched, metadata, kind), [watched, metadata, kind]);
-    const genre = stats.rows.find(row => row.key === params.get('genre'));
-    const items = genre?.records ?? stats.records;
+    const dimensionParam = params.get('dimension');
+    const dimension: WatchedDimension = dimensionParam === 'country' || dimensionParam === 'year' ? dimensionParam : 'genre';
+    const loadCountries = useCallback(() => watched.length && dimension === 'country' ? getCountries() : Promise.resolve([]), [watched.length, dimension]);
+    const countryDictionary = useAsyncResource(`stats-countries:${dimension}:${watched.length > 0}`, loadCountries);
+    const stats = useMemo(() => buildWatchedStats(watched, metadata, kind, dimension, countryDictionary.data), [watched, metadata, kind, dimension, countryDictionary.data]);
+    const config = dimensions[dimension];
+    const selection = stats.rows.find(row => row.key === params.get(dimension));
+    const items = selection?.records ?? stats.records;
     const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
     const requestedPage = Number(params.get('page'));
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, pageCount) : 1;
     const visibleItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
     const filmColor = theme.palette.mode === 'dark' ? '#eda47d' : '#ae4b25';
     const tvColor = theme.palette.mode === 'dark' ? '#6bd6be' : '#087f71';
-    const maxCount = Math.max(1, ...stats.rows.map(row => row.records.length));
 
-    const selectGenre = (key?: string) => {
+    const selectGroup = (key?: string) => {
         const next = new URLSearchParams(params);
         next.delete('page');
-        if (key) next.set('genre', key);
-        else next.delete('genre');
+        if (key) next.set(dimension, key);
+        else next.delete(dimension);
         setParams(next, {replace: true});
     };
 
@@ -57,14 +68,25 @@ export default function WatchedStatsPage() {
                 <BarChartIcon sx={{color: 'text.secondary', fontSize: 24}}/>
             </Box>
 
-            <ToggleButtonGroup value={kind} exclusive size="small" aria-label="统计影视类别"
-                               onChange={(_, value: WatchedKind | null) => {
-                                   if (value) setParams(value === 'all' ? {} : {kind: value}, {replace: true});
-                               }} sx={{height: 34, '& .MuiToggleButton-root': {px: 2, fontSize: 13}}}>
-                <ToggleButton value="all">全部</ToggleButton>
-                <ToggleButton value="movie">电影</ToggleButton>
-                <ToggleButton value="tv_season">电视剧</ToggleButton>
-            </ToggleButtonGroup>
+            <Box
+                sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap'}}>
+                <Tabs value={dimension} aria-label="统计维度" onChange={(_, value: WatchedDimension) => {
+                    setParams(kind === 'all' ? {dimension: value} : {dimension: value, kind}, {replace: true});
+                }} sx={{minHeight: 36, '& .MuiTab-root': {minHeight: 36, minWidth: 56, px: 1.5, fontSize: 13}}}>
+                    {Object.entries(dimensions).map(([key, value]) => <Tab key={key} value={key} label={value.label}/>)}
+                </Tabs>
+                <ToggleButtonGroup value={kind} exclusive size="small" aria-label="统计影视类别"
+                                   onChange={(_, value: WatchedKind | null) => {
+                                       if (value) setParams(value === 'all' ? {dimension} : {
+                                           dimension,
+                                           kind: value
+                                       }, {replace: true});
+                                   }} sx={{height: 34, '& .MuiToggleButton-root': {px: 2, fontSize: 13}}}>
+                    <ToggleButton value="all">全部</ToggleButton>
+                    <ToggleButton value="movie">电影</ToggleButton>
+                    <ToggleButton value="tv_season">电视剧</ToggleButton>
+                </ToggleButtonGroup>
+            </Box>
 
             <Box sx={{
                 display: 'grid',
@@ -79,7 +101,7 @@ export default function WatchedStatsPage() {
                     {label: '看过记录', value: stats.total, unit: '条'},
                     {label: '电影', value: stats.movies, unit: '部', color: filmColor},
                     {label: '电视剧', value: stats.seasons, unit: '季', detail: `${stats.shows} 部剧`, color: tvColor},
-                    {label: '类型覆盖', value: stats.genreCount, unit: '类'},
+                    {label: config.metric, value: stats.coverageCount, unit: config.unit},
                 ].map(metric => <Box key={metric.label}>
                     <Typography variant="body2" color="text.secondary">{metric.label}</Typography>
                     <Box sx={{display: 'flex', alignItems: 'baseline', gap: 0.75, mt: 0.5, flexWrap: 'wrap'}}>
@@ -100,21 +122,30 @@ export default function WatchedStatsPage() {
 
             <Box sx={{my: 2, minHeight: 24}} aria-live="polite">
                 {watched.length > 0 && <Typography variant="caption" color="text.secondary">
-                    电影按部、电视剧按季统计；多类型作品分别计数，占比之和可能超过 100%。
+                    电影按部、电视剧按季统计。
+                    {dimension === 'genre' && '多类型作品分别计数，占比之和可能超过 100%。'}
+                    {dimension === 'country' && '按制片地区统计，多国合拍分别计数；环形图占比以地区归属总次数为分母。'}
+                    {dimension === 'year' && '电影按上映年份、电视剧按每季首播年份分组，并非标记“看过”的年份。'}
                 </Typography>}
                 {pendingCount > 0 && <Box sx={{mt: 1}}>
                     <Box sx={{display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.5}}>
-                        <Typography variant="caption" color="text.secondary">正在补全类型资料</Typography>
+                        <Typography variant="caption" color="text.secondary">正在补全影视资料</Typography>
                         <Typography variant="caption"
                                     color="text.secondary">当前分类已识别 {stats.resolved}/{stats.total} 条</Typography>
                     </Box>
-                    <LinearProgress aria-label="类型资料加载中" sx={{height: 3}}/>
+                    <LinearProgress aria-label="影视资料加载中" sx={{height: 3}}/>
                 </Box>}
             </Box>
             {failedCount > 0 && <Alert severity="warning" sx={{mb: 2}}
                                        action={<Button size="small" color="inherit" startIcon={<RefreshIcon/>}
                                                        onClick={retry}>重试</Button>}>
-                {failedCount} 部作品的类型资料获取失败，已有结果保留；未识别记录暂不计入类型分布。
+                {failedCount} 部作品的资料更新失败，已有结果保留；未识别记录暂不计入当前分布。
+            </Alert>}
+            {dimension === 'country' && countryDictionary.error && <Alert severity="info" sx={{mb: 2}}
+                                                                          action={<Button size="small" color="inherit"
+                                                                                          startIcon={<RefreshIcon/>}
+                                                                                          onClick={countryDictionary.retry}>重试</Button>}>
+                地区中文字典暂不可用，已使用本地名称显示，不影响统计数量。
             </Alert>}
 
             {stats.total === 0 ? (
@@ -139,86 +170,33 @@ export default function WatchedStatsPage() {
                             flexWrap: 'wrap'
                         }}>
                             <Typography id="genre-distribution-title" component="h2" fontSize={18} fontWeight={750}
-                                        sx={{mr: 'auto'}}>类型分布</Typography>
-                            {[[filmColor, '电影'], [tvColor, '电视剧']].map(([color, label]) =>
+                                        sx={{mr: 'auto'}}>{config.title}</Typography>
+                            {dimension !== 'country' && [[filmColor, '电影'], [tvColor, '电视剧']].map(([color, label]) =>
                                 <Box key={label} sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
                                     <Box sx={{width: 7, height: 7, bgcolor: color, borderRadius: '50%'}}/>
                                     <Typography variant="caption" color="text.secondary">{label}</Typography>
                                 </Box>)}
                         </Box>
                         {stats.rows.length === 0 && <Typography variant="body2" color="text.secondary" sx={{py: 4}}>
-                            {pendingCount ? '正在整理观看类型…' : '暂时没有可用的类型资料'}
+                            {pendingCount ? '正在整理观看资料…' : '暂时没有可用的统计资料'}
                         </Typography>}
-                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
-                            {stats.rows.map((row, index) => (
-                                <ButtonBase key={row.key}
-                                            onClick={() => selectGenre(genre?.key === row.key ? undefined : row.key)}
-                                            aria-pressed={genre?.key === row.key}
-                                            aria-label={`${row.name}，${row.records.length} 条，占比 ${formatPercent(row.share)}`}
-                                            sx={{
-                                                display: 'block',
-                                                width: '100%',
-                                                textAlign: 'left',
-                                                px: 1.25,
-                                                py: 1.25,
-                                                borderRadius: 1,
-                                                bgcolor: genre?.key === row.key ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                                                '&:hover, &.Mui-focusVisible': {bgcolor: alpha(theme.palette.primary.main, 0.07)}
-                                            }}>
-                                    <Box sx={{display: 'flex', alignItems: 'baseline', gap: 1, mb: 0.75}}>
-                                        <Typography variant="caption" color="text.disabled" sx={{
-                                            width: 18,
-                                            flexShrink: 0,
-                                            fontVariantNumeric: 'tabular-nums'
-                                        }}>{String(index + 1).padStart(2, '0')}</Typography>
-                                        <Typography variant="body2" fontWeight={650}
-                                                    sx={{flex: 1, overflowWrap: 'anywhere'}}>{row.name}</Typography>
-                                        <Typography variant="body2" fontWeight={700}
-                                                    sx={{fontVariantNumeric: 'tabular-nums'}}>{row.records.length}</Typography>
-                                        <Typography variant="caption" color="text.secondary" sx={{
-                                            width: '4ch',
-                                            textAlign: 'right',
-                                            fontVariantNumeric: 'tabular-nums'
-                                        }}>{formatPercent(row.share)}</Typography>
-                                    </Box>
-                                    <Box sx={{
-                                        height: 7,
-                                        bgcolor: alpha(theme.palette.text.primary, 0.055),
-                                        borderRadius: 1,
-                                        ml: '26px',
-                                        overflow: 'hidden'
-                                    }}>
-                                        <Box sx={{
-                                            display: 'flex',
-                                            height: '100%',
-                                            width: `${row.records.length / maxCount * 100}%`,
-                                            transition: 'width 250ms ease',
-                                            '@media (prefers-reduced-motion: reduce)': {transition: 'none'}
-                                        }}>
-                                            <Box sx={{
-                                                width: `${row.movies / row.records.length * 100}%`,
-                                                bgcolor: filmColor
-                                            }}/>
-                                            <Box sx={{
-                                                width: `${row.seasons / row.records.length * 100}%`,
-                                                bgcolor: tvColor
-                                            }}/>
-                                        </Box>
-                                    </Box>
-                                </ButtonBase>
-                            ))}
-                        </Box>
+                        {stats.rows.length > 0 && <WatchedDistributionChart
+                            dimension={dimension} rows={stats.rows} selected={selection?.key}
+                            onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
+                            filmColor={filmColor} tvColor={tvColor}
+                        />}
                     </Box>
 
                     <Box component="section" aria-labelledby="genre-films-title" sx={{minWidth: 0}}>
                         <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2, minHeight: 32}}>
                             <Typography id="genre-films-title" component="h2" fontSize={18} fontWeight={750}
-                                        sx={{overflowWrap: 'anywhere'}}>{genre?.name ?? '全部看过'}</Typography>
+                                        sx={{overflowWrap: 'anywhere'}}>{selection?.name ?? '全部看过'}</Typography>
                             <Typography variant="body2" color="text.secondary">{items.length}</Typography>
-                            {genre && <Tooltip title="查看全部看过"><IconButton size="small" aria-label="清除类型筛选"
-                                                                          onClick={() => selectGenre()}
-                                                                          sx={{ml: 'auto'}}><CloseIcon
-                                fontSize="small"/></IconButton></Tooltip>}
+                            {selection &&
+                                <Tooltip title="查看全部看过"><IconButton size="small" aria-label={`清除${config.label}筛选`}
+                                                                    onClick={() => selectGroup()}
+                                                                    sx={{ml: 'auto'}}><CloseIcon
+                                    fontSize="small"/></IconButton></Tooltip>}
                         </Box>
                         <Box sx={{
                             display: 'grid',

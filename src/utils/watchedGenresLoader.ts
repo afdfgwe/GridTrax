@@ -48,8 +48,9 @@ export function createWatchedGenresLoader(initialRecords: ProgressRecord[], opti
             attempted.add(key);
             void Promise.resolve().then(() => options.load(record)).then(detail => {
                 const metadata = toMediaMetadata(detail);
-                // 类型缺失与未请求区分开：成功返回但未标注时计入“未标注类型”。
+                // 将成功返回但未标注的类型、地区与尚未请求的旧缓存区分开。
                 metadata.genres ??= [];
+                metadata.countries ??= [];
                 values.set(key, metadata);
                 options.cache.set(key, metadata);
                 failures.delete(key);
@@ -73,7 +74,7 @@ export function createWatchedGenresLoader(initialRecords: ProgressRecord[], opti
             if (cached && (!current || cached.fetchedAt > current.fetchedAt)) values.set(key, cached);
             const metadata = values.get(key);
             if (!attempted.has(key) && !inFlight.has(key) &&
-                (!metadata || metadata.genres === undefined || !options.cache.isFresh(metadata))) pending.set(key, record);
+                (!metadata || metadata.genres === undefined || metadata.countries === undefined || !options.cache.isFresh(metadata))) pending.set(key, record);
         }
         // 移除已删除记录的页面数据，进行中的结果仍可进入有容量限制的公共缓存。
         for (const key of values.keys()) if (!records.has(key)) values.delete(key);

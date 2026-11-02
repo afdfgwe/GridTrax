@@ -1,4 +1,4 @@
-import type {ProgressRecord, TMDBGenre, TMDBMovie, TMDBTVShow} from '../types/index.ts';
+import type {ProgressRecord, TMDBGenre, TMDBMovie, TMDBTVShow, TMDBProductionCountry} from '../types/index.ts';
 import {getMediaScores} from './mediaScores.ts';
 import {getMediaYears} from './mediaYears.ts';
 
@@ -15,6 +15,8 @@ export interface MediaMetadata {
     posterPath?: string;
     /** 旧缓存没有此字段，空数组则表示接口已确认没有类型资料。 */
     genres?: TMDBGenre[];
+    /** 制片地区单独保留；旧缓存缺失此字段时由统计页补全。 */
+    countries?: TMDBProductionCountry[];
     fetchedAt: number;
 }
 
@@ -29,6 +31,14 @@ export function toMediaMetadata(detail: TMDBMovie | TMDBTVShow, now = Date.now()
                 Number.isSafeInteger(genre.id) && genre.id > 0 && typeof genre.name === 'string' && genre.name.trim()
             ).map(genre => ({id: genre.id, name: genre.name.trim()}))
         } : {}),
+        ...(detail.production_countries !== undefined ? {
+            countries: [...new Map((detail.production_countries ?? []).filter(country =>
+                country && /^[a-z]{2}$/i.test(country.iso_3166_1?.trim())
+            ).map(country => {
+                const code = country.iso_3166_1.trim().toUpperCase();
+                return [code, {iso_3166_1: code, name: country.name?.trim() || code}] as const;
+            })).values()],
+        } : {}),
     };
 }
 
@@ -42,6 +52,8 @@ function validMetadata(key: string, value: unknown): value is MediaMetadata {
         (item.posterPath === undefined || typeof item.posterPath === 'string') &&
         (item.genres === undefined || (Array.isArray(item.genres) && item.genres.every(genre =>
             genre && Number.isSafeInteger(genre.id) && genre.id > 0 && typeof genre.name === 'string' && !!genre.name.trim()))) &&
+        (item.countries === undefined || (Array.isArray(item.countries) && item.countries.every(country =>
+            country && typeof country.iso_3166_1 === 'string' && /^[A-Z]{2}$/.test(country.iso_3166_1) && typeof country.name === 'string'))) &&
         !!item.scores && typeof item.scores === 'object' && !Array.isArray(item.scores) &&
         Object.entries(item.scores).every(([field, score]) => validKey(field) && Number.isFinite(score) && score >= 0 && score <= 10) &&
         !!item.years && typeof item.years === 'object' && !Array.isArray(item.years) &&
