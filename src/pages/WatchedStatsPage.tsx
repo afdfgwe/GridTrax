@@ -11,6 +11,7 @@ import {useCallback, useMemo} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {getCountries, getPosterUrl} from '../api/tmdb';
 import WatchedDistributionChart from '../components/WatchedDistributionChart';
+import WatchedGenreRadar from '../components/WatchedGenreRadar';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {useWatchedGenres} from '../hooks/useWatchedGenres';
 import {useProgressStore} from '../store/useProgressStore';
@@ -185,6 +186,8 @@ export default function WatchedStatsPage() {
                             onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
                             filmColor={filmColor} tvColor={tvColor}
                         />}
+                        {dimension === 'genre' && <WatchedGenreRadar records={watched} metadata={metadata}
+                            pending={pendingCount > 0} filmColor={filmColor} tvColor={tvColor}/>}
                     </Box>
 
                     <Box component="section" aria-labelledby="genre-films-title" sx={{minWidth: 0}}>

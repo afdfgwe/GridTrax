@@ -1,5 +1,8 @@
-import {Box, ButtonBase, Typography} from '@mui/material';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {Box, Button, ButtonBase, Typography} from '@mui/material';
 import {alpha, useTheme} from '@mui/material/styles';
+import {useId, useState} from 'react';
 import type {WatchedGenreRow} from '../utils/watchedGenres';
 import {UNKNOWN_STAT, type WatchedDimension} from '../utils/watchedStats';
 
@@ -14,10 +17,13 @@ interface Props {
 
 const percent = (share: number) => `${Math.round(share * 100)}%`;
 const colors = ['#45bda8', '#eb9b71', '#83a8ed', '#db84a3', '#b4bc65', '#b19cdb', '#63b9cf', '#cf9d51'];
+const COLLAPSED_GENRE_COUNT = 8;
 
 /** 三个维度共用筛选交互；地区环形图按归属次数分配角度，年份柱图保留真实年份顺序。 */
 export default function WatchedDistributionChart({dimension, rows, selected, onSelect, filmColor, tvColor}: Props) {
     const theme = useTheme();
+    const [genresExpanded, setGenresExpanded] = useState(false);
+    const genreRowsId = useId();
     const maxCount = Math.max(1, ...rows.map(row => row.records.length));
     const activeStyle = (key: string) => ({
         borderRadius: 1, textAlign: 'left',
@@ -178,8 +184,11 @@ export default function WatchedDistributionChart({dimension, rows, selected, onS
         </Box>
     </Box>;
 
-    return <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
-        {rows.map((row, index) => <ButtonBase key={row.key} onClick={() => onSelect(row.key)}
+    // 只折叠图表的展示项，统计分母、排序与已选类型保持不变。
+    const visibleGenres = genresExpanded ? rows : rows.slice(0, COLLAPSED_GENRE_COUNT);
+    return <Box>
+        <Box id={genreRowsId} sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
+        {visibleGenres.map((row, index) => <ButtonBase key={row.key} onClick={() => onSelect(row.key)}
                                               aria-pressed={selected === row.key}
                                               aria-label={`${row.name}，${row.records.length} 条，占比 ${percent(row.share)}`}
                                               sx={{
@@ -211,5 +220,13 @@ export default function WatchedDistributionChart({dimension, rows, selected, onS
                 <Box sx={{height: '100%', width: `${row.records.length / maxCount * 100}%`}}>{bars(row)}</Box>
             </Box>
         </ButtonBase>)}
+        </Box>
+        {rows.length > COLLAPSED_GENRE_COUNT && <Button size="small"
+            aria-expanded={genresExpanded} aria-controls={genreRowsId}
+            onClick={() => setGenresExpanded(expanded => !expanded)}
+            endIcon={genresExpanded ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
+            sx={{mt: 1, width: '100%'}}>
+            {genresExpanded ? '收起' : '展开全部'}
+        </Button>}
     </Box>;
 }
