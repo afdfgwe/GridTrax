@@ -260,7 +260,8 @@ export default function WatchedStatsPage() {
                                         onChange={(_, nextPage) => {
                                             const next = new URLSearchParams(params);
                                             next.set('page', String(nextPage));
-                                            setParams(next, {replace: true});
+                                            // 只替换列表内容，避免全局路由滚动逻辑把页面带回顶部。
+                                            setParams(next, {replace: true, state: {preserveScroll: true}});
                                         }}/>
                         </Box>}
                     </Box>

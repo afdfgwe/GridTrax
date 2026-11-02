@@ -2,16 +2,19 @@ import {useLayoutEffect} from 'react';
 import {useLocation, useNavigationType} from 'react-router-dom';
 import {navigationMemory} from '../utils/navigationMemory';
 
-/** 新页面从顶部开始；历史返回等待异步页面撑开后恢复原位置，用户操作时立即停止。 */
+/** 新页面从顶部开始；局部分页保留位置，历史返回等待异步内容后恢复位置。 */
 const ScrollToTop = () => {
-    const {key} = useLocation();
+    const {key, state} = useLocation();
     const navigationType = useNavigationType();
+    const preserveScroll = state?.preserveScroll === true;
 
     useLayoutEffect(() => {
         const previous = history.scrollRestoration;
         // 关闭浏览器默认恢复，避免它和异步内容加载后的自定义恢复相互抢占。
         history.scrollRestoration = 'manual';
-        const target = navigationType === 'POP' ? navigationMemory.get(key)?.scroll ?? 0 : 0;
+        const target = navigationType === 'POP'
+            ? navigationMemory.get(key)?.scroll ?? 0
+            : preserveScroll ? window.scrollY : 0;
         let lastScroll = target;
         let frame = 0;
         let stopped = false;
@@ -34,7 +37,9 @@ const ScrollToTop = () => {
             if (stopped) return;
             window.scrollTo({top: target, left: 0, behavior: 'instant'});
         };
-        window.scrollTo({top: 0, left: 0, behavior: 'instant'});
+        if (!preserveScroll || navigationType === 'POP') {
+            window.scrollTo({top: 0, left: 0, behavior: 'instant'});
+        }
         // 延迟到路由主体提交后恢复；懒加载期间会继续等待足够的页面高度。
         frame = requestAnimationFrame(restore);
         if (target > 0) {
@@ -57,7 +62,7 @@ const ScrollToTop = () => {
             window.removeEventListener('keydown', stop);
             history.scrollRestoration = previous;
         };
-    }, [key, navigationType]);
+    }, [key, navigationType, preserveScroll]);
 
     return null;
 };
