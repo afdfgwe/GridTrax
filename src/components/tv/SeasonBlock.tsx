@@ -226,8 +226,8 @@ const SeasonBlock: React.FC<SeasonBlockProps> = ({
                 <Box sx={{mb: 2}}>
                     <GlobalStatusPicker
                         status={record?.global_status ?? undefined}
-                        onStatusChange={(s: WatchStatus) => {
-                            // 用户明确选择状态后才创建或更新当前季记录。
+                        onStatusChange={(s: WatchStatus | undefined) => {
+                            // 设置或取消当前季状态，保留已有的单集观看记录。
                             setSeasonStatus(tvId, seasonSummary.season_number, s, metaPayload);
                         }}
                     />

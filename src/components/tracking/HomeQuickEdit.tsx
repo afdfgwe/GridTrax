@@ -53,10 +53,9 @@ const HomeQuickEdit: React.FC<HomeQuickEditProps> = ({
     const currentStatus = record?.global_status;
     const primary = theme.palette.primary.main;
 
-    const handleStatusChange = (_: React.MouseEvent, val: string | null) => {
-        // 单选按钮再次点击当前项会返回空值，此处不将其解释为清除观看状态。
-        if (!val) return;
-        const status = val as WatchStatus;
+    const handleStatusChange = (_: React.MouseEvent, val: WatchStatus | null) => {
+        // 取消选中只清除状态，不调用删除记录，以保留单集进度和历史备注。
+        const status = val ?? undefined;
         if (type === 'tv_season' && seasonNumber !== undefined) {
             setSeasonStatus(tmdbId, seasonNumber, status, meta);
         } else if (type === 'movie') {

@@ -22,10 +22,10 @@ interface ProgressState {
     ensureSeasonRecord: (tvId: number, seasonNumber: number, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
     toggleEpisodeWatched: (tvId: number, seasonNumber: number, episodeNumber: number, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
     watchUpToEpisode: (tvId: number, seasonNumber: number, episodeNumber: number, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
-    setSeasonStatus: (tvId: number, seasonNumber: number, status: WatchStatus, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
+    setSeasonStatus: (tvId: number, seasonNumber: number, status: WatchStatus | undefined, meta?: { name?: string; show_name?: string; poster_path?: string; episode_count?: number }) => void;
     // 电影动作：不需要单集明细，只维护整部电影的元信息和观看状态。
     ensureMovieRecord: (movieId: number, meta?: { name?: string; poster_path?: string }) => void;
-    setMovieStatus: (movieId: number, status: WatchStatus, meta?: { name?: string; poster_path?: string }) => void;
+    setMovieStatus: (movieId: number, status: WatchStatus | undefined, meta?: { name?: string; poster_path?: string }) => void;
     // 只读查询：不会因为渲染页面而创建新记录。
     getSeasonRecord: (tvId: number, seasonNumber: number) => SeasonRecord | undefined;
     getMovieRecord: (movieId: number) => MovieRecord | undefined;
@@ -185,7 +185,9 @@ export const useProgressStore = create<ProgressState>()(
             // 整季状态与单集进度分开保存：选“看过”不会在这里批量改写所有集数。
             setSeasonStatus: (tvId, seasonNumber, status, meta) => {
                 const key = seasonKey(tvId, seasonNumber);
-                get().ensureSeasonRecord(tvId, seasonNumber, meta);
+                // 取消状态不创建记录、不补写资料，保留现有单集进度和备注。
+                if (status === undefined && !get().data.records[key]) return;
+                if (status !== undefined) get().ensureSeasonRecord(tvId, seasonNumber, meta);
                 set((state) => ({
                     data: {
                         ...state.data,
@@ -196,7 +198,7 @@ export const useProgressStore = create<ProgressState>()(
                                 global_status: status,
                                 last_interacted: Date.now(),
                                 // 用户明确修改状态时同步保存元信息，未提供的字段沿用旧值。
-                                ...(meta ? {
+                                ...(status !== undefined && meta ? {
                                     name: meta.name ?? (state.data.records[key] as SeasonRecord)?.name,
                                     show_name: meta.show_name ?? (state.data.records[key] as SeasonRecord)?.show_name,
                                     poster_path: meta.poster_path ?? (state.data.records[key] as SeasonRecord)?.poster_path,
@@ -243,7 +245,9 @@ export const useProgressStore = create<ProgressState>()(
             // 状态操作刷新最近互动时间，首页“最近互动”排序直接读取该字段。
             setMovieStatus: (movieId, status, meta) => {
                 const key = movieKey(movieId);
-                get().ensureMovieRecord(movieId, meta);
+                // 未选择状态用 undefined 保存，与删除整条观影记录严格区分。
+                if (status === undefined && !get().data.records[key]) return;
+                if (status !== undefined) get().ensureMovieRecord(movieId, meta);
                 set((state) => ({
                     data: {
                         ...state.data,

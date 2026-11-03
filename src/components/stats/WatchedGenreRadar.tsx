@@ -20,25 +20,28 @@ interface Props {
     tvColor: string;
 }
 
-const RADIUS = 104;
+const RADIUS = 128;
+const LABEL_FONT_SIZE = 16;
 
 /** 密集标签按两侧的垂直顺序避让，保留全部类型，不依赖屏幕宽度缩小字号。 */
 function createRadarLayout(axes: (WatchedRadarAxis | null)[]) {
     const count = axes.length;
     const dense = count > 6;
+    const labelOffset = RADIUS + 8;
+    const labelRadius = RADIUS * 1.25;
     // 为类型和括号数量预留横向空间，避免长类型名或大数量被画布裁切。
     const labelWidth = Math.max(...axes.map(axis => Array.from(axis ? `${axis.name}（${axis.count}）` : '—')
-        .reduce((width, character) => width + (character.charCodeAt(0) > 255 ? 13 : 8), 0)));
-    const width = Math.max(420, 2 * (labelWidth + (dense ? 127 : RADIUS * 1.37) + 16));
+        .reduce((width, character) => width + (character.charCodeAt(0) > 255 ? LABEL_FONT_SIZE : 10), 0)));
+    const width = Math.max(420, 2 * (labelWidth + (dense ? labelOffset : labelRadius) + 16));
     const labels = axes.map((_, index) => {
         const angle = index * Math.PI * 2 / count - Math.PI / 2;
         const cosine = Math.cos(angle);
         const side = Math.abs(cosine) < 0.01 ? 0 : cosine > 0 ? 1 : -1;
-        return {side, x: width / 2 + cosine * RADIUS * 1.37, y: Math.sin(angle) * RADIUS * 1.37};
+        return {side, x: width / 2 + cosine * labelRadius, y: Math.sin(angle) * labelRadius};
     });
     const gap = 44;
     const sideCount = Math.max(...[-1, 1].map(side => labels.filter(label => label.side === side).length));
-    const height = dense ? Math.max(360, (sideCount - 1) * gap + 100) : 360;
+    const height = dense ? Math.max(380, (sideCount - 1) * gap + 100) : 380;
     const center = {x: width / 2, y: height / 2};
     labels.forEach(label => {
         label.y += center.y;
@@ -47,7 +50,7 @@ function createRadarLayout(axes: (WatchedRadarAxis | null)[]) {
         for (const side of [-1, 1]) {
             const column = labels.filter(label => label.side === side).sort((a, b) => a.y - b.y);
             column.forEach((label, index) => {
-                label.x = center.x + side * 127;
+                label.x = center.x + side * labelOffset;
                 label.y = Math.max(label.y, index ? column[index - 1].y + gap : 48);
             });
             for (let index = column.length - 1; index >= 0; index--) {
@@ -92,7 +95,7 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
         </Typography>
         <Box sx={{
             width: '100%',
-            maxWidth: Math.max(440, layout.width),
+            maxWidth: Math.max(520, layout.width),
             aspectRatio: `${layout.width} / ${layout.height}`,
             mx: 'auto',
             display: 'grid',
@@ -114,7 +117,7 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                                                     stroke={theme.palette.divider} strokeWidth="1"/>)}
                 {[1, 2, 3, 4].map(level => <text key={level} x={layout.center.x + 7}
                                                  y={layout.center.y - RADIUS * getWatchedRadarRatio(stats.step * level, stats.maximum) + 4}
-                                                 fill={theme.palette.text.secondary} fontSize="10"
+                                                 fill={theme.palette.text.secondary} fontSize="11"
                                                  fontFamily="inherit">{stats.step * level}</text>)}
                 <polygon data-radar-shape="true"
                          points={layout.points(stats.axes.map(axis => getWatchedRadarRatio(axis?.count ?? 0, stats.maximum)))}
@@ -123,8 +126,8 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                     const position = layout.point(index, getWatchedRadarRatio(axis?.count ?? 0, stats.maximum));
                     const labelPosition = layout.labels[index];
                     const anchor = labelPosition.side === 0 ? 'middle' : labelPosition.side > 0 ? 'start' : 'end';
-                    const start = layout.point(index, 1.04);
-                    const elbow = layout.point(index, 1.16);
+                    const start = layout.point(index, 1.01);
+                    const elbow = layout.point(index, 1.04);
                     const rank = axis ? highlights.get(axis.key) : undefined;
                     const axisColor = rank ? rankColors[rank - 1] : color;
                     return <g key={axis?.key ?? `empty-${index}`} data-radar-rank={rank}>
@@ -138,7 +141,7 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                         </circle>}
                         <text data-radar-label="true" x={labelPosition.x} y={labelPosition.y}
                               textAnchor={anchor} fill={rank ? axisColor : axis ? theme.palette.text.primary : theme.palette.text.disabled}
-                              fontFamily="inherit" fontSize="13" fontWeight={rank ? 800 : 600}>
+                              fontFamily="inherit" fontSize={LABEL_FONT_SIZE} fontWeight={rank ? 800 : 600}>
                             {axis?.name ?? '—'}
                             {axis && <tspan fill={axisColor}>（{axis.count}）</tspan>}
                         </text>

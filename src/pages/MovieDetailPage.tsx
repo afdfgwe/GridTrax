@@ -230,8 +230,8 @@ const MovieDetailPage: React.FC = () => {
                                 </Typography>
                                 {record && (
                                     <GlobalStatusPicker
-                                        status={record.global_status || 'Wish'}
-                                        onStatusChange={(s: WatchStatus) => setMovieStatus(movie.id, s, {
+                                        status={record.global_status}
+                                        onStatusChange={(s: WatchStatus | undefined) => setMovieStatus(movie.id, s, {
                                             name: movie.title,
                                             poster_path: movie.poster_path
                                         })}

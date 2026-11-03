@@ -8,7 +8,7 @@ import {STATUS_LABELS} from '../../types';
 
 interface GlobalStatusPickerProps {
     status?: WatchStatus;
-    onStatusChange: (status: WatchStatus) => void;
+    onStatusChange: (status: WatchStatus | undefined) => void;
 }
 
 // 可切换的观看状态，顺序即界面展示顺序。
@@ -53,10 +53,10 @@ const GlobalStatusPicker: React.FC<GlobalStatusPickerProps> = ({
 
     return (
         <ToggleButtonGroup
-            value={status}
+            value={status ?? null}
             exclusive
-            // 再次点击当前项产生空值时不清空已有状态，保持互斥单选语义。
-            onChange={(_, val) => val && onStatusChange(val as WatchStatus)}
+            // 再次点击已选项时仅取消状态，单集进度由父组件原样保留。
+            onChange={(_, val: WatchStatus | null) => onStatusChange(val ?? undefined)}
             size="small"
             sx={{
                 flexWrap: 'wrap',
