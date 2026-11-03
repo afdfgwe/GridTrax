@@ -26,20 +26,22 @@ const RADIUS = 104;
 function createRadarLayout(axes: (WatchedRadarAxis | null)[]) {
     const count = axes.length;
     const dense = count > 6;
-    const labels = axes.map((axis, index) => {
+    // 为类型和括号数量预留横向空间，避免长类型名或大数量被画布裁切。
+    const labelWidth = Math.max(...axes.map(axis => Array.from(axis ? `${axis.name}（${axis.count}）` : '—')
+        .reduce((width, character) => width + (character.charCodeAt(0) > 255 ? 13 : 8), 0)));
+    const width = Math.max(420, 2 * (labelWidth + (dense ? 127 : RADIUS * 1.37) + 16));
+    const labels = axes.map((_, index) => {
         const angle = index * Math.PI * 2 / count - Math.PI / 2;
         const cosine = Math.cos(angle);
         const side = Math.abs(cosine) < 0.01 ? 0 : cosine > 0 ? 1 : -1;
-        const name = Array.from(axis?.name ?? '—');
-        const lines = Array.from({length: Math.ceil(name.length / 6)}, (_, i) => name.slice(i * 6, (i + 1) * 6).join(''));
-        return {side, lines, x: 210 + cosine * RADIUS * 1.37, y: Math.sin(angle) * RADIUS * 1.37};
+        return {side, x: width / 2 + cosine * RADIUS * 1.37, y: Math.sin(angle) * RADIUS * 1.37};
     });
-    const gap = Math.max(...labels.map(label => label.lines.length)) * 15 + 29;
+    const gap = 44;
     const sideCount = Math.max(...[-1, 1].map(side => labels.filter(label => label.side === side).length));
     const height = dense ? Math.max(360, (sideCount - 1) * gap + 100) : 360;
-    const center = {x: 210, y: height / 2};
+    const center = {x: width / 2, y: height / 2};
     labels.forEach(label => {
-        label.y += center.y - (label.lines.length - 1) * 7;
+        label.y += center.y;
     });
     if (dense) {
         for (const side of [-1, 1]) {
@@ -61,7 +63,7 @@ function createRadarLayout(axes: (WatchedRadarAxis | null)[]) {
         const {x, y} = point(index, ratio);
         return `${x},${y}`;
     }).join(' ');
-    return {center, height, dense, labels, point, points};
+    return {center, width, height, dense, labels, point, points};
 }
 
 /** 跟随页面的影视类别统计，包含未标注类型，不额外请求资料。 */
@@ -90,13 +92,13 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
         </Typography>
         <Box sx={{
             width: '100%',
-            maxWidth: 440,
-            aspectRatio: `420 / ${layout.height}`,
+            maxWidth: Math.max(440, layout.width),
+            aspectRatio: `${layout.width} / ${layout.height}`,
             mx: 'auto',
             display: 'grid',
             alignItems: 'center'
         }}>
-            {hasData ? <Box component="svg" viewBox={`0 0 420 ${layout.height}`} role="img"
+            {hasData ? <Box component="svg" viewBox={`0 0 ${layout.width} ${layout.height}`} role="img"
                             aria-labelledby={`${id}-title ${id}-description`}
                             sx={{display: 'block', width: '100%', height: '100%', overflow: 'hidden'}}>
                 <title id={`${id}-title`}>{label}类型偏好雷达图</title>
@@ -137,11 +139,8 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                         <text data-radar-label="true" x={labelPosition.x} y={labelPosition.y}
                               textAnchor={anchor} fill={rank ? axisColor : axis ? theme.palette.text.primary : theme.palette.text.disabled}
                               fontFamily="inherit" fontSize="13" fontWeight={rank ? 800 : 600}>
-                            {labelPosition.lines.map((line, lineIndex) => <tspan key={lineIndex} x={labelPosition.x}
-                                                                                 dy={lineIndex ? 15 : 0}>{line}</tspan>)}
-                            {axis && <tspan x={labelPosition.x} dy="18" fill={axisColor} fontSize="12" fontWeight={rank ? 800 : 700}>
-                                {rank ? `#${rank} ` : ''}{axis.count} {unit}
-                            </tspan>}
+                            {axis?.name ?? '—'}
+                            {axis && <tspan fill={axisColor}>（{axis.count}）</tspan>}
                         </text>
                     </g>;
                 })}
