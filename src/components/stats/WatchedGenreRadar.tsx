@@ -5,6 +5,7 @@ import type {ProgressRecord} from '../../types';
 import type {MediaMetadata} from '../../utils/media/mediaMetadataCache';
 import {
     buildWatchedRadarStats,
+    getWatchedRadarHighlights,
     getWatchedRadarRatio,
     type WatchedRadarAxis,
     type WatchedRadarKind
@@ -69,6 +70,10 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
     const id = useId();
     const stats = useMemo(() => buildWatchedRadarStats(records, metadata, kind), [records, metadata, kind]);
     const layout = useMemo(() => createRadarLayout(stats.axes), [stats.axes]);
+    const highlights = useMemo(() => getWatchedRadarHighlights(stats.axes), [stats.axes]);
+    const rankColors = theme.palette.mode === 'dark'
+        ? ['#ffd166', '#c4d1df', '#efad88']
+        : ['#946200', '#526779', '#a6532d'];
     const isMovie = kind === 'movie';
     const label = isMovie ? '电影' : '电视剧';
     const unit = isMovie ? '部' : '季';
@@ -118,21 +123,24 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                     const anchor = labelPosition.side === 0 ? 'middle' : labelPosition.side > 0 ? 'start' : 'end';
                     const start = layout.point(index, 1.04);
                     const elbow = layout.point(index, 1.16);
-                    return <g key={axis?.key ?? `empty-${index}`}>
+                    const rank = axis ? highlights.get(axis.key) : undefined;
+                    const axisColor = rank ? rankColors[rank - 1] : color;
+                    return <g key={axis?.key ?? `empty-${index}`} data-radar-rank={rank}>
                         {layout.dense && labelPosition.side !== 0 && <polyline
                             points={`${start.x},${start.y} ${elbow.x},${elbow.y} ${labelPosition.x - labelPosition.side * 6},${labelPosition.y + 3}`}
-                            fill="none" stroke={theme.palette.divider} strokeWidth="1"/>}
-                        {axis && <circle cx={position.x} cy={position.y} r="3.5" fill={color}
+                            fill="none" stroke={rank ? alpha(axisColor, 0.5) : theme.palette.divider} strokeWidth="1"/>}
+                        {rank && <circle cx={position.x} cy={position.y} r="9" fill={alpha(axisColor, 0.16)}/>}
+                        {axis && <circle cx={position.x} cy={position.y} r={rank ? 5 : 3.5} fill={axisColor}
                                          stroke={theme.palette.background.paper} strokeWidth="1.5">
-                            <title>{axis.name}：{axis.count} {unit}，占比 {Math.round(axis.share * 100)}%</title>
+                            <title>{rank ? `第 ${rank} 名，` : ''}{axis.name}：{axis.count} {unit}，占比 {Math.round(axis.share * 100)}%</title>
                         </circle>}
                         <text data-radar-label="true" x={labelPosition.x} y={labelPosition.y}
-                              textAnchor={anchor} fill={axis ? theme.palette.text.primary : theme.palette.text.disabled}
-                              fontFamily="inherit" fontSize="13" fontWeight="600">
+                              textAnchor={anchor} fill={rank ? axisColor : axis ? theme.palette.text.primary : theme.palette.text.disabled}
+                              fontFamily="inherit" fontSize="13" fontWeight={rank ? 800 : 600}>
                             {labelPosition.lines.map((line, lineIndex) => <tspan key={lineIndex} x={labelPosition.x}
                                                                                  dy={lineIndex ? 15 : 0}>{line}</tspan>)}
-                            {axis && <tspan x={labelPosition.x} dy="18" fill={color} fontSize="12" fontWeight="700">
-                                {axis.count} {unit}
+                            {axis && <tspan x={labelPosition.x} dy="18" fill={axisColor} fontSize="12" fontWeight={rank ? 800 : 700}>
+                                {rank ? `#${rank} ` : ''}{axis.count} {unit}
                             </tspan>}
                         </text>
                     </g>;

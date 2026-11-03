@@ -1,12 +1,37 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {buildWatchedRadarStats, getWatchedRadarRatio, MIN_RADAR_AXIS_COUNT} from '../src/utils/stats/watchedRadar.ts';
+import {buildWatchedRadarStats, getWatchedRadarHighlights, getWatchedRadarRatio, MIN_RADAR_AXIS_COUNT} from '../src/utils/stats/watchedRadar.ts';
 import {toMediaMetadata} from '../src/utils/media/mediaMetadataCache.ts';
 
 const movie = (id, global_status = 'Collect') => ({type: 'movie', tmdb_id: id, global_status});
 const season = (id, number) => ({type: 'tv_season', tmdb_id: id, season_number: number, global_status: 'Collect'});
 const detail = genres => toMediaMetadata({id: 1, genres});
 const genre = id => ({id, name: `类型${id}`});
+
+test('前三名高亮按真实数量排名，同量按编号排序且不改变轴顺序', () => {
+    const axes = [
+        {key: '28', name: '动作', count: 9, share: 0.9},
+        {key: '12', name: '冒险', count: 9, share: 0.9},
+        {key: '18', name: '剧情', count: 12, share: 1},
+        {key: '35', name: '喜剧', count: 3, share: 0.3},
+        {key: 'unknown', name: '未标注类型', count: 30, share: 1},
+        null,
+    ];
+    const before = structuredClone(axes);
+    assert.deepEqual([...getWatchedRadarHighlights(axes)], [['18', 1], ['12', 2], ['28', 3]]);
+    assert.deepEqual(axes, before);
+    assert.deepEqual([...getWatchedRadarHighlights([...axes].reverse())], [['18', 1], ['12', 2], ['28', 3]]);
+});
+
+test('高亮不足三类时只突出已有类型，空轴、未标注和零值不参与', () => {
+    assert.equal(getWatchedRadarHighlights([null]).size, 0);
+    assert.deepEqual([...getWatchedRadarHighlights([
+        {key: '18', name: '剧情', count: 1, share: 1},
+        {key: '35', name: '喜剧', count: 0, share: 0},
+        {key: 'unknown', name: '未标注类型', count: 2, share: 1},
+        null,
+    ])], [['18', 1]]);
+});
 
 test('雷达图按类型编号展示全部类型，保留完整分母，不修改输入', () => {
     const records = Array.from({length: 8}, (_, index) => movie(index + 1));

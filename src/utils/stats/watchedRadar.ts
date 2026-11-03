@@ -12,6 +12,14 @@ export interface WatchedRadarAxis {
     share: number;
 }
 
+/** 仅对有观看记录的已知类型取前三名，同量按类型编号排序，不改变雷达轴顺序。 */
+export function getWatchedRadarHighlights(axes: readonly (WatchedRadarAxis | null)[]) {
+    return new Map(axes.filter((axis): axis is WatchedRadarAxis =>
+        axis !== null && axis.key !== UNKNOWN_GENRE && axis.count > 0)
+        .sort((a, b) => b.count - a.count || Number(a.key) - Number(b.key))
+        .slice(0, 3).map((axis, index) => [axis.key, index + 1]));
+}
+
 /** 平方根刻度压缩数量差距，保留零值，并将异常输入限制在有效半径内。 */
 export function getWatchedRadarRatio(count: number, maximum: number) {
     if (!Number.isFinite(count) || !Number.isFinite(maximum) || count <= 0 || maximum <= 0) return 0;
