@@ -51,7 +51,7 @@ export function createWatchedGenresLoader(initialRecords: ProgressRecord[], opti
                 // 将成功返回但未标注的类型、地区、语言与尚未请求的旧缓存区分开。
                 metadata.genres ??= [];
                 metadata.countries ??= [];
-                metadata.originalLanguage ??= '';
+                metadata.spokenLanguages ??= [];
                 values.set(key, metadata);
                 options.cache.set(key, metadata);
                 failures.delete(key);
@@ -76,7 +76,7 @@ export function createWatchedGenresLoader(initialRecords: ProgressRecord[], opti
             const metadata = values.get(key);
             if (!attempted.has(key) && !inFlight.has(key) &&
                 (!metadata || metadata.genres === undefined || metadata.countries === undefined ||
-                    metadata.originalLanguage === undefined || !options.cache.isFresh(metadata))) pending.set(key, record);
+                    metadata.spokenLanguages === undefined || !options.cache.isFresh(metadata))) pending.set(key, record);
         }
         // 移除已删除记录的页面数据，进行中的结果仍可进入有容量限制的公共缓存。
         for (const key of values.keys()) if (!records.has(key)) values.delete(key);

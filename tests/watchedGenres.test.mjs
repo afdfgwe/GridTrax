@@ -23,7 +23,7 @@ const detail = (id, genres = [drama]) => ({
     release_date: '2020-01-01',
     vote_average: 8,
     genres,
-    original_language: 'zh',
+    spoken_languages: [{iso_639_1: 'zh', name: '普通话', english_name: 'Mandarin'}],
     production_countries: []
 });
 const tick = () => new Promise(resolve => setImmediate(resolve));

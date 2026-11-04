@@ -182,7 +182,7 @@ export interface TMDBTVShow {
     id: number;
     name: string;
     original_name: string;
-    original_language?: string | null; // 原始语言用于观看统计，每季沿用整剧语言。
+    original_language?: string | null; // 原始语言代码，与对白语言列表区分。
     tagline?: string | null; // 整剧宣传语，缺失或空白时不展示。
     overview: string;
     poster_path?: string;
@@ -270,7 +270,7 @@ export interface TMDBMovie {
     id: number;
     title: string;
     original_title: string;
-    original_language?: string | null; // 原始语言与多个对白语言区分，避免重复计数。
+    original_language?: string | null; // 原始语言代码，与对白语言列表区分。
     tagline?: string | null; // 电影宣传语，缺失或空白时不展示。
     overview: string;
     poster_path?: string;

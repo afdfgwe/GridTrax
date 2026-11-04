@@ -1,4 +1,4 @@
-import type {ProgressRecord, TMDBGenre, TMDBMovie, TMDBTVShow, TMDBProductionCountry} from '../../types/index.ts';
+import type {ProgressRecord, TMDBGenre, TMDBMovie, TMDBTVShow, TMDBProductionCountry, TMDBSpokenLanguage} from '../../types/index.ts';
 import {getMediaScores} from './mediaScores.ts';
 import {getMediaYears} from './mediaYears.ts';
 
@@ -17,8 +17,8 @@ export interface MediaMetadata {
     genres?: TMDBGenre[];
     /** 制片地区单独保留；旧缓存缺失此字段时由统计页补全。 */
     countries?: TMDBProductionCountry[];
-    /** undefined 表示旧缓存尚未补全，空字符串表示接口未标注原始语言。 */
-    originalLanguage?: string;
+    /** undefined 表示旧缓存尚未补全，空数组表示接口未标注对白语言。 */
+    spokenLanguages?: TMDBSpokenLanguage[];
     fetchedAt: number;
 }
 
@@ -28,9 +28,16 @@ export function toMediaMetadata(detail: TMDBMovie | TMDBTVShow, now = Date.now()
     return {
         scores: getMediaScores(detail), years: getMediaYears(detail),
         posterPath: detail.poster_path || undefined, fetchedAt: now,
-        ...(detail.original_language !== undefined ? {
-            originalLanguage: typeof detail.original_language === 'string' && /^[a-z]{2}$/i.test(detail.original_language.trim())
-                ? detail.original_language.trim().toLowerCase() : '',
+        ...(detail.spoken_languages !== undefined ? {
+            spokenLanguages: [...new Map((Array.isArray(detail.spoken_languages) ? detail.spoken_languages : []).flatMap(language => {
+                if (!language || typeof language.iso_639_1 !== 'string' || !/^[a-z]{2}$/i.test(language.iso_639_1.trim())) return [];
+                const code = language.iso_639_1.trim().toLowerCase();
+                return [[code, {
+                    iso_639_1: code,
+                    name: typeof language.name === 'string' ? language.name.trim() : '',
+                    english_name: typeof language.english_name === 'string' ? language.english_name.trim() : '',
+                }] as const];
+            })).values()],
         } : {}),
         ...(Array.isArray(detail.genres) ? {
             genres: detail.genres.filter(genre =>
@@ -56,7 +63,9 @@ function validMetadata(key: string, value: unknown): value is MediaMetadata {
         (key.startsWith('tv_season-') && field.startsWith(`${key}-`) && /^\d+$/.test(field.slice(key.length + 1)));
     return Number.isFinite(item.fetchedAt) && item.fetchedAt > 0 &&
         (item.posterPath === undefined || typeof item.posterPath === 'string') &&
-        (item.originalLanguage === undefined || (typeof item.originalLanguage === 'string' && /^(?:[a-z]{2})?$/.test(item.originalLanguage))) &&
+        (item.spokenLanguages === undefined || (Array.isArray(item.spokenLanguages) && item.spokenLanguages.every(language =>
+            language && typeof language.iso_639_1 === 'string' && /^[a-z]{2}$/.test(language.iso_639_1) &&
+            typeof language.name === 'string' && typeof language.english_name === 'string'))) &&
         (item.genres === undefined || (Array.isArray(item.genres) && item.genres.every(genre =>
             genre && Number.isSafeInteger(genre.id) && genre.id > 0 && typeof genre.name === 'string' && !!genre.name.trim()))) &&
         (item.countries === undefined || (Array.isArray(item.countries) && item.countries.every(country =>

@@ -23,7 +23,7 @@ function countryLabel(code: string, fallback: string, names: Map<string, string>
     return label;
 }
 
-/** 地区按制片归属、年份按上映/首播年、语言按原始语言计数，不使用操作时间。 */
+/** 地区按制片归属、年份按上映/首播年、语言按对白语言分别计数，不使用操作时间。 */
 export function buildWatchedStats(
     records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedKind = 'all',
     dimension: WatchedDimension = 'genre', countries: readonly TMDBCountry[] = [],
@@ -40,7 +40,7 @@ export function buildWatchedStats(
     for (const record of base.records) {
         const data = metadata[getMediaMetadataKey(record)];
         if (!data || (dimension === 'country' && data.countries === undefined) ||
-            (dimension === 'language' && data.originalLanguage === undefined)) continue;
+            (dimension === 'language' && data.spokenLanguages === undefined)) continue;
         resolved++;
         const labels = new Map<string, string>();
         if (dimension === 'country') {
@@ -48,8 +48,12 @@ export function buildWatchedStats(
                 labels.set(country.iso_3166_1, countryLabel(country.iso_3166_1, country.name, names));
             }
         } else if (dimension === 'language') {
-            const code = data.originalLanguage;
-            if (code) labels.set(code, discoveryLanguageLabel(code));
+            for (const language of data.spokenLanguages ?? []) {
+                const code = language.iso_639_1;
+                const name = /\p{Script=Han}/u.test(language.name) ? language.name
+                    : discoveryLanguageLabel(code, language.name || language.english_name || code);
+                labels.set(code, name);
+            }
         } else {
             const year = data.years[getMediaYearKey(record)];
             if (year && /^\d{4}$/.test(year)) labels.set(year, year);

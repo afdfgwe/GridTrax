@@ -7,7 +7,7 @@ import type {WatchedGenreRow} from '../../utils/stats/watchedGenres';
 import {UNKNOWN_STAT, type WatchedDimension} from '../../utils/stats/watchedStats';
 
 interface Props {
-    dimension: Exclude<WatchedDimension, 'language'>;
+    dimension: WatchedDimension;
     rows: WatchedGenreRow[];
     selected?: string;
     onSelect: (key: string) => void;
@@ -19,7 +19,7 @@ const percent = (share: number) => `${Math.round(share * 100)}%`;
 const colors = ['#45bda8', '#eb9b71', '#83a8ed', '#db84a3', '#b4bc65', '#b19cdb', '#63b9cf', '#cf9d51'];
 const COLLAPSED_GENRE_COUNT = 8;
 
-/** 三个维度共用筛选交互；地区环形图按归属次数分配角度，年份柱图保留真实年份顺序。 */
+/** 四个维度共用筛选交互；类型与语言用横向条形图，地区用环形图，年份用柱状图。 */
 export default function WatchedDistributionChart({dimension, rows, selected, onSelect, filmColor, tvColor}: Props) {
     const theme = useTheme();
     const [genresExpanded, setGenresExpanded] = useState(false);
@@ -184,7 +184,7 @@ export default function WatchedDistributionChart({dimension, rows, selected, onS
         </Box>
     </Box>;
 
-    // 只折叠图表的展示项，统计分母、排序与已选类型保持不变。
+    // 只折叠图表的展示项，统计分母、排序与已选分类保持不变。
     const visibleGenres = genresExpanded ? rows : rows.slice(0, COLLAPSED_GENRE_COUNT);
     return <Box>
         <Box id={genreRowsId} sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
