@@ -196,7 +196,7 @@ export default function WatchedDistributionChart({dimension, rows, selected, onS
 
     if (dimension === 'language') return <Box>
         <Box id={genreRowsId} role="group" aria-label="对白语言横向条形图"
-             sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
+             sx={{display: 'flex', flexDirection: 'column', gap: 0.25}}>
             {visibleGenres.map(row => <ButtonBase key={row.key} onClick={() => onSelect(row.key)}
                 aria-pressed={selected === row.key}
                 aria-label={`${row.name}，${row.records.length} 条，占比 ${percent(row.share)}`}
@@ -204,7 +204,7 @@ export default function WatchedDistributionChart({dimension, rows, selected, onS
                 sx={{
                     ...activeStyle(row.key),
                     display: 'grid', gridTemplateColumns: {xs: '72px minmax(0, 1fr) 48px', sm: '92px minmax(0, 1fr) 56px'},
-                    alignItems: 'center', gap: {xs: 1, sm: 1.5}, width: '100%', minHeight: 64, px: 1, py: 1,
+                    alignItems: 'center', gap: {xs: 1, sm: 1.5}, width: '100%', minHeight: 52, px: 1, py: 0.5,
                     opacity: selected && selected !== row.key ? 0.55 : 1,
                     '&:hover, &.Mui-focusVisible': {bgcolor: alpha(theme.palette.primary.main, 0.07), opacity: 1},
                     '&.Mui-focusVisible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2},
