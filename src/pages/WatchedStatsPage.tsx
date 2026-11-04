@@ -13,6 +13,7 @@ import {getCountries, getPosterUrl} from '../api/tmdb';
 import PosterScoreBadge from '../components/common/PosterScoreBadge';
 import WatchedDistributionChart from '../components/stats/WatchedDistributionChart';
 import WatchedGenreRadar from '../components/stats/WatchedGenreRadar';
+import WatchedLanguageChart from '../components/stats/WatchedLanguageChart';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {useWatchedGenres} from '../hooks/useWatchedGenres';
 import {useProgressStore} from '../store/useProgressStore';
@@ -26,9 +27,10 @@ const dimensions = {
     genre: {label: '类型', title: '类型分布', metric: '类型覆盖', unit: '类'},
     country: {label: '地区', title: '制片地区分布', metric: '地区覆盖', unit: '个'},
     year: {label: '年份', title: '上映 / 首播年份', metric: '年份覆盖', unit: '年'},
+    language: {label: '语言', title: '原始语言分布', metric: '语言覆盖', unit: '种'},
 } as const;
 
-/** 只读的观看画像：统计以本地“看过”为准，三种维度共用缓存资料与作品列表。 */
+/** 只读的观看画像：统计以本地“看过”为准，四种维度共用缓存资料与作品列表。 */
 export default function WatchedStatsPage() {
     const theme = useTheme();
     const desktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -40,7 +42,7 @@ export default function WatchedStatsPage() {
     const kindParam = params.get('kind');
     const kind: WatchedKind = kindParam === 'movie' || kindParam === 'tv_season' ? kindParam : 'all';
     const dimensionParam = params.get('dimension');
-    const dimension: WatchedDimension = dimensionParam === 'country' || dimensionParam === 'year' ? dimensionParam : 'genre';
+    const dimension: WatchedDimension = dimensionParam === 'country' || dimensionParam === 'year' || dimensionParam === 'language' ? dimensionParam : 'genre';
     const loadCountries = useCallback(() => watched.length && dimension === 'country' ? getCountries() : Promise.resolve([]), [watched.length, dimension]);
     const countryDictionary = useAsyncResource(`stats-countries:${dimension}:${watched.length > 0}`, loadCountries);
     const stats = useMemo(() => buildWatchedStats(watched, metadata, kind, dimension, countryDictionary.data), [watched, metadata, kind, dimension, countryDictionary.data]);
@@ -130,6 +132,7 @@ export default function WatchedStatsPage() {
                     {dimension === 'genre' && '多类型作品分别计数，占比之和可能超过 100%。'}
                     {dimension === 'country' && '按制片地区统计，多国合拍分别计数；环形图占比以地区归属总次数为分母。'}
                     {dimension === 'year' && '电影按上映年份、电视剧按每季首播年份分组，并非标记“看过”的年份。'}
+                    {dimension === 'language' && '按原始语言归类，每条记录只计入一种语言；同剧各季沿用整剧语言。'}
                 </Typography>}
                 {pendingCount > 0 && <Box sx={{mt: 1}}>
                     <Box sx={{display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.5}}>
@@ -175,7 +178,7 @@ export default function WatchedStatsPage() {
                         }}>
                             <Typography id="genre-distribution-title" component="h2" fontSize={18} fontWeight={750}
                                         sx={{mr: 'auto'}}>{config.title}</Typography>
-                            {dimension !== 'country' && [[filmColor, '电影'], [tvColor, '电视剧']].map(([color, label]) =>
+                            {(dimension === 'genre' || dimension === 'year') && [[filmColor, '电影'], [tvColor, '电视剧']].map(([color, label]) =>
                                 <Box key={label} sx={{display: 'flex', alignItems: 'center', gap: 0.5}}>
                                     <Box sx={{width: 7, height: 7, bgcolor: color, borderRadius: '50%'}}/>
                                     <Typography variant="caption" color="text.secondary">{label}</Typography>
@@ -184,7 +187,11 @@ export default function WatchedStatsPage() {
                         {stats.rows.length === 0 && <Typography variant="body2" color="text.secondary" sx={{py: 4}}>
                             {pendingCount ? '正在整理观看资料…' : '暂时没有可用的统计资料'}
                         </Typography>}
-                        {stats.rows.length > 0 && <WatchedDistributionChart
+                        {dimension === 'language' && stats.rows.length > 0 && <WatchedLanguageChart
+                            rows={stats.rows} unresolved={stats.total - stats.resolved} selected={selection?.key}
+                            onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
+                        />}
+                        {dimension !== 'language' && stats.rows.length > 0 && <WatchedDistributionChart
                             dimension={dimension} rows={stats.rows} selected={selection?.key}
                             onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
                             filmColor={filmColor} tvColor={tvColor}

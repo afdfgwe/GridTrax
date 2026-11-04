@@ -17,6 +17,8 @@ export interface MediaMetadata {
     genres?: TMDBGenre[];
     /** 制片地区单独保留；旧缓存缺失此字段时由统计页补全。 */
     countries?: TMDBProductionCountry[];
+    /** undefined 表示旧缓存尚未补全，空字符串表示接口未标注原始语言。 */
+    originalLanguage?: string;
     fetchedAt: number;
 }
 
@@ -26,6 +28,10 @@ export function toMediaMetadata(detail: TMDBMovie | TMDBTVShow, now = Date.now()
     return {
         scores: getMediaScores(detail), years: getMediaYears(detail),
         posterPath: detail.poster_path || undefined, fetchedAt: now,
+        ...(detail.original_language !== undefined ? {
+            originalLanguage: typeof detail.original_language === 'string' && /^[a-z]{2}$/i.test(detail.original_language.trim())
+                ? detail.original_language.trim().toLowerCase() : '',
+        } : {}),
         ...(Array.isArray(detail.genres) ? {
             genres: detail.genres.filter(genre =>
                 Number.isSafeInteger(genre.id) && genre.id > 0 && typeof genre.name === 'string' && genre.name.trim()
@@ -50,6 +56,7 @@ function validMetadata(key: string, value: unknown): value is MediaMetadata {
         (key.startsWith('tv_season-') && field.startsWith(`${key}-`) && /^\d+$/.test(field.slice(key.length + 1)));
     return Number.isFinite(item.fetchedAt) && item.fetchedAt > 0 &&
         (item.posterPath === undefined || typeof item.posterPath === 'string') &&
+        (item.originalLanguage === undefined || (typeof item.originalLanguage === 'string' && /^(?:[a-z]{2})?$/.test(item.originalLanguage))) &&
         (item.genres === undefined || (Array.isArray(item.genres) && item.genres.every(genre =>
             genre && Number.isSafeInteger(genre.id) && genre.id > 0 && typeof genre.name === 'string' && !!genre.name.trim()))) &&
         (item.countries === undefined || (Array.isArray(item.countries) && item.countries.every(country =>

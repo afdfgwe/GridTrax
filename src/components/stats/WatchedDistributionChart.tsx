@@ -7,7 +7,7 @@ import type {WatchedGenreRow} from '../../utils/stats/watchedGenres';
 import {UNKNOWN_STAT, type WatchedDimension} from '../../utils/stats/watchedStats';
 
 interface Props {
-    dimension: WatchedDimension;
+    dimension: Exclude<WatchedDimension, 'language'>;
     rows: WatchedGenreRow[];
     selected?: string;
     onSelect: (key: string) => void;

@@ -23,6 +23,7 @@ const detail = (id, genres = [drama]) => ({
     release_date: '2020-01-01',
     vote_average: 8,
     genres,
+    original_language: 'zh',
     production_countries: []
 });
 const tick = () => new Promise(resolve => setImmediate(resolve));

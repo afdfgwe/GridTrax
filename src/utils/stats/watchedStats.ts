@@ -1,9 +1,10 @@
 import type {ProgressRecord, TMDBCountry} from '../../types/index.ts';
 import {getMediaMetadataKey, type MediaMetadata} from '../media/mediaMetadataCache.ts';
 import {getMediaYearKey} from '../media/mediaYears.ts';
+import {discoveryLanguageLabel} from '../browse/movieDiscovery.ts';
 import {buildWatchedGenreStats, UNKNOWN_GENRE, type WatchedGenreRow, type WatchedKind} from './watchedGenres.ts';
 
-export type WatchedDimension = 'genre' | 'country' | 'year';
+export type WatchedDimension = 'genre' | 'country' | 'year' | 'language';
 export const UNKNOWN_STAT = 'unknown';
 
 /** 制片地区优先使用接口中文字典，字典不可用时使用浏览器中文名称，最后保留原名称。 */
@@ -22,7 +23,7 @@ function countryLabel(code: string, fallback: string, names: Map<string, string>
     return label;
 }
 
-/** 国家按制片地区归属计数；年份按电影上映年、每季首播年计数，不使用操作时间。 */
+/** 地区按制片归属、年份按上映/首播年、语言按原始语言计数，不使用操作时间。 */
 export function buildWatchedStats(
     records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedKind = 'all',
     dimension: WatchedDimension = 'genre', countries: readonly TMDBCountry[] = [],
@@ -38,18 +39,22 @@ export function buildWatchedStats(
     let resolved = 0;
     for (const record of base.records) {
         const data = metadata[getMediaMetadataKey(record)];
-        if (!data || (dimension === 'country' && data.countries === undefined)) continue;
+        if (!data || (dimension === 'country' && data.countries === undefined) ||
+            (dimension === 'language' && data.originalLanguage === undefined)) continue;
         resolved++;
         const labels = new Map<string, string>();
         if (dimension === 'country') {
             for (const country of data.countries ?? []) {
                 labels.set(country.iso_3166_1, countryLabel(country.iso_3166_1, country.name, names));
             }
+        } else if (dimension === 'language') {
+            const code = data.originalLanguage;
+            if (code) labels.set(code, discoveryLanguageLabel(code));
         } else {
             const year = data.years[getMediaYearKey(record)];
             if (year && /^\d{4}$/.test(year)) labels.set(year, year);
         }
-        if (!labels.size) labels.set(UNKNOWN_STAT, dimension === 'country' ? '未标注地区' : '未标注年份');
+        if (!labels.size) labels.set(UNKNOWN_STAT, dimension === 'country' ? '未标注地区' : dimension === 'language' ? '未标注语言' : '未标注年份');
         for (const [key, name] of labels) {
             const row = groups.get(key) ?? {key, name, records: [], movies: 0, seasons: 0, share: 0};
             row.records.push(record);
