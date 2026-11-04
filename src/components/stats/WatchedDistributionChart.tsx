@@ -186,6 +186,62 @@ export default function WatchedDistributionChart({dimension, rows, selected, onS
 
     // 只折叠图表的展示项，统计分母、排序与已选分类保持不变。
     const visibleGenres = genresExpanded ? rows : rows.slice(0, COLLAPSED_GENRE_COUNT);
+    const expandButton = rows.length > COLLAPSED_GENRE_COUNT && <Button size="small"
+        aria-expanded={genresExpanded} aria-controls={genreRowsId}
+        onClick={() => setGenresExpanded(expanded => !expanded)}
+        endIcon={genresExpanded ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
+        sx={{mt: 1, width: '100%'}}>
+        {genresExpanded ? '收起' : '展开全部'}
+    </Button>;
+
+    if (dimension === 'language') return <Box>
+        <Box id={genreRowsId} role="group" aria-label="对白语言横向条形图"
+             sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
+            {visibleGenres.map(row => <ButtonBase key={row.key} onClick={() => onSelect(row.key)}
+                aria-pressed={selected === row.key}
+                aria-label={`${row.name}，${row.records.length} 条，占比 ${percent(row.share)}`}
+                title={`电影 ${row.movies} 部 · 电视剧 ${row.seasons} 季`}
+                sx={{
+                    ...activeStyle(row.key),
+                    display: 'grid', gridTemplateColumns: {xs: '72px minmax(0, 1fr) 48px', sm: '92px minmax(0, 1fr) 56px'},
+                    alignItems: 'center', gap: {xs: 1, sm: 1.5}, width: '100%', minHeight: 64, px: 1, py: 1,
+                    opacity: selected && selected !== row.key ? 0.55 : 1,
+                    '&:hover, &.Mui-focusVisible': {bgcolor: alpha(theme.palette.primary.main, 0.07), opacity: 1},
+                    '&.Mui-focusVisible': {outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2},
+                }}>
+                <Box sx={{minWidth: 0}}>
+                    <Typography variant="body2" fontWeight={650}
+                        sx={{lineHeight: 1.4, overflowWrap: 'anywhere'}}>{row.name}</Typography>
+                    {row.key !== UNKNOWN_STAT && <Typography variant="caption" color="text.secondary"
+                        sx={{display: 'block', fontSize: 10, lineHeight: 1.5, mt: 0.25}}>
+                        {row.key.toUpperCase()}
+                    </Typography>}
+                </Box>
+                <Box sx={{position: 'relative', height: 32, display: 'flex', alignItems: 'center', minWidth: 0}}>
+                    {/* 刻度仅用于比较数量，条形长度仍以最多的语言为基准，不改变占比分母。 */}
+                    <Box aria-hidden="true" sx={{position: 'absolute', inset: 0, display: 'flex', pointerEvents: 'none'}}>
+                        {[0, 1, 2, 3].map(tick => <Box key={tick} sx={{
+                            flex: 1, borderRight: '1px dashed', borderColor: alpha(theme.palette.text.primary, 0.12),
+                            ...(tick === 0 ? {borderLeft: '1px solid', borderLeftColor: alpha(theme.palette.text.primary, 0.16)} : {}),
+                        }}/>)}
+                    </Box>
+                    <Box sx={{position: 'relative', width: '100%', height: 18, bgcolor: alpha(theme.palette.text.primary, 0.035), borderRadius: 0.5}}>
+                        <Box sx={{width: `${row.records.length / maxCount * 100}%`, height: '100%', minWidth: 2}}>
+                            {bars(row)}
+                        </Box>
+                    </Box>
+                </Box>
+                <Box sx={{textAlign: 'right', fontVariantNumeric: 'tabular-nums'}}>
+                    <Typography component="div" sx={{fontSize: 18, lineHeight: 1.3, fontWeight: 750}}>{row.records.length}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{display: 'block', fontSize: 11, mt: 0.25}}>
+                        {percent(row.share)}
+                    </Typography>
+                </Box>
+            </ButtonBase>)}
+        </Box>
+        {expandButton}
+    </Box>;
+
     return <Box>
         <Box id={genreRowsId} sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
             {visibleGenres.map((row, index) => <ButtonBase key={row.key} onClick={() => onSelect(row.key)}
@@ -221,12 +277,6 @@ export default function WatchedDistributionChart({dimension, rows, selected, onS
                 </Box>
             </ButtonBase>)}
         </Box>
-        {rows.length > COLLAPSED_GENRE_COUNT && <Button size="small"
-                                                        aria-expanded={genresExpanded} aria-controls={genreRowsId}
-                                                        onClick={() => setGenresExpanded(expanded => !expanded)}
-                                                        endIcon={genresExpanded ? <ExpandLessIcon/> : <ExpandMoreIcon/>}
-                                                        sx={{mt: 1, width: '100%'}}>
-            {genresExpanded ? '收起' : '展开全部'}
-        </Button>}
+        {expandButton}
     </Box>;
 }
