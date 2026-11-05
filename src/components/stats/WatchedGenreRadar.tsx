@@ -20,18 +20,23 @@ interface Props {
     tvColor: string;
 }
 
-const RADIUS = 128;
-const LABEL_FONT_SIZE = 16;
+const RADIUS = 192;
+const LABEL_FONT_SIZE = 18;
+const HIGHLIGHT_COLOR = '#ff3030';
 
 /** 密集标签按两侧的垂直顺序避让，保留全部类型，不依赖屏幕宽度缩小字号。 */
-function createRadarLayout(axes: (WatchedRadarAxis | null)[]) {
+function createRadarLayout(axes: (WatchedRadarAxis | null)[], highlights: ReadonlyMap<string, number>) {
     const count = axes.length;
     const dense = count > 6;
     const labelOffset = RADIUS + 8;
-    const labelRadius = RADIUS * 1.25;
-    // 为类型和括号数量预留横向空间，避免长类型名或大数量被画布裁切。
-    const labelWidth = Math.max(...axes.map(axis => Array.from(axis ? `${axis.name}（${axis.count}）` : '—')
-        .reduce((width, character) => width + (character.charCodeAt(0) > 255 ? LABEL_FONT_SIZE : 10), 0)));
+    const labelRadius = RADIUS + 32;
+    // 排名、类型和数量共同参与宽度计算，避免前三名标签被画布裁切。
+    const labelWidth = Math.max(...axes.map(axis => {
+        const rank = axis ? highlights.get(axis.key) : undefined;
+        const text = axis ? `${rank ? `#${rank} ` : ''}${axis.name}（${axis.count}）` : '—';
+        return Array.from(text).reduce((width, character) => width +
+            (character.charCodeAt(0) > 255 ? LABEL_FONT_SIZE : LABEL_FONT_SIZE * 0.625), 0);
+    }));
     const width = Math.max(420, 2 * (labelWidth + (dense ? labelOffset : labelRadius) + 16));
     const labels = axes.map((_, index) => {
         const angle = index * Math.PI * 2 / count - Math.PI / 2;
@@ -41,7 +46,7 @@ function createRadarLayout(axes: (WatchedRadarAxis | null)[]) {
     });
     const gap = 44;
     const sideCount = Math.max(...[-1, 1].map(side => labels.filter(label => label.side === side).length));
-    const height = dense ? Math.max(380, (sideCount - 1) * gap + 100) : 380;
+    const height = Math.max(2 * (labelRadius + 30), dense ? (sideCount - 1) * gap + 100 : 0);
     const center = {x: width / 2, y: height / 2};
     labels.forEach(label => {
         label.y += center.y;
@@ -74,11 +79,8 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
     const theme = useTheme();
     const id = useId();
     const stats = useMemo(() => buildWatchedRadarStats(records, metadata, kind), [records, metadata, kind]);
-    const layout = useMemo(() => createRadarLayout(stats.axes), [stats.axes]);
     const highlights = useMemo(() => getWatchedRadarHighlights(stats.axes), [stats.axes]);
-    const rankColors = theme.palette.mode === 'dark'
-        ? ['#ffd166', '#c4d1df', '#efad88']
-        : ['#946200', '#526779', '#a6532d'];
+    const layout = useMemo(() => createRadarLayout(stats.axes, highlights), [stats.axes, highlights]);
     const isMovie = kind === 'movie';
     const label = isMovie ? '电影' : '电视剧';
     const unit = isMovie ? '部' : '季';
@@ -129,7 +131,7 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                     const start = layout.point(index, 1.01);
                     const elbow = layout.point(index, 1.04);
                     const rank = axis ? highlights.get(axis.key) : undefined;
-                    const axisColor = rank ? rankColors[rank - 1] : color;
+                    const axisColor = rank ? HIGHLIGHT_COLOR : color;
                     return <g key={axis?.key ?? `empty-${index}`} data-radar-rank={rank}>
                         {layout.dense && labelPosition.side !== 0 && <polyline
                             points={`${start.x},${start.y} ${elbow.x},${elbow.y} ${labelPosition.x - labelPosition.side * 6},${labelPosition.y + 3}`}
@@ -142,7 +144,7 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                         <text data-radar-label="true" x={labelPosition.x} y={labelPosition.y}
                               textAnchor={anchor} fill={rank ? axisColor : axis ? theme.palette.text.primary : theme.palette.text.disabled}
                               fontFamily="inherit" fontSize={LABEL_FONT_SIZE} fontWeight={rank ? 800 : 600}>
-                            {axis?.name ?? '—'}
+                            {rank ? `#${rank} ` : ''}{axis?.name ?? '—'}
                             {axis && <tspan fill={axisColor}>（{axis.count}）</tspan>}
                         </text>
                     </g>;
