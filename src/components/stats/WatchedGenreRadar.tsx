@@ -21,7 +21,7 @@ interface Props {
 }
 
 const RADIUS = 192;
-const LABEL_FONT_SIZE = 18;
+const LABEL_FONT_SIZE = 21;
 const HIGHLIGHT_COLOR = '#ff3030';
 
 /** 密集标签按两侧的垂直顺序避让，保留全部类型，不依赖屏幕宽度缩小字号。 */
