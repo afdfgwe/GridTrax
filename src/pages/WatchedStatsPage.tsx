@@ -25,10 +25,10 @@ import {buildWatchedStats, type WatchedDimension} from '../utils/stats/watchedSt
 
 const dimensions = {
     genre: {label: '类型', title: '类型分布', metric: '类型覆盖', unit: '类'},
+    score: {label: '评分', title: 'TMDB 评分分布', metric: '平均评分', unit: '分'},
     country: {label: '地区', title: '制片地区分布', metric: '地区覆盖', unit: '个'},
     year: {label: '年份', title: '上映 / 首播年份', metric: '年份覆盖', unit: '年'},
     language: {label: '语言', title: '对白语言分布', metric: '语言覆盖', unit: '种'},
-    score: {label: '评分', title: 'TMDB 评分分布', metric: '平均评分', unit: '分'},
 } as const;
 
 /** 只读的观看画像：统计以本地“看过”为准，各维度共用缓存资料与作品列表。 */
@@ -80,7 +80,11 @@ export default function WatchedStatsPage() {
                 sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap'}}>
                 <Tabs value={dimension} aria-label="统计维度" onChange={(_, value: WatchedDimension) => {
                     setParams(kind === 'all' ? {dimension: value} : {dimension: value, kind}, {replace: true});
-                }} sx={{minHeight: 36, maxWidth: '100%', '& .MuiTab-root': {minHeight: 36, minWidth: 52, px: 1.5, fontSize: 13}}}>
+                }} sx={{
+                    minHeight: 36,
+                    maxWidth: '100%',
+                    '& .MuiTab-root': {minHeight: 36, minWidth: 52, px: 1.5, fontSize: 13}
+                }}>
                     {Object.entries(dimensions).map(([key, value]) => <Tab key={key} value={key} label={value.label}/>)}
                 </Tabs>
                 <ToggleButtonGroup value={kind} exclusive size="small" aria-label="统计影视类别"
@@ -109,7 +113,11 @@ export default function WatchedStatsPage() {
                     {label: scoreStats ? '有评分记录' : '看过记录', value: stats.total, unit: '条'},
                     {label: '电影', value: stats.movies, unit: '部', color: filmColor},
                     {label: '电视剧', value: stats.seasons, unit: '季', detail: `${stats.shows} 部剧`, color: tvColor},
-                    {label: config.metric, value: scoreStats ? (stats.total ? scoreStats.averageScore.toFixed(1) : '暂无') : stats.coverageCount, unit: config.unit},
+                    {
+                        label: config.metric,
+                        value: scoreStats ? (stats.total ? scoreStats.averageScore.toFixed(1) : '暂无') : stats.coverageCount,
+                        unit: config.unit
+                    },
                 ].map(metric => <Box key={metric.label}>
                     <Typography variant="body2" color="text.secondary">{metric.label}</Typography>
                     <Box sx={{display: 'flex', alignItems: 'baseline', gap: 0.75, mt: 0.5, flexWrap: 'wrap'}}>
@@ -164,7 +172,8 @@ export default function WatchedStatsPage() {
                     <Typography fontWeight={700}>{stats.sourceTotal
                         ? (pendingCount ? '正在整理观看资料…' : `暂时没有可用的${config.label}统计资料`)
                         : watched.length ? '这个分类还没有看过记录' : '还没有看过记录'}</Typography>
-                    {!stats.sourceTotal && <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>标记为“看过”的影视作品会计入统计。</Typography>}
+                    {!stats.sourceTotal &&
+                        <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>标记为“看过”的影视作品会计入统计。</Typography>}
                     <Button component={Link} to="/" startIcon={<ArrowBackIcon/>} sx={{mt: 2}}>返回追踪</Button>
                 </Box>
             ) : (
@@ -193,17 +202,16 @@ export default function WatchedStatsPage() {
                             {pendingCount ? '正在整理观看资料…' : '暂时没有可用的统计资料'}
                         </Typography>}
                         {dimension === 'score' && <WatchedScoreChart rows={stats.rows} kind={kind}
-                            selected={selection?.key} onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
-                            filmColor={filmColor} tvColor={tvColor}/>}
-                        {scoreStats && <Box sx={{display: 'flex', alignItems: 'baseline', gap: 1, mt: 1.5}}>
-                            <Typography variant="body2" color="text.secondary">8 分及以上</Typography>
-                            <Typography fontWeight={750}>{Math.round(scoreStats.highScoreShare * 100)}%</Typography>
-                            <Typography variant="caption" color="text.secondary">{scoreStats.highScoreCount} 条</Typography>
-                        </Box>}
+                                                                     selected={selection?.key}
+                                                                     onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
+                                                                     filmColor={filmColor} tvColor={tvColor}/>}
                         {dimension !== 'score' && stats.rows.length > 0 && <WatchedDistributionChart key={dimension}
-                            dimension={dimension} rows={stats.rows} selected={selection?.key}
-                            onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
-                            filmColor={filmColor} tvColor={tvColor}
+                                                                                                     dimension={dimension}
+                                                                                                     rows={stats.rows}
+                                                                                                     selected={selection?.key}
+                                                                                                     onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
+                                                                                                     filmColor={filmColor}
+                                                                                                     tvColor={tvColor}
                         />}
                         {dimension === 'genre' && kind !== 'all' &&
                             <WatchedGenreRadar kind={kind} records={watched} metadata={metadata}
