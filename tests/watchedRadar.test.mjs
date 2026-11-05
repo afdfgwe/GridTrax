@@ -50,17 +50,19 @@ test('雷达图按类型编号展示全部类型，保留完整分母，不修�
     assert.deepEqual({records, metadata}, before);
 });
 
-test('观看量变化不改变类型顺序，未标注类型置后，刻度覆盖非首轴的最大值', () => {
+test('观看量变化不改变类型顺序，排除未标注类型，刻度覆盖非首轴的最大值', () => {
     const records = Array.from({length: 9}, (_, index) => movie(index + 1));
     const metadata = Object.fromEntries(records.map(record => [`movie-${record.tmdb_id}`,
         detail(record.tmdb_id === 9 ? [] : record.tmdb_id === 1 ? [genre(12), genre(28)] : [genre(28)])]));
     const first = buildWatchedRadarStats(records, metadata, 'movie');
-    assert.deepEqual(first.axes.filter(Boolean).map(axis => axis.key), ['12', '28', 'unknown']);
-    assert.deepEqual(first.axes.filter(Boolean).map(axis => axis.count), [1, 8, 1]);
+    assert.deepEqual(first.axes.filter(Boolean).map(axis => axis.key), ['12', '28']);
+    assert.deepEqual(first.axes.filter(Boolean).map(axis => axis.count), [1, 8]);
     assert.equal(first.maximum, 8);
     const second = buildWatchedRadarStats(records.slice(0, 2), metadata, 'movie');
     assert.deepEqual(second.axes.filter(Boolean).map(axis => axis.key), ['12', '28']);
-    assert.equal(first.axes[1].share, 8 / 9);
+    assert.equal(first.axes[1].share, 1);
+    assert.equal(first.total, 8);
+    assert.equal(first.sourceTotal, 9);
 });
 
 test('平方根半径保留真实比例次序，低值更清晰，网格刻度可按数量反算', () => {
@@ -97,21 +99,19 @@ test('电影和电视剧独立统计，同剧多季按季计数、重复记录�
     assert.equal(series.axes[0].count, 2);
 });
 
-test('未标注类型保留独立轴，尚未加载的资料不计入任何类型，不足六轴补空轴', () => {
+test('未标注类型和尚未加载的资料不参与雷达统计及占比分母，不足六轴补空轴', () => {
     const stats = buildWatchedRadarStats([movie(1), movie(2), movie(3)], {
         'movie-1': detail([genre(18)]), 'movie-2': detail([]),
     }, 'movie');
-    assert.equal(stats.total, 3);
+    assert.equal(stats.total, 1);
+    assert.equal(stats.sourceTotal, 3);
     assert.equal(stats.resolved, 2);
     assert.equal(stats.genreCount, 1);
-    assert.equal(stats.unknownCount, 1);
     const known = stats.axes.find(axis => axis?.key === '18');
     const unknown = stats.axes.find(axis => axis?.key === 'unknown');
-    assert.equal(known.share, 1 / 3);
-    assert.equal(unknown.name, '未标注类型');
-    assert.equal(unknown.count, 1);
-    assert.equal(unknown.share, 1 / 3);
-    assert.equal(stats.axes.filter(axis => axis === null).length, MIN_RADAR_AXIS_COUNT - 2);
+    assert.equal(known.share, 1);
+    assert.equal(unknown, undefined);
+    assert.equal(stats.axes.filter(axis => axis === null).length, MIN_RADAR_AXIS_COUNT - 1);
 });
 
 test('空记录和全部未加载时不生成虚构维度', () => {
@@ -120,20 +120,20 @@ test('空记录和全部未加载时不生成虚构维度', () => {
         const stats = buildWatchedRadarStats(records, metadata, 'movie');
         assert.deepEqual(stats.axes, Array(MIN_RADAR_AXIS_COUNT).fill(null));
         assert.equal(stats.genreCount, 0);
-        assert.equal(stats.unknownCount, 0);
+        assert.equal(stats.total, 0);
         assert.equal(stats.maximum, 4);
     }
 });
 
-test('全部为未标注类型时仍展示雷达图，并且电影、电视剧计数隔离', () => {
+test('全部为未标注类型时不生成雷达数据，并且电影、电视剧加载总数隔离', () => {
     const records = [movie(1), season(1, 1), season(1, 2)];
     const metadata = {'movie-1': detail([]), 'tv_season-1': detail([])};
     for (const [kind, count] of [['movie', 1], ['tv_season', 2]]) {
         const stats = buildWatchedRadarStats(records, metadata, kind);
         assert.equal(stats.genreCount, 0);
-        assert.equal(stats.unknownCount, count);
-        assert.deepEqual(stats.axes[0], {key: 'unknown', name: '未标注类型', count, share: 1});
-        assert.deepEqual(stats.axes.slice(1), Array(MIN_RADAR_AXIS_COUNT - 1).fill(null));
+        assert.equal(stats.sourceTotal, count);
+        assert.equal(stats.total, 0);
+        assert.deepEqual(stats.axes, Array(MIN_RADAR_AXIS_COUNT).fill(null));
     }
 });
 

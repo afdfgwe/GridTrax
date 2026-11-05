@@ -2,7 +2,7 @@ import type {ProgressRecord, TMDBCountry} from '../../types/index.ts';
 import {getMediaMetadataKey, type MediaMetadata} from '../media/mediaMetadataCache.ts';
 import {getMediaYearKey} from '../media/mediaYears.ts';
 import {discoveryLanguageLabel} from '../browse/movieDiscovery.ts';
-import {buildWatchedGenreStats, UNKNOWN_GENRE, type WatchedGenreRow, type WatchedKind} from './watchedGenres.ts';
+import {buildWatchedGenreStats, getWatchedRecords, type WatchedGenreRow, type WatchedKind} from './watchedGenres.ts';
 
 export type WatchedDimension = 'genre' | 'country' | 'year' | 'language';
 export const UNKNOWN_STAT = 'unknown';
@@ -28,16 +28,20 @@ export function buildWatchedStats(
     records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedKind = 'all',
     dimension: WatchedDimension = 'genre', countries: readonly TMDBCountry[] = [],
 ) {
-    const base = buildWatchedGenreStats(records, metadata, kind);
-    if (dimension === 'genre') return {
-        ...base,
-        coverageCount: base.genreCount,
-        assignments: base.rows.reduce((sum, row) => sum + row.records.length, 0)
-    };
+    if (dimension === 'genre') {
+        const base = buildWatchedGenreStats(records, metadata, kind);
+        return {
+            ...base,
+            coverageCount: base.genreCount,
+            assignments: base.rows.reduce((sum, row) => sum + row.records.length, 0)
+        };
+    }
+    const watched = getWatchedRecords(records).filter(record => kind === 'all' || record.type === kind);
+    const included: ProgressRecord[] = [];
     const names = new Map(countries.map(country => [country.iso_3166_1.trim().toUpperCase(), country.native_name?.trim() || country.english_name?.trim()]));
     const groups = new Map<string, WatchedGenreRow>();
     let resolved = 0;
-    for (const record of base.records) {
+    for (const record of watched) {
         const data = metadata[getMediaMetadataKey(record)];
         if (!data || (dimension === 'country' && data.countries === undefined) ||
             (dimension === 'language' && data.spokenLanguages === undefined)) continue;
@@ -58,7 +62,9 @@ export function buildWatchedStats(
             const year = data.years[getMediaYearKey(record)];
             if (year && /^\d{4}$/.test(year)) labels.set(year, year);
         }
-        if (!labels.size) labels.set(UNKNOWN_STAT, dimension === 'country' ? '未标注地区' : dimension === 'language' ? '未标注语言' : '未标注年份');
+        // 各维度独立排除空值，不因缺少类型而丢失已有地区、年份或语言的影片。
+        if (!labels.size) continue;
+        included.push(record);
         for (const [key, name] of labels) {
             const row = groups.get(key) ?? {key, name, records: [], movies: 0, seasons: 0, share: 0};
             row.records.push(record);
@@ -69,10 +75,15 @@ export function buildWatchedStats(
     }
     const assignments = [...groups.values()].reduce((sum, row) => sum + row.records.length, 0);
     // 环形图的分母必须是地区归属次数，不能把多国合拍伪装成互斥的作品占比。
-    const denominator = dimension === 'country' ? assignments : base.total;
+    const denominator = dimension === 'country' ? assignments : included.length;
     const rows = [...groups.values()].map(row => ({...row, share: denominator ? row.records.length / denominator : 0}));
     rows.sort((a, b) => dimension === 'year'
-        ? (a.key === UNKNOWN_STAT ? 1 : b.key === UNKNOWN_STAT ? -1 : Number(a.key) - Number(b.key))
+        ? Number(a.key) - Number(b.key)
         : b.records.length - a.records.length || a.name.localeCompare(b.name, 'zh-CN'));
-    return {...base, rows, resolved, assignments, coverageCount: rows.filter(row => row.key !== UNKNOWN_GENRE).length};
+    const movies = included.filter(record => record.type === 'movie').length;
+    return {
+        records: included, rows, resolved, assignments, coverageCount: rows.length,
+        sourceTotal: watched.length, total: included.length, movies, seasons: included.length - movies,
+        shows: new Set(included.filter(record => record.type === 'tv_season').map(record => record.tmdb_id)).size,
+    };
 }

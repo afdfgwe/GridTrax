@@ -29,9 +29,10 @@ const translatedNames: Record<string, string> = {
     'War & Politics': '战争与政治',
 };
 
-/** 多类型独立计数，占比以当前筛选下的全部看过记录为分母，未加载不冒充“未知类型”。 */
+/** 多类型独立计数，只纳入已标注类型的看过记录，并以这些记录为占比分母。 */
 export function buildWatchedGenreStats(records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedKind = 'all') {
     const watched = getWatchedRecords(records).filter(record => kind === 'all' || record.type === kind);
+    const included: ProgressRecord[] = [];
     const groups = new Map<string, WatchedGenreRow>();
     let resolved = 0;
     for (const record of watched) {
@@ -39,7 +40,8 @@ export function buildWatchedGenreStats(records: readonly ProgressRecord[], metad
         if (!genres) continue;
         resolved++;
         const unique = new Map(genres.map(genre => [String(genre.id), translatedNames[genre.name] ?? genre.name]));
-        if (!unique.size) unique.set(UNKNOWN_GENRE, '未标注类型');
+        if (!unique.size) continue;
+        included.push(record);
         for (const [key, name] of unique) {
             let row = groups.get(key);
             if (!row) {
@@ -53,14 +55,14 @@ export function buildWatchedGenreStats(records: readonly ProgressRecord[], metad
     }
     const rows = [...groups.values()].map(row => ({
         ...row,
-        share: watched.length ? row.records.length / watched.length : 0
+        share: included.length ? row.records.length / included.length : 0
     }))
         .sort((a, b) => b.records.length - a.records.length || a.name.localeCompare(b.name, 'zh-CN'));
-    const movies = watched.filter(record => record.type === 'movie').length;
+    const movies = included.filter(record => record.type === 'movie').length;
     return {
-        records: watched, rows, resolved, total: watched.length, movies,
-        seasons: watched.length - movies,
-        shows: new Set(watched.filter(record => record.type === 'tv_season').map(record => record.tmdb_id)).size,
-        genreCount: rows.filter(row => row.key !== UNKNOWN_GENRE).length,
+        records: included, rows, resolved, sourceTotal: watched.length, total: included.length, movies,
+        seasons: included.length - movies,
+        shows: new Set(included.filter(record => record.type === 'tv_season').map(record => record.tmdb_id)).size,
+        genreCount: rows.length,
     };
 }

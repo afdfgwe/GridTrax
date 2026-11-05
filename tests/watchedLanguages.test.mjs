@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {buildWatchedStats, UNKNOWN_STAT} from '../src/utils/stats/watchedStats.ts';
+import {buildWatchedStats} from '../src/utils/stats/watchedStats.ts';
 import {createWatchedGenresLoader} from '../src/utils/stats/watchedGenresLoader.ts';
 import {createMediaMetadataCache, MEDIA_METADATA_STORAGE_KEY, toMediaMetadata} from '../src/utils/media/mediaMetadataCache.ts';
 
@@ -49,7 +49,7 @@ test('多种对白语言分别计数，电影和季去重，各季继承整剧�
     assert.deepEqual({records, metadata}, before);
 });
 
-test('旧缓存、未加载和确认未标注分别处理，不把未知语言计入覆盖数', () => {
+test('旧缓存、未加载和确认未标注均不参与语言统计和占比分母', () => {
     const metadata = {
         'movie-1': toMediaMetadata(detail(1, [])),
         'movie-2': toMediaMetadata(detail(2, undefined)),
@@ -58,9 +58,13 @@ test('旧缓存、未加载和确认未标注分别处理，不把未知语言�
     const stats = buildWatchedStats([movie(1), movie(2), movie(3), movie(4)], metadata, 'all', 'language');
     assert.equal(stats.resolved, 2);
     assert.equal(stats.coverageCount, 1);
-    assert.equal(stats.rows.find(row => row.key === UNKNOWN_STAT).name, '未标注语言');
+    assert.equal(stats.total, 1);
+    assert.equal(stats.sourceTotal, 4);
+    assert.equal(stats.assignments, 1);
+    assert.equal(stats.rows.length, 1);
+    assert.deepEqual(stats.records.map(record => record.tmdb_id), [3]);
     assert.equal(stats.rows.find(row => row.key === 'ja').name, '日语');
-    assert.equal(stats.rows.reduce((sum, row) => sum + row.share, 0), 0.5);
+    assert.equal(stats.rows.reduce((sum, row) => sum + row.share, 0), 1);
     assert.deepEqual(buildWatchedStats([], {}, 'all', 'language').rows, []);
 });
 
@@ -150,15 +154,17 @@ test('手动传入含重复语言的资料也只按一部作品计数', () => {
     assert.equal(stats.rows[0].share, 1);
 });
 
-test('只有未标注语言时保留筛选分组，不虚增语言覆盖数量', () => {
+test('只有未标注语言时不生成分组、不展示影片，也不计入总数', () => {
     const stats = buildWatchedStats([movie(1), season(2, 1)], {
         'movie-1': toMediaMetadata(detail(1, [])),
         'tv_season-2': toMediaMetadata(detail(2, [])),
     }, 'all', 'language');
     assert.equal(stats.coverageCount, 0);
-    assert.equal(stats.assignments, 2);
-    assert.equal(stats.rows.length, 1);
-    assert.equal(stats.rows[0].key, UNKNOWN_STAT);
-    assert.equal(stats.rows[0].movies, 1);
-    assert.equal(stats.rows[0].seasons, 1);
+    assert.equal(stats.assignments, 0);
+    assert.deepEqual(stats.rows, []);
+    assert.deepEqual(stats.records, []);
+    assert.equal(stats.total, 0);
+    assert.equal(stats.sourceTotal, 2);
+    assert.equal(stats.movies, 0);
+    assert.equal(stats.seasons, 0);
 });

@@ -69,7 +69,7 @@ function createRadarLayout(axes: (WatchedRadarAxis | null)[]) {
     return {center, width, height, dense, labels, point, points};
 }
 
-/** 跟随页面的影视类别统计，包含未标注类型，不额外请求资料。 */
+/** 跟随页面的影视类别统计，仅包含已标注类型，不额外请求资料。 */
 export default function WatchedGenreRadar({kind, records, metadata, pending, filmColor, tvColor}: Props) {
     const theme = useTheme();
     const id = useId();
@@ -106,7 +106,7 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                             sx={{display: 'block', width: '100%', height: '100%', overflow: 'hidden'}}>
                 <title id={`${id}-title`}>{label}类型偏好雷达图</title>
                 <desc
-                    id={`${id}-description`}>{summary}。展示全部 {stats.genreCount} 种类型{stats.unknownCount > 0 ? '及未标注类型' : ''}，采用平方根刻度，标签为真实数量，刻度上限 {stats.maximum} {unit}，空轴表示没有其他类型数据。
+                    id={`${id}-description`}>{summary}。展示全部 {stats.genreCount} 种类型，采用平方根刻度，标签为真实数量，刻度上限 {stats.maximum} {unit}，空轴表示没有其他类型数据。
                 </desc>
                 {[1, 2, 3, 4].map(level => <polygon key={level}
                                                     points={layout.points(Array(stats.axes.length).fill(getWatchedRadarRatio(stats.step * level, stats.maximum)))}
@@ -148,7 +148,7 @@ export default function WatchedGenreRadar({kind, records, metadata, pending, fil
                     </g>;
                 })}
             </Box> : <Typography variant="body2" color="text.secondary" textAlign="center" sx={{px: 2}}>
-                {pending && stats.resolved < stats.total ? '正在整理类型资料…' : `暂无已看${label}类型数据`}
+                {pending && stats.resolved < stats.sourceTotal ? '正在整理类型资料…' : `暂无已看${label}类型数据`}
             </Typography>}
         </Box>
     </Box>;

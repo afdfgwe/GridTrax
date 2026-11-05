@@ -137,7 +137,7 @@ export default function WatchedStatsPage() {
                     <Box sx={{display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.5}}>
                         <Typography variant="caption" color="text.secondary">正在补全影视资料</Typography>
                         <Typography variant="caption"
-                                    color="text.secondary">当前分类已识别 {stats.resolved}/{stats.total} 条</Typography>
+                                    color="text.secondary">当前分类已识别 {stats.resolved}/{stats.sourceTotal} 条</Typography>
                     </Box>
                     <LinearProgress aria-label="影视资料加载中" sx={{height: 3}}/>
                 </Box>}
@@ -157,8 +157,10 @@ export default function WatchedStatsPage() {
             {stats.total === 0 ? (
                 <Box sx={{py: 8, textAlign: 'center'}}>
                     <BarChartIcon sx={{fontSize: 44, color: 'text.disabled', mb: 1}}/>
-                    <Typography fontWeight={700}>{watched.length ? '这个分类还没有看过记录' : '还没有看过记录'}</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>标记为“看过”的影视作品会计入统计。</Typography>
+                    <Typography fontWeight={700}>{stats.sourceTotal
+                        ? (pendingCount ? '正在整理观看资料…' : `暂时没有可用的${config.label}统计资料`)
+                        : watched.length ? '这个分类还没有看过记录' : '还没有看过记录'}</Typography>
+                    {!stats.sourceTotal && <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>标记为“看过”的影视作品会计入统计。</Typography>}
                     <Button component={Link} to="/" startIcon={<ArrowBackIcon/>} sx={{mt: 2}}>返回追踪</Button>
                 </Box>
             ) : (

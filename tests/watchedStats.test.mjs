@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {buildWatchedStats, UNKNOWN_STAT} from '../src/utils/stats/watchedStats.ts';
+import {buildWatchedStats} from '../src/utils/stats/watchedStats.ts';
 import {buildWatchedGenreStats} from '../src/utils/stats/watchedGenres.ts';
 import {createWatchedGenresLoader} from '../src/utils/stats/watchedGenresLoader.ts';
 import {
@@ -73,14 +73,15 @@ test('无制片地区、缺少字段的旧缓存与尚未加载分开处理，�
     };
     const stats = buildWatchedStats([movie(1), movie(2), movie(3), season(4, 1)], metadata, 'all', 'country');
     assert.equal(stats.resolved, 2);
-    assert.equal(stats.assignments, 2);
+    assert.equal(stats.assignments, 0);
     assert.equal(stats.coverageCount, 0);
-    assert.equal(stats.rows.length, 1);
-    assert.equal(stats.rows[0].key, UNKNOWN_STAT);
-    assert.equal(stats.rows[0].records.length, 2);
+    assert.equal(stats.total, 0);
+    assert.equal(stats.sourceTotal, 4);
+    assert.deepEqual(stats.rows, []);
+    assert.deepEqual(stats.records, []);
 });
 
-test('各季使用自身首播年份；不回退到整剧首播或标记时间，缺失年份单独归类', () => {
+test('各季使用自身首播年份；不回退到整剧首播或标记时间，缺失年份不参与统计', () => {
     const records = [movie(1), movie(2), season(3, 1), season(3, 2), season(3, 3), movie(4)];
     const metadata = {
         'movie-1': toMediaMetadata(detail(1, [], '2024-12-31')),
@@ -96,10 +97,15 @@ test('各季使用自身首播年份；不回退到整剧首播或标记时间�
     const stats = buildWatchedStats(records, metadata, 'all', 'year');
     assert.equal(stats.resolved, 5);
     assert.equal(stats.coverageCount, 2);
-    assert.deepEqual(stats.rows.map(row => [row.key, row.records.length]), [['2020', 1], ['2024', 2], [UNKNOWN_STAT, 2]]);
+    assert.deepEqual(stats.rows.map(row => [row.key, row.records.length]), [['2020', 1], ['2024', 2]]);
+    assert.equal(stats.total, 3);
+    assert.equal(stats.sourceTotal, 6);
+    assert.equal(stats.movies, 1);
+    assert.equal(stats.seasons, 2);
+    assert.equal(stats.shows, 1);
     assert.equal(stats.rows[1].movies, 1);
     assert.equal(stats.rows[1].seasons, 1);
-    assert.equal(stats.rows[1].share, 2 / 6);
+    assert.equal(stats.rows[1].share, 2 / 3);
     assert.ok(!stats.rows.some(row => ['1999', '2026'].includes(row.key)));
 });
 
@@ -119,12 +125,56 @@ test('电影与电视剧筛选、同 ID 媒体区分、重复记录与空记录�
     const series = buildWatchedStats(records, metadata, 'tv_season', 'year');
     assert.equal(series.total, 2);
     assert.deepEqual(series.rows.map(row => row.key), ['2020', '2021']);
-    for (const dimension of ['genre', 'country', 'year']) {
+    for (const dimension of ['genre', 'country', 'year', 'language']) {
         const stats = buildWatchedStats([], {}, 'all', dimension);
         assert.equal(stats.total, 0);
+        assert.equal(stats.sourceTotal, 0);
         assert.equal(stats.assignments, 0);
         assert.equal(stats.coverageCount, 0);
         assert.deepEqual(stats.rows, []);
+    }
+});
+
+test('四个维度独立排除未标注记录，列表、总数和占比分母只保留当前维度有值的作品', () => {
+    const records = [movie(1), movie(2), movie(3), movie(4), movie(5), movie(1), movie(6, 'Wish')];
+    const metadata = {
+        'movie-1': toMediaMetadata({...detail(1), spoken_languages: [{iso_639_1: 'zh', name: '普通话'}]}),
+        'movie-2': toMediaMetadata({...detail(2, [us]), genres: []}),
+        'movie-3': toMediaMetadata({...detail(3, [], ''), spoken_languages: [{iso_639_1: 'en', name: 'English'}]}),
+        'movie-4': toMediaMetadata({...detail(4, [], ''), genres: [], spoken_languages: []}),
+    };
+    const before = structuredClone({records, metadata});
+    const expected = {genre: [1, 3], country: [1, 2], year: [1, 2], language: [1, 3]};
+    for (const dimension of Object.keys(expected)) {
+        const stats = buildWatchedStats(records, metadata, 'all', dimension);
+        assert.equal(stats.total, 2);
+        assert.equal(stats.sourceTotal, 5);
+        assert.equal(stats.movies, 2);
+        assert.equal(stats.seasons, 0);
+        assert.equal(stats.shows, 0);
+        assert.deepEqual(stats.records.map(record => record.tmdb_id).sort(), expected[dimension]);
+        assert.ok(stats.rows.every(row => row.key !== 'unknown' && !row.name.startsWith('未标注')));
+        assert.equal(stats.rows.reduce((sum, row) => sum + row.share, 0), 1);
+    }
+    assert.deepEqual({records, metadata}, before);
+});
+
+test('四个维度全部未标注时总数、归属次数、覆盖和列表均为空，不制造未知分组', () => {
+    const records = [movie(1), season(2, 1), season(2, 2)];
+    const empty = id => toMediaMetadata({id, genres: [], production_countries: [], spoken_languages: [], seasons: []});
+    const metadata = {'movie-1': empty(1), 'tv_season-2': empty(2)};
+    for (const dimension of ['genre', 'country', 'year', 'language']) {
+        for (const kind of ['all', 'movie', 'tv_season']) {
+            const stats = buildWatchedStats(records, metadata, kind, dimension);
+            assert.equal(stats.total, 0);
+            assert.equal(stats.movies, 0);
+            assert.equal(stats.seasons, 0);
+            assert.equal(stats.shows, 0);
+            assert.equal(stats.assignments, 0);
+            assert.equal(stats.coverageCount, 0);
+            assert.deepEqual(stats.rows, []);
+            assert.deepEqual(stats.records, []);
+        }
     }
 });
 

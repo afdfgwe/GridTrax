@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {buildWatchedGenreStats, getWatchedRecords, UNKNOWN_GENRE} from '../src/utils/stats/watchedGenres.ts';
+import {buildWatchedGenreStats, getWatchedRecords} from '../src/utils/stats/watchedGenres.ts';
 import {createWatchedGenresLoader} from '../src/utils/stats/watchedGenresLoader.ts';
 import {
     createMediaMetadataCache,
@@ -80,16 +80,22 @@ test('多类型分别计数，同一类型去重，占比以筛选后的看过�
     assert.equal(buildWatchedGenreStats([], {}).total, 0);
 });
 
-test('无类型、尚未加载和旧缓存分别处理；补齐中文类型名称', () => {
+test('无类型、尚未加载和旧缓存不纳入统计；补齐中文类型名称', () => {
     const stats = buildWatchedGenreStats([movie(1), movie(2), movie(3), season(4, 1)], {
         'movie-1': toMediaMetadata(detail(1, [])),
         'movie-3': toMediaMetadata({id: 3, vote_average: 8}),
         'tv_season-4': toMediaMetadata(detail(4, [{id: 10765, name: 'Sci-Fi & Fantasy'}])),
     });
-    assert.equal(stats.total, 4);
+    assert.equal(stats.total, 1);
+    assert.equal(stats.sourceTotal, 4);
     assert.equal(stats.resolved, 2);
     assert.equal(stats.genreCount, 1);
-    assert.equal(stats.rows.find(row => row.key === UNKNOWN_GENRE).records.length, 1);
+    assert.equal(stats.rows.length, 1);
+    assert.equal(stats.rows[0].share, 1);
+    assert.equal(stats.movies, 0);
+    assert.equal(stats.seasons, 1);
+    assert.equal(stats.shows, 1);
+    assert.deepEqual(stats.records.map(record => record.tmdb_id), [4]);
     assert.ok(stats.rows.some(row => row.name === '科幻与奇幻'));
 });
 
