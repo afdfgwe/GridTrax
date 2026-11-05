@@ -13,6 +13,7 @@ import {getCountries, getPosterUrl} from '../api/tmdb';
 import PosterScoreBadge from '../components/common/PosterScoreBadge';
 import WatchedDistributionChart from '../components/stats/WatchedDistributionChart';
 import WatchedGenreRadar from '../components/stats/WatchedGenreRadar';
+import WatchedScoreChart from '../components/stats/WatchedScoreChart';
 import {useAsyncResource} from '../hooks/useAsyncResource';
 import {useWatchedGenres} from '../hooks/useWatchedGenres';
 import {useProgressStore} from '../store/useProgressStore';
@@ -27,9 +28,10 @@ const dimensions = {
     country: {label: '地区', title: '制片地区分布', metric: '地区覆盖', unit: '个'},
     year: {label: '年份', title: '上映 / 首播年份', metric: '年份覆盖', unit: '年'},
     language: {label: '语言', title: '对白语言分布', metric: '语言覆盖', unit: '种'},
+    score: {label: '评分', title: 'TMDB 评分分布', metric: '平均评分', unit: '分'},
 } as const;
 
-/** 只读的观看画像：统计以本地“看过”为准，四种维度共用缓存资料与作品列表。 */
+/** 只读的观看画像：统计以本地“看过”为准，各维度共用缓存资料与作品列表。 */
 export default function WatchedStatsPage() {
     const theme = useTheme();
     const desktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -41,11 +43,12 @@ export default function WatchedStatsPage() {
     const kindParam = params.get('kind');
     const kind: WatchedKind = kindParam === 'movie' || kindParam === 'tv_season' ? kindParam : 'all';
     const dimensionParam = params.get('dimension');
-    const dimension: WatchedDimension = dimensionParam === 'country' || dimensionParam === 'year' || dimensionParam === 'language' ? dimensionParam : 'genre';
+    const dimension: WatchedDimension = dimensionParam === 'country' || dimensionParam === 'year' || dimensionParam === 'language' || dimensionParam === 'score' ? dimensionParam : 'genre';
     const loadCountries = useCallback(() => watched.length && dimension === 'country' ? getCountries() : Promise.resolve([]), [watched.length, dimension]);
     const countryDictionary = useAsyncResource(`stats-countries:${dimension}:${watched.length > 0}`, loadCountries);
     const stats = useMemo(() => buildWatchedStats(watched, metadata, kind, dimension, countryDictionary.data), [watched, metadata, kind, dimension, countryDictionary.data]);
     const config = dimensions[dimension];
+    const scoreStats = 'averageScore' in stats ? stats : undefined;
     const selection = stats.rows.find(row => row.key === params.get(dimension));
     const items = selection?.records ?? stats.records;
     const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
@@ -60,7 +63,7 @@ export default function WatchedStatsPage() {
         next.delete('page');
         if (key) next.set(dimension, key);
         else next.delete(dimension);
-        setParams(next, {replace: true});
+        setParams(next, {replace: true, state: dimension === 'score' ? {preserveScroll: true} : undefined});
     };
 
     return (
@@ -77,7 +80,7 @@ export default function WatchedStatsPage() {
                 sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap'}}>
                 <Tabs value={dimension} aria-label="统计维度" onChange={(_, value: WatchedDimension) => {
                     setParams(kind === 'all' ? {dimension: value} : {dimension: value, kind}, {replace: true});
-                }} sx={{minHeight: 36, '& .MuiTab-root': {minHeight: 36, minWidth: 56, px: 1.5, fontSize: 13}}}>
+                }} sx={{minHeight: 36, maxWidth: '100%', '& .MuiTab-root': {minHeight: 36, minWidth: 52, px: 1.5, fontSize: 13}}}>
                     {Object.entries(dimensions).map(([key, value]) => <Tab key={key} value={key} label={value.label}/>)}
                 </Tabs>
                 <ToggleButtonGroup value={kind} exclusive size="small" aria-label="统计影视类别"
@@ -103,10 +106,10 @@ export default function WatchedStatsPage() {
                 borderColor: 'divider'
             }}>
                 {[
-                    {label: '看过记录', value: stats.total, unit: '条'},
+                    {label: scoreStats ? '有评分记录' : '看过记录', value: stats.total, unit: '条'},
                     {label: '电影', value: stats.movies, unit: '部', color: filmColor},
                     {label: '电视剧', value: stats.seasons, unit: '季', detail: `${stats.shows} 部剧`, color: tvColor},
-                    {label: config.metric, value: stats.coverageCount, unit: config.unit},
+                    {label: config.metric, value: scoreStats ? (stats.total ? scoreStats.averageScore.toFixed(1) : '暂无') : stats.coverageCount, unit: config.unit},
                 ].map(metric => <Box key={metric.label}>
                     <Typography variant="body2" color="text.secondary">{metric.label}</Typography>
                     <Box sx={{display: 'flex', alignItems: 'baseline', gap: 0.75, mt: 0.5, flexWrap: 'wrap'}}>
@@ -132,6 +135,7 @@ export default function WatchedStatsPage() {
                     {dimension === 'country' && '按制片地区统计，多国合拍分别计数；环形图占比以地区归属总次数为分母。'}
                     {dimension === 'year' && '电影按上映年份、电视剧按每季首播年份分组，并非标记“看过”的年份。'}
                     {dimension === 'language' && '按对白语言统计，多语言作品分别计数，占比之和可能超过 100%；同剧各季沿用整剧语言。'}
+                    {dimension === 'score' && '采用卡片上的 TMDB 评分，按 1 分分档；未评分不计入统计，10 分归入 9-10 分档。'}
                 </Typography>}
                 {pendingCount > 0 && <Box sx={{mt: 1}}>
                     <Box sx={{display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.5}}>
@@ -188,7 +192,15 @@ export default function WatchedStatsPage() {
                         {stats.rows.length === 0 && <Typography variant="body2" color="text.secondary" sx={{py: 4}}>
                             {pendingCount ? '正在整理观看资料…' : '暂时没有可用的统计资料'}
                         </Typography>}
-                        {stats.rows.length > 0 && <WatchedDistributionChart key={dimension}
+                        {dimension === 'score' && <WatchedScoreChart rows={stats.rows} kind={kind}
+                            selected={selection?.key} onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
+                            filmColor={filmColor} tvColor={tvColor}/>}
+                        {scoreStats && <Box sx={{display: 'flex', alignItems: 'baseline', gap: 1, mt: 1.5}}>
+                            <Typography variant="body2" color="text.secondary">8 分及以上</Typography>
+                            <Typography fontWeight={750}>{Math.round(scoreStats.highScoreShare * 100)}%</Typography>
+                            <Typography variant="caption" color="text.secondary">{scoreStats.highScoreCount} 条</Typography>
+                        </Box>}
+                        {dimension !== 'score' && stats.rows.length > 0 && <WatchedDistributionChart key={dimension}
                             dimension={dimension} rows={stats.rows} selected={selection?.key}
                             onSelect={key => selectGroup(selection?.key === key ? undefined : key)}
                             filmColor={filmColor} tvColor={tvColor}
@@ -201,7 +213,7 @@ export default function WatchedStatsPage() {
                     <Box component="section" aria-labelledby="genre-films-title" sx={{minWidth: 0}}>
                         <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2, minHeight: 32}}>
                             <Typography id="genre-films-title" component="h2" fontSize={18} fontWeight={750}
-                                        sx={{overflowWrap: 'anywhere'}}>{selection?.name ?? '全部看过'}</Typography>
+                                        sx={{overflowWrap: 'anywhere'}}>{selection?.name ?? (scoreStats ? '全部有评分作品' : '全部看过')}</Typography>
                             <Typography variant="body2" color="text.secondary">{items.length}</Typography>
                             {selection &&
                                 <Tooltip title="查看全部看过"><IconButton size="small" aria-label={`清除${config.label}筛选`}
@@ -209,6 +221,9 @@ export default function WatchedStatsPage() {
                                                                     sx={{ml: 'auto'}}><CloseIcon
                                     fontSize="small"/></IconButton></Tooltip>}
                         </Box>
+                        {!items.length && <Typography variant="body2" color="text.secondary" sx={{py: 4}}>
+                            这个评分区间暂无看过记录
+                        </Typography>}
                         <Box sx={{
                             display: 'grid',
                             gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',

@@ -3,8 +3,9 @@ import {getMediaMetadataKey, type MediaMetadata} from '../media/mediaMetadataCac
 import {getMediaYearKey} from '../media/mediaYears.ts';
 import {discoveryLanguageLabel} from '../browse/movieDiscovery.ts';
 import {buildWatchedGenreStats, getWatchedRecords, type WatchedGenreRow, type WatchedKind} from './watchedGenres.ts';
+import {buildWatchedScoreStats} from './watchedScores.ts';
 
-export type WatchedDimension = 'genre' | 'country' | 'year' | 'language';
+export type WatchedDimension = 'genre' | 'country' | 'year' | 'language' | 'score';
 export const UNKNOWN_STAT = 'unknown';
 
 /** 制片地区优先使用接口中文字典，字典不可用时使用浏览器中文名称，最后保留原名称。 */
@@ -28,6 +29,7 @@ export function buildWatchedStats(
     records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedKind = 'all',
     dimension: WatchedDimension = 'genre', countries: readonly TMDBCountry[] = [],
 ) {
+    if (dimension === 'score') return buildWatchedScoreStats(records, metadata, kind);
     if (dimension === 'genre') {
         const base = buildWatchedGenreStats(records, metadata, kind);
         return {
