@@ -51,7 +51,7 @@ test('独立资料缓存跨实例恢复，过期仍可读取旧值，不写入�
     time += MEDIA_METADATA_TTL;
     assert.equal(restored.isFresh(item), false);
     assert.deepEqual(restored.get('movie-1'), item);
-    assert.deepEqual(Object.keys(item).sort(), ['fetchedAt', 'posterPath', 'scores', 'years']);
+    assert.deepEqual(Object.keys(item).sort(), ['fetchedAt', 'posterPath', 'scores', 'voteCount', 'years']);
 });
 
 test('损坏缓存、非法字段、存储禁用和空间不足不影响原始观影记录', () => {

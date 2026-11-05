@@ -105,20 +105,6 @@ export default function WatchedStatsPage() {
                 </ToggleButtonGroup>
             </Box>
 
-            {dimension === 'score' && <Box sx={{mt: 2.5, maxWidth: 420}}>
-                <SliderFilter label="最低评分人数" unit="人" value={minVotes} max={500} step={50}
-                              labelEvery={250} ariaLabels={['最低评分人数']} onChange={value => {
-                    const next = new URLSearchParams(params);
-                    next.delete('page');
-                    if (Number(value) > 0) next.set('minVotes', String(value));
-                    else next.delete('minVotes');
-                    setParams(next, {replace: true, state: {preserveScroll: true}});
-                }}/>
-                <Typography variant="caption" color="text.secondary">
-                    {minVotes ? `至少 ${minVotes} 人评分` : '不限评分人数'} · 电视剧按整剧评分人数筛选
-                </Typography>
-            </Box>}
-
             <Box sx={{
                 display: 'grid',
                 gridTemplateColumns: {xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))'},
@@ -184,6 +170,20 @@ export default function WatchedStatsPage() {
                                                                                           onClick={countryDictionary.retry}>重试</Button>}>
                 地区中文字典暂不可用，已使用本地名称显示，不影响统计数量。
             </Alert>}
+
+            {dimension === 'score' && <Box sx={{mb: 3, maxWidth: 420}}>
+                <SliderFilter label="最低评分人数" unit="人" value={minVotes} max={500} step={50}
+                              labelEvery={250} ariaLabels={['最低评分人数']} onChange={value => {
+                    const next = new URLSearchParams(params);
+                    next.delete('page');
+                    if (Number(value) > 0) next.set('minVotes', String(value));
+                    else next.delete('minVotes');
+                    setParams(next, {replace: true, state: {preserveScroll: true}});
+                }}/>
+                <Typography variant="caption" color="text.secondary">
+                    {minVotes ? `至少 ${minVotes} 人评分` : '不限评分人数'} · 电视剧按整剧评分人数筛选
+                </Typography>
+            </Box>}
 
             {stats.total === 0 ? (
                 <Box sx={{py: 8, textAlign: 'center'}}>
