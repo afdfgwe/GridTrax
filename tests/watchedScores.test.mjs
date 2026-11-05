@@ -126,3 +126,58 @@ test('看过记录增加后重新统计，千条以上数据仍保持正确数�
     assert.equal(after.rows[8].movies, 1100);
     assert.equal(after.highScoreShare, 1);
 });
+
+test('最低评分人数包含门槛边界，图表、平均分、占比和列表同步筛选且不修改输入', () => {
+    const records = [movie(1), movie(2), movie(3), movie(4)];
+    const data = Object.fromEntries([[1, 10, 49], [2, 8, 50], [3, 6, 500], [4, 0, 1000]].map(([id, score, votes]) =>
+        [`movie-${id}`, toMediaMetadata({id, vote_average: score, vote_count: votes})]));
+    const before = structuredClone({records, data});
+    const stats = buildWatchedStats(records, data, 'movie', 'score', [], 50);
+    assert.equal(stats.sourceTotal, 4);
+    assert.equal(stats.resolved, 4);
+    assert.equal(stats.total, 2);
+    assert.equal(stats.averageScore, 7);
+    assert.equal(stats.movies, 2);
+    assert.equal(stats.rows[8].share, 0.5);
+    assert.equal(stats.rows[6].share, 0.5);
+    assert.deepEqual(stats.records.map(record => record.tmdb_id), [2, 3]);
+    assert.deepEqual(buildWatchedScoreStats(records, data, 'all', 500).records.map(record => record.tmdb_id), [3]);
+    assert.deepEqual({records, data}, before);
+});
+
+test('不限人数时保留旧行为，非零门槛排除缺失、零和无效人数，全部排除后仍保留十个空档', () => {
+    const counts = [undefined, null, 0, -1, 1.5, '100', NaN, Infinity, 100];
+    const records = counts.map((_, index) => movie(index + 1));
+    const data = Object.fromEntries(counts.map((vote_count, index) =>
+        [`movie-${index + 1}`, toMediaMetadata({id: index + 1, vote_average: 8, vote_count})]));
+    delete data['movie-1'].voteCount;
+    assert.equal(buildWatchedScoreStats(records, data).total, 9);
+    const filtered = buildWatchedScoreStats(records, data, 'all', 50);
+    assert.equal(filtered.total, 1);
+    assert.equal(filtered.resolved, 8);
+    assert.deepEqual(filtered.records.map(record => record.tmdb_id), [9]);
+    const empty = buildWatchedScoreStats(records, data, 'all', 500);
+    assert.equal(empty.total, 0);
+    assert.equal(empty.averageScore, 0);
+    assert.equal(empty.rows.length, 10);
+    assert.ok(empty.rows.every(row => row.share === 0 && row.records.length === 0));
+});
+
+test('电视剧用整剧人数筛选所有季，不改变本季评分和单季剧评分规则，其他维度不受影响', () => {
+    const records = [season(1, 1), season(1, 2), season(2, 1), movie(3)];
+    const data = {
+        'tv_season-1': toMediaMetadata({id: 1, vote_average: 7.5, vote_count: 100, number_of_seasons: 2,
+            seasons: [{season_number: 1, vote_average: 9.2, vote_count: 1}, {season_number: 2, vote_average: 0}]}),
+        'tv_season-2': toMediaMetadata({id: 2, vote_average: 8.2, vote_count: 49, number_of_seasons: 1,
+            seasons: [{season_number: 1, vote_average: 10, vote_count: 999}]}),
+        'movie-3': toMediaMetadata({id: 3, vote_average: 6, vote_count: 1000, genres: [{id: 18, name: '剧情'}]}),
+    };
+    const stats = buildWatchedScoreStats(records, data, 'tv_season', 50);
+    assert.equal(stats.seasons, 2);
+    assert.equal(stats.shows, 1);
+    assert.equal(stats.averageScore, (9.2 + 7.5) / 2);
+    assert.equal(stats.rows[9].seasons, 1);
+    assert.equal(stats.rows[7].seasons, 1);
+    assert.equal(buildWatchedScoreStats(records, data, 'movie', 50).movies, 1);
+    assert.deepEqual(buildWatchedStats(records, data, 'all', 'genre', [], 500), buildWatchedStats(records, data));
+});

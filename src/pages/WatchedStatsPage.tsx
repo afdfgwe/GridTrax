@@ -11,6 +11,7 @@ import {useCallback, useMemo} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {getCountries, getPosterUrl} from '../api/tmdb';
 import PosterScoreBadge from '../components/common/PosterScoreBadge';
+import SliderFilter from '../components/common/SliderFilter';
 import WatchedDistributionChart from '../components/stats/WatchedDistributionChart';
 import WatchedGenreRadar from '../components/stats/WatchedGenreRadar';
 import WatchedScoreChart from '../components/stats/WatchedScoreChart';
@@ -44,9 +45,12 @@ export default function WatchedStatsPage() {
     const kind: WatchedKind = kindParam === 'movie' || kindParam === 'tv_season' ? kindParam : 'all';
     const dimensionParam = params.get('dimension');
     const dimension: WatchedDimension = dimensionParam === 'country' || dimensionParam === 'year' || dimensionParam === 'language' || dimensionParam === 'score' ? dimensionParam : 'genre';
+    const requestedMinVotes = Number(params.get('minVotes'));
+    const minVotes = dimension === 'score' && Number.isInteger(requestedMinVotes) && requestedMinVotes >= 0 &&
+        requestedMinVotes <= 500 && requestedMinVotes % 50 === 0 ? requestedMinVotes : 0;
     const loadCountries = useCallback(() => watched.length && dimension === 'country' ? getCountries() : Promise.resolve([]), [watched.length, dimension]);
     const countryDictionary = useAsyncResource(`stats-countries:${dimension}:${watched.length > 0}`, loadCountries);
-    const stats = useMemo(() => buildWatchedStats(watched, metadata, kind, dimension, countryDictionary.data), [watched, metadata, kind, dimension, countryDictionary.data]);
+    const stats = useMemo(() => buildWatchedStats(watched, metadata, kind, dimension, countryDictionary.data, minVotes), [watched, metadata, kind, dimension, countryDictionary.data, minVotes]);
     const config = dimensions[dimension];
     const scoreStats = 'averageScore' in stats ? stats : undefined;
     const selection = stats.rows.find(row => row.key === params.get(dimension));
@@ -89,16 +93,31 @@ export default function WatchedStatsPage() {
                 </Tabs>
                 <ToggleButtonGroup value={kind} exclusive size="small" aria-label="统计影视类别"
                                    onChange={(_, value: WatchedKind | null) => {
-                                       if (value) setParams(value === 'all' ? {dimension} : {
-                                           dimension,
-                                           kind: value
-                                       }, {replace: true});
+                                       if (!value) return;
+                                       const next = new URLSearchParams({dimension});
+                                       if (value !== 'all') next.set('kind', value);
+                                       if (minVotes) next.set('minVotes', String(minVotes));
+                                       setParams(next, {replace: true});
                                    }} sx={{height: 34, '& .MuiToggleButton-root': {px: 2, fontSize: 13}}}>
                     <ToggleButton value="all">全部</ToggleButton>
                     <ToggleButton value="movie">电影</ToggleButton>
                     <ToggleButton value="tv_season">电视剧</ToggleButton>
                 </ToggleButtonGroup>
             </Box>
+
+            {dimension === 'score' && <Box sx={{mt: 2.5, maxWidth: 420}}>
+                <SliderFilter label="最低评分人数" unit="人" value={minVotes} max={500} step={50}
+                              labelEvery={250} ariaLabels={['最低评分人数']} onChange={value => {
+                    const next = new URLSearchParams(params);
+                    next.delete('page');
+                    if (Number(value) > 0) next.set('minVotes', String(value));
+                    else next.delete('minVotes');
+                    setParams(next, {replace: true, state: {preserveScroll: true}});
+                }}/>
+                <Typography variant="caption" color="text.secondary">
+                    {minVotes ? `至少 ${minVotes} 人评分` : '不限评分人数'} · 电视剧按整剧评分人数筛选
+                </Typography>
+            </Box>}
 
             <Box sx={{
                 display: 'grid',
@@ -170,7 +189,7 @@ export default function WatchedStatsPage() {
                 <Box sx={{py: 8, textAlign: 'center'}}>
                     <BarChartIcon sx={{fontSize: 44, color: 'text.disabled', mb: 1}}/>
                     <Typography fontWeight={700}>{stats.sourceTotal
-                        ? (pendingCount ? '正在整理观看资料…' : `暂时没有可用的${config.label}统计资料`)
+                        ? (pendingCount ? '正在整理观看资料…' : minVotes ? '暂无符合评分人数条件的看过作品' : `暂时没有可用的${config.label}统计资料`)
                         : watched.length ? '这个分类还没有看过记录' : '还没有看过记录'}</Typography>
                     {!stats.sourceTotal &&
                         <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>标记为“看过”的影视作品会计入统计。</Typography>}

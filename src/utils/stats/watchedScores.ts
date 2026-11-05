@@ -5,7 +5,7 @@ import {getWatchedRecords, type WatchedGenreRow, type WatchedKind} from './watch
 
 /** 按卡片实际评分分档；保留空档供折线归零，0 表示未评分，不进入任何统计分母。 */
 export function buildWatchedScoreStats(
-    records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedKind = 'all',
+    records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedKind = 'all', minVotes = 0,
 ) {
     const watched = getWatchedRecords(records).filter(record => kind === 'all' || record.type === kind);
     const rows: WatchedGenreRow[] = Array.from({length: 10}, (_, index) => ({
@@ -18,7 +18,10 @@ export function buildWatchedScoreStats(
     for (const record of watched) {
         const data = metadata[getMediaMetadataKey(record)];
         if (!data) continue;
+        if (minVotes > 0 && data.voteCount === undefined) continue;
         resolved++;
+        // 电视剧沿用整剧评分人数，季摘要没有 vote_count；缺失人数不能通过非零门槛。
+        if (minVotes > 0 && (typeof data.voteCount !== 'number' || !Number.isSafeInteger(data.voteCount) || data.voteCount < minVotes)) continue;
         const score = getMediaScore(record, data.scores);
         if (!Number.isFinite(score) || score <= 0 || score > 10) continue;
         // 使用原始值分档，不让 7.96 四舍五入后进入 8 分档；10 分纳入最后一档。

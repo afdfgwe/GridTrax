@@ -189,6 +189,7 @@ export interface TMDBTVShow {
     backdrop_path?: string;
     first_air_date: string;
     vote_average: number;
+    vote_count?: number;
     number_of_seasons: number;
     number_of_episodes: number;
     seasons: TMDBSeasonSummary[];
@@ -277,6 +278,7 @@ export interface TMDBMovie {
     backdrop_path?: string;
     release_date: string;
     vote_average: number;
+    vote_count?: number;
     runtime?: number;
     genres: { id: number; name: string }[];
     status: string;

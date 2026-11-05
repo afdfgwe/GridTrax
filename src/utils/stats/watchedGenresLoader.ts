@@ -18,7 +18,7 @@ interface Options {
     load: (record: ProgressRecord) => Promise<TMDBMovie | TMDBTVShow>;
 }
 
-/** 五路补位队列，同剧多季只取一次整剧详情；不写观看记录，也不取消其他页面共享的请求。 */
+/** 八路补位队列，同剧多季只取一次整剧详情；不写观看记录，也不取消其他页面共享的请求。 */
 export function createWatchedGenresLoader(initialRecords: ProgressRecord[], options: Options) {
     let records = new Map<string, ProgressRecord>();
     const values = new Map<string, MediaMetadata>();
@@ -41,7 +41,7 @@ export function createWatchedGenresLoader(initialRecords: ProgressRecord[], opti
 
     function pump() {
         if (!running) return;
-        while (pending.size && inFlight.size < 5) {
+        while (pending.size && inFlight.size < 8) {
             const [key, record] = pending.entries().next().value!;
             pending.delete(key);
             inFlight.add(key);
@@ -76,7 +76,8 @@ export function createWatchedGenresLoader(initialRecords: ProgressRecord[], opti
             const metadata = values.get(key);
             if (!attempted.has(key) && !inFlight.has(key) &&
                 (!metadata || metadata.genres === undefined || metadata.countries === undefined ||
-                    metadata.spokenLanguages === undefined || !options.cache.isFresh(metadata))) pending.set(key, record);
+                    metadata.spokenLanguages === undefined || metadata.voteCount === undefined ||
+                    !options.cache.isFresh(metadata))) pending.set(key, record);
         }
         // 移除已删除记录的页面数据，进行中的结果仍可进入有容量限制的公共缓存。
         for (const key of values.keys()) if (!records.has(key)) values.delete(key);

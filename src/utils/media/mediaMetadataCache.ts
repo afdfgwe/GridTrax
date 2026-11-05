@@ -11,6 +11,8 @@ type StorageAccess = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 export interface MediaMetadata {
     scores: Record<string, number>;
+    /** 整部影视的评分人数；undefined 是旧缓存，null 表示接口未提供有效人数。 */
+    voteCount?: number | null;
     years: Record<string, string>;
     posterPath?: string;
     /** 旧缓存没有此字段，空数组则表示接口已确认没有类型资料。 */
@@ -27,6 +29,8 @@ export const getMediaMetadataKey = (record: ProgressRecord) => `${record.type}-$
 export function toMediaMetadata(detail: TMDBMovie | TMDBTVShow, now = Date.now()): MediaMetadata {
     return {
         scores: getMediaScores(detail), years: getMediaYears(detail),
+        voteCount: typeof detail.vote_count === 'number' && Number.isSafeInteger(detail.vote_count) && detail.vote_count >= 0
+            ? detail.vote_count : null,
         posterPath: detail.poster_path || undefined, fetchedAt: now,
         ...(detail.spoken_languages !== undefined ? {
             spokenLanguages: [...new Map((Array.isArray(detail.spoken_languages) ? detail.spoken_languages : []).flatMap(language => {
@@ -62,6 +66,8 @@ function validMetadata(key: string, value: unknown): value is MediaMetadata {
     const validKey = (field: string) => field === key ||
         (key.startsWith('tv_season-') && field.startsWith(`${key}-`) && /^\d+$/.test(field.slice(key.length + 1)));
     return Number.isFinite(item.fetchedAt) && item.fetchedAt > 0 &&
+        (item.voteCount === undefined || item.voteCount === null ||
+            (Number.isSafeInteger(item.voteCount) && item.voteCount >= 0)) &&
         (item.posterPath === undefined || typeof item.posterPath === 'string') &&
         (item.spokenLanguages === undefined || (Array.isArray(item.spokenLanguages) && item.spokenLanguages.every(language =>
             language && typeof language.iso_639_1 === 'string' && /^[a-z]{2}$/.test(language.iso_639_1) &&

@@ -27,9 +27,9 @@ function countryLabel(code: string, fallback: string, names: Map<string, string>
 /** 地区按制片归属、年份按上映/首播年、语言按对白语言分别计数，不使用操作时间。 */
 export function buildWatchedStats(
     records: readonly ProgressRecord[], metadata: Record<string, MediaMetadata>, kind: WatchedKind = 'all',
-    dimension: WatchedDimension = 'genre', countries: readonly TMDBCountry[] = [],
+    dimension: WatchedDimension = 'genre', countries: readonly TMDBCountry[] = [], minVotes = 0,
 ) {
-    if (dimension === 'score') return buildWatchedScoreStats(records, metadata, kind);
+    if (dimension === 'score') return buildWatchedScoreStats(records, metadata, kind, minVotes);
     if (dimension === 'genre') {
         const base = buildWatchedGenreStats(records, metadata, kind);
         return {

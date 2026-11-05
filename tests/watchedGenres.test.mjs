@@ -117,11 +117,11 @@ test('类型字段兼容旧缓存，恢复有效中文类型，拒绝损坏的�
     assert.equal(cache.get('movie-4'), undefined);
 });
 
-test('五路并发持续补位，同剧多季只请求一次，不加载其他状态', async () => {
+test('八路并发持续补位，同剧多季只请求一次，不加载其他状态', async () => {
     const cache = createMediaMetadataCache(storage);
     const jobs = new Map();
     let active = 0, peak = 0;
-    const records = Array.from({length: 8}, (_, i) => movie(i + 1));
+    const records = Array.from({length: 9}, (_, i) => movie(i + 1));
     records.push(season(20, 1), season(20, 2), movie(30, 'Do'));
     const loader = createWatchedGenresLoader(records, {
         cache, load: record => {
@@ -134,20 +134,20 @@ test('五路并发持续补位，同剧多季只请求一次，不加载其他�
     });
     loader.start();
     await tick();
-    assert.equal(jobs.size, 5);
-    assert.equal(loader.getSnapshot().pendingCount, 9);
+    assert.equal(jobs.size, 8);
+    assert.equal(loader.getSnapshot().pendingCount, 10);
     jobs.get(1).resolve(detail(1));
     await tick();
-    assert.equal(jobs.size, 6);
+    assert.equal(jobs.size, 9);
     for (let round = 0; round < 5; round++) {
         for (const [id, job] of jobs) job.resolve(detail(id));
         await tick();
     }
-    assert.equal(peak, 5);
-    assert.equal(jobs.size, 9);
+    assert.equal(peak, 8);
+    assert.equal(jobs.size, 10);
     assert.equal(jobs.has(30), false);
     assert.equal(loader.getSnapshot().pendingCount, 0);
-    assert.equal(Object.keys(loader.getSnapshot().metadata).length, 9);
+    assert.equal(Object.keys(loader.getSnapshot().metadata).length, 10);
     loader.stop();
 });
 
@@ -200,7 +200,7 @@ test('过期缓存先展示，失败保留旧资料，重试不重发成功请�
 test('卸载停止排队，不发送页面通知，删除记录不残留；恢复可继续且无重复请求', async () => {
     const cache = createMediaMetadataCache(storage);
     const jobs = new Map();
-    const records = Array.from({length: 7}, (_, i) => movie(i + 1));
+    const records = Array.from({length: 10}, (_, i) => movie(i + 1));
     const loader = createWatchedGenresLoader(records, {
         cache, load: record => {
             const job = deferred();
@@ -218,15 +218,60 @@ test('卸载停止排队，不发送页面通知，删除记录不残留；恢�
     for (const [id, job] of jobs) job.resolve(detail(id));
     await tick();
     assert.equal(notifications, before);
-    assert.equal(jobs.size, 5);
+    assert.equal(jobs.size, 8);
     loader.start();
     await tick();
-    assert.equal(jobs.size, 7);
+    assert.equal(jobs.size, 10);
     assert.equal(loader.getSnapshot().metadata['movie-1'], undefined);
-    jobs.get(6).resolve(detail(6));
-    jobs.get(7).resolve(detail(7));
+    jobs.get(9).resolve(detail(9));
+    jobs.get(10).resolve(detail(10));
     await tick();
-    assert.equal(Object.keys(loader.getSnapshot().metadata).length, 6);
+    assert.equal(Object.keys(loader.getSnapshot().metadata).length, 9);
     unsubscribe();
     loader.stop();
+});
+
+test('评分人数缓存兼容旧格式，保留零和未知人数，拒绝非法缓存并支持跨实例恢复', () => {
+    const disk = storage();
+    const base = toMediaMetadata(detail(1));
+    const values = [undefined, null, 0, 500, -1, 1.5, '100'];
+    disk.setItem(MEDIA_METADATA_STORAGE_KEY, JSON.stringify({version: 1,
+        entries: values.map((voteCount, index) => [`movie-${index + 1}`, {...base, scores: {}, years: {}, voteCount}])}));
+    const cache = createMediaMetadataCache(() => disk);
+    assert.equal(cache.get('movie-1').voteCount, undefined);
+    assert.equal(cache.get('movie-2').voteCount, null);
+    assert.equal(cache.get('movie-3').voteCount, 0);
+    assert.equal(cache.get('movie-4').voteCount, 500);
+    for (const id of [5, 6, 7]) assert.equal(cache.get(`movie-${id}`), undefined);
+    cache.set('movie-8', toMediaMetadata({...detail(8), vote_count: 123}));
+    cache.flush();
+    assert.equal(createMediaMetadataCache(() => disk).get('movie-8').voteCount, 123);
+});
+
+test('新鲜旧缓存缺少人数也补全，同剧多季只请求一次；未知人数确认后不反复补全', async () => {
+    const cache = createMediaMetadataCache(storage);
+    const old = toMediaMetadata({...detail(1), seasons: []});
+    delete old.voteCount;
+    cache.set('tv_season-1', old);
+    const calls = [];
+    const records = [season(1, 1), season(1, 2)];
+    const load = async record => {
+        calls.push(record.tmdb_id);
+        return {...detail(1), seasons: []};
+    };
+    const loader = createWatchedGenresLoader(records, {cache, load});
+    try {
+        loader.start();
+        await tick();
+        loader.update(records);
+        assert.deepEqual(calls, [1]);
+        assert.equal(loader.getSnapshot().metadata['tv_season-1'].voteCount, null);
+        assert.equal(loader.getSnapshot().pendingCount, 0);
+    } finally { loader.stop(); }
+    const next = createWatchedGenresLoader(records, {cache, load});
+    try {
+        next.start();
+        await tick();
+        assert.deepEqual(calls, [1]);
+    } finally { next.stop(); }
 });
